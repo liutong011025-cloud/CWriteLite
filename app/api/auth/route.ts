@@ -25,7 +25,8 @@ export async function POST(request: Request) {
         await signIn(user.id);
         return NextResponse.json({ success: true, user: publicUser(user) });
     }
-    catch {
+    catch (error) {
+        console.error('POST /api/auth failed', error);
         return NextResponse.json({ error: 'Unable to sign in. Please try again.' }, { status: 500 });
     }
 }
