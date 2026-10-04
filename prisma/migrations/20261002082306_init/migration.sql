@@ -28,6 +28,7 @@ CREATE TABLE "Character" (
     "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "age" TEXT NOT NULL DEFAULT '',
+    "species" TEXT NOT NULL DEFAULT '',
     "appearance" TEXT NOT NULL DEFAULT '',
     "traits" TEXT NOT NULL DEFAULT '',
     "background" TEXT NOT NULL DEFAULT '',
