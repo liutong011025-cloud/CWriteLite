@@ -1,0 +1,1619 @@
+@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Child-friendly vibrant colors */
+  --background: oklch(0.98 0 0);
+  --foreground: oklch(0.15 0 0);
+  --font-comic-neue: var(--font-comic-neue);
+  --font-patrick-hand: var(--font-patrick-hand);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0 0);
+  --primary: oklch(0.48 0.3 264);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.62 0.25 46);
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.92 0.02 0);
+  --muted-foreground: oklch(0.55 0 0);
+  --accent: oklch(0.55 0.28 142);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.58 0.25 27);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.9 0.01 0);
+  --input: oklch(0.95 0 0);
+  --ring: oklch(0.48 0.3 264);
+  --chart-1: oklch(0.48 0.3 264);
+  --chart-2: oklch(0.55 0.28 142);
+  --chart-3: oklch(0.62 0.25 46);
+  --chart-4: oklch(0.65 0.25 307);
+  --chart-5: oklch(0.52 0.28 53);
+  --radius: 0.875rem;
+  --sidebar: oklch(0.98 0 0);
+  --sidebar-foreground: oklch(0.15 0 0);
+  --sidebar-primary: oklch(0.48 0.3 264);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.55 0.28 142);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(0.9 0.01 0);
+  --sidebar-ring: oklch(0.48 0.3 264);
+  /* 全站默認字體：Arial（Home 等特殊標題另用自定義類） */
+  --font-sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --stage-top-padding: 128px;
+  --stage-bottom-padding: 120px;
+}
+
+.dark {
+  --background: oklch(0.12 0 0);
+  --foreground: oklch(0.96 0 0);
+  --card: oklch(0.18 0 0);
+  --card-foreground: oklch(0.96 0 0);
+  --popover: oklch(0.18 0 0);
+  --popover-foreground: oklch(0.96 0 0);
+  --primary: oklch(0.62 0.28 264);
+  --primary-foreground: oklch(0.12 0 0);
+  --secondary: oklch(0.72 0.23 46);
+  --secondary-foreground: oklch(0.12 0 0);
+  --muted: oklch(0.3 0.01 0);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.65 0.26 142);
+  --accent-foreground: oklch(0.12 0 0);
+  --destructive: oklch(0.52 0.22 27);
+  --destructive-foreground: oklch(0.96 0 0);
+  --border: oklch(0.25 0.01 0);
+  --input: oklch(0.22 0.01 0);
+  --ring: oklch(0.62 0.28 264);
+  --chart-1: oklch(0.62 0.28 264);
+  --chart-2: oklch(0.65 0.26 142);
+  --chart-3: oklch(0.72 0.23 46);
+  --chart-4: oklch(0.68 0.25 307);
+  --chart-5: oklch(0.62 0.26 53);
+  --sidebar: oklch(0.15 0 0);
+  --sidebar-foreground: oklch(0.96 0 0);
+  --sidebar-primary: oklch(0.62 0.28 264);
+  --sidebar-primary-foreground: oklch(0.96 0 0);
+  --sidebar-accent: oklch(0.65 0.26 142);
+  --sidebar-accent-foreground: oklch(0.96 0 0);
+  --sidebar-border: oklch(0.25 0.01 0);
+  --sidebar-ring: oklch(0.62 0.28 264);
+}
+
+@theme inline {
+  /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
+  --font-caveat: var(--font-caveat), "Caveat", cursive;
+  --font-baloo: var(--font-baloo), "Baloo 2", sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* 全站（除 Home）统一 Arial，包括 AI 回复文本。 */
+  main[data-stage]:not([data-stage="home"]):not(.lite-stage),
+  main[data-stage]:not([data-stage="home"]):not(.lite-stage) * {
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1180px) {
+  html {
+    font-size: 12.8px;
+  }
+
+  :root {
+    --stage-top-padding: 88px;
+    --stage-bottom-padding: 76px;
+  }
+}
+
+@layer utilities {
+  .font-hand {
+    font-family: var(--font-patrick-hand), "Patrick Hand", "Kalam", cursive;
+  }
+}
+
+/* Child-friendly animations */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Poetry / Drama&Poetry patterns and fade-in */
+.pattern-dots {
+  background-image: radial-gradient(circle, oklch(0.48 0.3 264 / 0.06) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.pattern-dots-dense {
+  background-image: radial-gradient(circle, oklch(0.48 0.3 264 / 0.05) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+.animate-float-delayed {
+  animation: float 3.5s ease-in-out infinite 0.5s;
+}
+
+/* ========== aboutnew 設計：neo-brutalist 動畫與陰影 ========== */
+@keyframes morphing {
+  0%, 100% { border-radius: 2rem; transform: rotate(0deg) scale(1); }
+  25% { border-radius: 3rem; transform: rotate(2deg) scale(1.02); }
+  50% { border-radius: 1.5rem; transform: rotate(-1deg) scale(0.98); }
+  75% { border-radius: 2.5rem; transform: rotate(1deg) scale(1.01); }
+}
+@keyframes slide-up {
+  0% { opacity: 0; transform: translateY(60px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-morphing {
+  animation: morphing 8s ease-in-out infinite;
+}
+.animate-slide-up {
+  animation: slide-up 0.8s ease-out forwards;
+}
+.shadow-brutal {
+  box-shadow: 2px 2px 3.5px 2px hsl(0 0% 0% / 100%), 2px 4px 6px 1px hsl(0 0% 0% / 100%);
+}
+
+/* aboutusnewest 配色與陰影：僅在 .about-new-theme 內套用 */
+.about-new-theme {
+  --background: oklch(0.98 0.01 85);
+  --foreground: oklch(0.2478 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2478 0 0);
+  --primary: oklch(0.75 0.18 85);
+  --primary-foreground: oklch(0.2 0 0);
+  --secondary: oklch(0.80 0.12 350);
+  --secondary-foreground: oklch(0.2 0 0);
+  --muted: oklch(0.95 0.02 85);
+  --muted-foreground: oklch(0.4 0 0);
+  --accent: oklch(0.55 0.15 250);
+  --accent-foreground: oklch(1 0 0);
+  --chart-1: oklch(0.75 0.18 85);
+  --chart-2: oklch(0.80 0.12 350);
+  --chart-3: oklch(0.55 0.15 250);
+  --chart-4: oklch(0.85 0.10 85);
+  --chart-5: oklch(0.70 0.14 350);
+  --shadow-lg: 2px 2px 3.5px 2px hsl(0 0% 0% / 100%), 2px 4px 6px 1px hsl(0 0% 0% / 100%);
+  --shadow-xl: 2px 2px 3.5px 2px hsl(0 0% 0% / 100%), 2px 8px 10px 1px hsl(0 0% 0% / 100%);
+}
+.about-new-theme .border-3 { border-width: 3px; }
+.about-new-theme .border-l-3 { border-left-width: 3px; }
+.about-new-theme .border-b-3 { border-bottom-width: 3px; }
+
+.styled-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.styled-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.styled-scrollbar::-webkit-scrollbar-thumb {
+  background: oklch(0.48 0.3 264 / 0.4);
+  border-radius: 99px;
+}
+.styled-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.48 0.3 264 / 0.6);
+}
+
+/* Drama V0: glass, animations, bubbles */
+.glass {
+  background: oklch(1 0 0 / 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.dark .glass {
+  background: oklch(0.12 0 0 / 0.7);
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out both;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  50% { opacity: 0.5; transform: scale(0.7) rotate(180deg); }
+}
+.animate-sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+.bubble-dialogue {
+  background: white;
+  border: 2.5px solid oklch(0.48 0.3 264 / 0.7);
+  box-shadow: 0 2px 12px oklch(0.48 0.3 264 / 0.15), 0 1px 3px rgb(0 0 0 / 0.06), inset 0 1px 0 rgb(255 255 255 / 0.8);
+  color: oklch(0.15 0 0);
+}
+.bubble-thought {
+  background: white;
+  border: 2.5px dashed oklch(0.55 0 0 / 0.4);
+  box-shadow: 0 2px 10px oklch(0.48 0.3 264 / 0.1), 0 1px 3px rgb(0 0 0 / 0.05), inset 0 1px 0 rgb(255 255 255 / 0.8);
+  color: oklch(0.25 0 0);
+}
+
+/* 蛋裂动画 */
+@keyframes crack-1 {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(5deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5) rotate(10deg);
+    opacity: 0;
+  }
+}
+
+@keyframes crack-2 {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3) rotate(-5deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.6) rotate(-10deg);
+    opacity: 0;
+  }
+}
+
+.animate-crack-1 {
+  animation: crack-1 0.8s ease-out forwards;
+}
+
+.animate-crack-2 {
+  animation: crack-2 0.8s ease-out 0.2s forwards;
+}
+
+/* 画笔动画 */
+@keyframes paint-brush {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  50% {
+    transform: translateX(10px) rotate(5deg);
+  }
+}
+
+.animate-paint-brush {
+  animation: paint-brush 2s ease-in-out infinite;
+}
+
+/* 音符飘动 */
+@keyframes music-note {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-30px) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+.animate-music-note {
+  animation: music-note 3s ease-in-out infinite;
+}
+
+/* 蛋抖动动画 */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  10% {
+    transform: translateX(-5px) rotate(-2deg);
+  }
+  20% {
+    transform: translateX(5px) rotate(2deg);
+  }
+  30% {
+    transform: translateX(-5px) rotate(-2deg);
+  }
+  40% {
+    transform: translateX(5px) rotate(2deg);
+  }
+  50% {
+    transform: translateX(-3px) rotate(-1deg);
+  }
+  60% {
+    transform: translateX(3px) rotate(1deg);
+  }
+  70% {
+    transform: translateX(-3px) rotate(-1deg);
+  }
+  80% {
+    transform: translateX(3px) rotate(1deg);
+  }
+  90% {
+    transform: translateX(-2px) rotate(-0.5deg);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+/* 纸张翻页动画 */
+@keyframes pageFlip {
+  0% {
+    transform: perspective(1000px) rotateY(0deg);
+  }
+  50% {
+    transform: perspective(1000px) rotateY(-5deg);
+  }
+  100% {
+    transform: perspective(1000px) rotateY(0deg);
+  }
+}
+
+.animate-page-flip {
+  animation: pageFlip 0.6s ease-in-out;
+}
+
+/* 翻页效果工具类 */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.rotate-y-0 {
+  transform: rotateY(0deg);
+}
+
+.rotate-y-12 {
+  transform: rotateY(12deg);
+}
+
+.rotate-y-neg-12 {
+  transform: rotateY(-12deg);
+}
+
+/* 滚动条隐藏 */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* 自定义滚动条样式 */
+.scrollbar-purple {
+  scrollbar-width: thin;
+  scrollbar-color: #a855f7 #f3e8ff;
+}
+
+.scrollbar-purple::-webkit-scrollbar {
+  height: 8px;
+}
+
+.scrollbar-purple::-webkit-scrollbar-track {
+  background: #f3e8ff;
+  border-radius: 4px;
+}
+
+.scrollbar-purple::-webkit-scrollbar-thumb {
+  background: #a855f7;
+  border-radius: 4px;
+}
+
+.scrollbar-purple::-webkit-scrollbar-thumb:hover {
+  background: #9333ea;
+}
+
+/* 打字机效果 */
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink {
+  0%, 50% {
+    border-color: transparent;
+  }
+  51%, 100% {
+    border-color: currentColor;
+  }
+}
+
+.animate-typing {
+  animation: typing 3s steps(40, end), blink 0.75s step-end infinite;
+}
+
+/* 闪烁效果 */
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.animate-twinkle {
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+/* 渐变流动 */
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-flow {
+  background-size: 200% 200%;
+  animation: gradient-flow 3s ease infinite;
+}
+
+/* 按钮弹跳动画 - 可爱动效 */
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.05) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+/* 轻微跳动动画 */
+@keyframes gentle-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-gentle-bounce {
+  animation: gentle-bounce 2s ease-in-out infinite;
+}
+
+@keyframes slideUpFromDoor {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 按钮悬停脉冲效果 */
+@keyframes button-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(147, 51, 234, 0);
+  }
+}
+
+/* Book Review Welcome 页面动效 */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 1s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-fade-in {
+  animation: fade-in 1s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+/* 打字机动画 - 一个字母一个字母敲进去 */
+@keyframes typewriter {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(5px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-typewriter {
+  animation: typewriter 0.12s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 0;
+  display: inline-block;
+}
+
+/* 保留旧的手写动画以兼容其他组件 */
+@keyframes handwriting {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes write-letter {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+  100% {
+    width: 100%;
+    opacity: 1;
+  }
+}
+
+.animate-handwriting {
+  animation: handwriting 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-write-letter {
+  animation: write-letter 2s ease-in-out forwards;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* 慢速闪烁动画 - 用于 Philosophy 部分的 emoji */
+@keyframes slowTwinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.animate-slow-twinkle {
+  animation: slowTwinkle 4s ease-in-out infinite;
+}
+
+/* Ticket tear effect */
+@keyframes ticketTear {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0.2;
+    transform: translateY(40px) rotate(-1deg);
+  }
+}
+
+.animate-ticket-tear {
+  animation: ticketTear 0.9s ease-in-out forwards;
+}
+
+/* Fireworks and plane effects for ticket */
+@keyframes fireworkBurst {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  20% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+@keyframes fireworkGlow {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+@keyframes planeFlyAway {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(220px, -160px) rotate(20deg);
+    opacity: 0;
+  }
+}
+
+.ticket-firework {
+  width: 140px;
+  height: 140px;
+  border-radius: 9999px;
+  border: 3px solid rgba(168, 85, 247, 0.6);
+  box-shadow:
+    0 0 30px rgba(168, 85, 247, 0.5),
+    0 0 60px rgba(236, 72, 153, 0.4),
+    inset 0 0 20px rgba(250, 204, 21, 0.6);
+  animation: fireworkBurst 1.1s ease-out forwards;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.ticket-firework.ticket-firework-delayed {
+  width: 180px;
+  height: 180px;
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow:
+    0 0 35px rgba(59, 130, 246, 0.5),
+    0 0 70px rgba(14, 165, 233, 0.4);
+  animation: fireworkGlow 1.1s ease-out forwards;
+}
+
+.ticket-firework-label {
+  position: relative;
+  z-index: 2;
+  margin-top: 12px;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 9999px;
+  border: 2px solid rgba(168, 85, 247, 0.4);
+  font-weight: 700;
+  color: #7c3aed;
+  text-align: center;
+  animation: fireworkGlow 0.9s ease-out forwards;
+}
+
+.plane-flyaway {
+  animation: planeFlyAway 0.9s ease-in forwards;
+}
+
+/* Ticket styling helpers */
+.ticket-pass {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(252, 231, 243, 0.4));
+}
+
+.ticket-chip {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 12px 14px;
+}
+
+.ticket-stub {
+  width: 100%;
+  max-width: 240px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  border: 2px dashed rgba(216, 180, 254, 0.6);
+  padding: 18px;
+  text-align: center;
+  box-shadow: inset 0 0 12px rgba(168, 85, 247, 0.1);
+}
+
+.ticket-barcode {
+  height: 52px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #111827 0px,
+      #111827 2px,
+      transparent 2px,
+      transparent 5px
+    );
+  border-radius: 6px;
+  opacity: 0.8;
+}
+
+.ticket-hole {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: #fef3f2;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 4px rgba(243, 244, 246, 0.9);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ticket-hole-left {
+  left: -14px;
+}
+
+.ticket-hole-right {
+  right: -14px;
+}
+
+/* Journey ticket card pulse animation */
+@keyframes journey-card-pulse {
+  0%, 100% {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 10px 25px -3px rgba(168, 85, 247, 0.3), 0 4px 10px -4px rgba(168, 85, 247, 0.2);
+    transform: scale(1.02);
+  }
+}
+
+.animate-journey-card-pulse {
+  animation: journey-card-pulse 2s ease-in-out infinite;
+}
+
+/* Drop zone pulse animation */
+@keyframes drop-zone-pulse {
+  0%, 100% {
+    border-color: rgba(216, 180, 254, 0.6);
+    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+  }
+  50% {
+    border-color: rgba(168, 85, 247, 0.8);
+    box-shadow: 0 0 15px 3px rgba(168, 85, 247, 0.3);
+  }
+}
+
+.animate-drop-zone-pulse {
+  animation: drop-zone-pulse 1.5s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Home page pixel-farm transition (distance-based sequencing)
+   ───────────────────────────────────────────────────────────── */
+
+.pixel-farm-transition {
+  --pixel-wood: #6b5210;
+  --pixel-wheat: #e8c547;
+  --pixel-grass: #7ec850;
+  --pixel-sky: #87ceeb;
+}
+
+.pixel-farm-transition [data-pixel-item] {
+  transition-property: filter, transform, opacity, color, background-color, box-shadow, border-color;
+  transition-duration: 520ms;
+  transition-timing-function: steps(6, end);
+  transition-delay: var(--pixel-delay, 0ms);
+  will-change: filter, transform, opacity;
+}
+
+.pixel-farm-transition.pixel-farm-transition-active {
+  image-rendering: pixelated;
+}
+
+@keyframes pixelizeItem {
+  0% {
+    filter: none;
+    transform: translateZ(0) scale(1);
+    opacity: 1;
+  }
+  35% {
+    filter: blur(1.4px) contrast(1.05) saturate(1.05);
+    transform: translateZ(0) scale(0.995);
+    opacity: 0.92;
+  }
+  100% {
+    filter: contrast(1.18) saturate(1.18);
+    transform: translateZ(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.pixel-farm-transition.pixel-farm-transition-active [data-pixel-item] {
+  /* Use keyframes (not transitions) so the delay feels like a real sequence. */
+  animation: pixelizeItem 1400ms steps(10, end) both;
+  animation-delay: var(--pixel-delay, 0ms);
+}
+
+/* Text reveal: keep original modern typography size/layout,
+   and overlay a pixel-font layer that reveals right-to-left in steps. */
+.pixel-reveal {
+  position: relative;
+  display: inline-block;
+}
+
+.pixel-reveal__base {
+  position: relative;
+  z-index: 1;
+}
+
+.pixel-reveal__pixel {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  font-family: var(--font-press-start-2p), ui-monospace, monospace;
+  letter-spacing: 0.02em;
+  text-shadow: none;
+  /* Start hidden: reveal from right -> left */
+  clip-path: inset(0 0 0 100%);
+  opacity: 0.98;
+}
+
+@keyframes pixelTextRevealRtl {
+  0%   { clip-path: inset(0 0 0 100%); }
+  100% { clip-path: inset(0 0 0 0%); }
+}
+
+.pixel-farm-transition.pixel-farm-transition-active .pixel-reveal__pixel {
+  animation-name: pixelTextRevealRtl;
+  animation-duration: var(--pixel-text-duration, 900ms);
+  animation-delay: var(--pixel-delay, 0ms);
+  animation-fill-mode: both;
+  /* timing-function is set inline (steps(N,end)) for per-string letter stepping */
+}
+
+.pixel-farm-transition.pixel-farm-transition-active [data-pixel-item][data-pixel-kind="panel"] {
+  background: linear-gradient(180deg, rgba(245, 230, 200, 0.92) 0%, rgba(232, 197, 71, 0.22) 100%);
+  border: 4px solid var(--pixel-wood);
+  box-shadow: inset -4px -4px 0 rgba(0,0,0,0.12), inset 4px 4px 0 rgba(255,255,255,0.25), 6px 6px 0 rgba(0,0,0,0.25);
+}
+
+.pixel-farm-transition.pixel-farm-transition-active [data-pixel-item][data-pixel-kind="button"] {
+  border-radius: 0 !important;
+  background: linear-gradient(180deg, #d9c9a6 0%, #c4a574 100%);
+  border: 4px solid var(--pixel-wood);
+  box-shadow: inset -4px -4px 0 rgba(0,0,0,0.18), inset 4px 4px 0 rgba(255,255,255,0.28), 6px 6px 0 rgba(0,0,0,0.28);
+}
+
+@keyframes stamp {
+  0% {
+    transform: scale(0) rotate(-15deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(5deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Lanyard animations */
+@keyframes lanyard-sway {
+  0%, 100% {
+    transform: translateX(50%) rotate(-2deg);
+  }
+  50% {
+    transform: translateX(50%) rotate(2deg);
+  }
+}
+
+@keyframes lanyard-pulse-glow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes number-bounce {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.2) translateY(-8px);
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-lanyard-sway {
+  animation: lanyard-sway 3s ease-in-out infinite;
+}
+
+.animate-lanyard-pulse-glow {
+  animation: lanyard-pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-number-bounce {
+  animation: number-bounce 0.6s ease-in-out;
+}
+
+.animate-ripple {
+  animation: ripple 0.6s ease-out;
+}
+
+@keyframes cagent-red-flash {
+  0% {
+    opacity: 0;
+    box-shadow: inset 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+  15% {
+    opacity: 1;
+    box-shadow: inset 0 0 80px 24px rgba(220, 38, 38, 0.7);
+  }
+  30% {
+    opacity: 1;
+    box-shadow: inset 0 0 80px 24px rgba(220, 38, 38, 0.7);
+  }
+  100% {
+    opacity: 0;
+    box-shadow: inset 0 0 80px 20px rgba(220, 38, 38, 0);
+  }
+}
+
+.animate-cagent-red-flash {
+  animation: cagent-red-flash 2s ease-out forwards;
+}
+
+/* ========== Stardew Valley / Pixel Art Theme ========== */
+
+/* Pixel art color palette */
+:root {
+  --pixel-grass: #7ec850;
+  --pixel-grass-dark: #5a9a32;
+  --pixel-wheat: #e8c547;
+  --pixel-wheat-dark: #c9a82e;
+  --pixel-wood: #8b6914;
+  --pixel-wood-light: #a58b3d;
+  --pixel-wood-dark: #6b5210;
+  --pixel-sky: #87ceeb;
+  --pixel-sky-light: #b8e4f9;
+  --pixel-stone: #9a9a9a;
+  --pixel-stone-dark: #6b6b6b;
+  --pixel-cream: #f5e6c8;
+  --pixel-cream-dark: #d9c9a6;
+  --pixel-brown-panel: #c4a574;
+  --pixel-brown-panel-dark: #9a7b4f;
+  --pixel-red-btn: #c94b4b;
+  --pixel-green-btn: #5cb85c;
+  --pixel-blue-btn: #5bc0de;
+}
+
+/* Pixel border utility - creates stepped pixel edges */
+.pixel-border {
+  border: 4px solid var(--pixel-wood-dark);
+  box-shadow: 
+    inset -4px -4px 0 0 var(--pixel-wood),
+    inset 4px 4px 0 0 var(--pixel-wood-light),
+    4px 4px 0 0 rgba(0,0,0,0.3);
+  image-rendering: pixelated;
+}
+
+.pixel-border-light {
+  border: 3px solid var(--pixel-cream-dark);
+  box-shadow: 
+    inset -3px -3px 0 0 var(--pixel-cream),
+    inset 3px 3px 0 0 #fff,
+    3px 3px 0 0 rgba(0,0,0,0.2);
+}
+
+/* Pixel panel - wooden plank style */
+.pixel-panel {
+  background: linear-gradient(
+    180deg,
+    var(--pixel-brown-panel) 0%,
+    var(--pixel-brown-panel-dark) 100%
+  );
+  border: 4px solid var(--pixel-wood-dark);
+  box-shadow: 
+    inset -4px -4px 0 0 var(--pixel-wood),
+    inset 4px 4px 0 0 var(--pixel-wood-light),
+    6px 6px 0 0 rgba(0,0,0,0.25);
+  position: relative;
+}
+
+.pixel-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 48px,
+    rgba(0,0,0,0.05) 48px,
+    rgba(0,0,0,0.05) 50px
+  );
+  pointer-events: none;
+}
+
+/* Pixel panel: light text on dark wood; dark text on light inset surfaces */
+.pixel-panel {
+  --on-panel-fg: var(--pixel-cream, #f5e6c8);
+  --on-panel-fg-muted: rgba(245, 230, 200, 0.78);
+  color: var(--on-panel-fg);
+}
+
+.pixel-panel-light,
+.pixel-panel[style*="#f5e6c8"],
+.pixel-panel[style*="#d4e8b4"],
+.pixel-panel[style*="#e8c547"],
+.pixel-panel[style*="#fff8ea"],
+.pixel-panel[style*="#f9f1dd"] {
+  --on-panel-fg: var(--pixel-wood-dark, #6b5210);
+  --on-panel-fg-muted: #5a4a2a;
+  color: var(--on-panel-fg);
+}
+
+.pixel-panel .text-foreground {
+  color: var(--on-panel-fg) !important;
+}
+
+.pixel-panel .text-muted-foreground {
+  color: var(--on-panel-fg-muted) !important;
+}
+
+.pixel-panel .pixel-panel-surface,
+.pixel-panel .pixel-card,
+.pixel-panel .pixel-input,
+.pixel-panel input:not([type="checkbox"]):not([type="radio"]),
+.pixel-panel textarea,
+.pixel-panel select,
+.pixel-panel [class*="bg-card"],
+.pixel-panel [class*="bg-white"],
+.pixel-panel [class*="bg-muted"],
+.pixel-panel [class*="bg-primary/"],
+.pixel-panel [class*="bg-accent/"],
+.pixel-panel [class*="bg-secondary/"],
+.pixel-panel [class*="bg-destructive/"],
+.pixel-panel [class*="bg-chart-"],
+.pixel-panel [style*="background: #f5e6c8"],
+.pixel-panel [style*="background:#f5e6c8"],
+.pixel-panel [style*="background: #fff"],
+.pixel-panel [style*="background:#fff"],
+.pixel-panel [style*="background: white"],
+.pixel-panel [style*="background: #d4e8b4"],
+.pixel-panel [style*="background: #e8c547"],
+.pixel-panel [style*="background: #e8d4a8"],
+.pixel-panel [style*="background: linear-gradient(180deg, #f9f1dd"],
+.pixel-panel [style*="background: linear-gradient(180deg, #e8c547"],
+.pixel-panel [style*="rgba(245,230,200"] {
+  --on-panel-fg: var(--pixel-wood-dark, #6b5210);
+  --on-panel-fg-muted: #5a4a2a;
+  color: var(--on-panel-fg);
+}
+
+.pixel-panel .pixel-panel-surface .text-foreground,
+.pixel-panel .pixel-card .text-foreground,
+.pixel-panel .pixel-input,
+.pixel-panel [class*="bg-card"] .text-foreground,
+.pixel-panel [class*="bg-muted"] .text-foreground,
+.pixel-panel [style*="background: #f5e6c8"] .text-foreground,
+.pixel-panel [style*="background:#f5e6c8"] .text-foreground,
+.pixel-panel [style*="background: #fff"] .text-foreground,
+.pixel-panel [style*="background: #d4e8b4"] .text-foreground,
+.pixel-panel [style*="background: #e8c547"] .text-foreground,
+.pixel-panel [style*="background: #e8d4a8"] .text-foreground,
+.pixel-panel [style*="background: linear-gradient(180deg, #f9f1dd"] .text-foreground,
+.pixel-panel [style*="rgba(245,230,200"] .text-foreground {
+  color: var(--foreground) !important;
+}
+
+.pixel-panel .pixel-panel-surface .text-muted-foreground,
+.pixel-panel .pixel-card .text-muted-foreground,
+.pixel-panel [class*="bg-card"] .text-muted-foreground,
+.pixel-panel [class*="bg-muted"] .text-muted-foreground,
+.pixel-panel [style*="background: #f5e6c8"] .text-muted-foreground,
+.pixel-panel [style*="background:#f5e6c8"] .text-muted-foreground,
+.pixel-panel [style*="background: #fff"] .text-muted-foreground,
+.pixel-panel [style*="background: #d4e8b4"] .text-muted-foreground,
+.pixel-panel [style*="background: #e8c547"] .text-muted-foreground,
+.pixel-panel [style*="background: #e8d4a8"] .text-muted-foreground,
+.pixel-panel [style*="background: linear-gradient(180deg, #f9f1dd"] .text-muted-foreground,
+.pixel-panel [style*="rgba(245,230,200"] .text-muted-foreground {
+  color: var(--muted-foreground) !important;
+}
+
+/* Inline dark browns on wood (skip elements that set their own background) */
+.pixel-panel:not(.pixel-panel-light):not([style*="#f5e6c8"]):not([style*="#d4e8b4"]):not([style*="#e8c547"]):not([style*="#f9f1dd"])
+  [style*="color: #5a4a2a"]:not([style*="background"]),
+.pixel-panel:not(.pixel-panel-light):not([style*="#f5e6c8"]):not([style*="#d4e8b4"]):not([style*="#e8c547"]):not([style*="#f9f1dd"])
+  [style*="color: #6b5210"]:not([style*="background"]),
+.pixel-panel:not(.pixel-panel-light):not([style*="#f5e6c8"]):not([style*="#d4e8b4"]):not([style*="#e8c547"]):not([style*="#f9f1dd"])
+  [style*="color: #8b6914"]:not([style*="background"]) {
+  color: var(--on-panel-fg) !important;
+}
+
+/* Keep dark text inside light islands (after wood-panel overrides) */
+.pixel-panel .pixel-card [style*="color: #5a4a2a"],
+.pixel-panel .pixel-card [style*="color: #6b5210"],
+.pixel-panel .pixel-card [style*="color: #3d5a1f"],
+.pixel-panel .pixel-card [style*="color: #3a8aa3"],
+.pixel-panel .pixel-panel-surface [style*="color: #5a4a2a"],
+.pixel-panel .pixel-panel-surface [style*="color: #6b5210"],
+.pixel-panel [style*="background: #f5e6c8"] [style*="color: #5a4a2a"],
+.pixel-panel [style*="background: #f5e6c8"] [style*="color: #6b5210"],
+.pixel-panel [style*="background:#f5e6c8"] [style*="color: #5a4a2a"],
+.pixel-panel [style*="background:#f5e6c8"] [style*="color: #6b5210"],
+.pixel-panel [style*="background: #fff"] [style*="color: #5a4a2a"],
+.pixel-panel [style*="background: #d4e8b4"] [style*="color: #5a4a2a"],
+.pixel-panel [style*="background: #d4e8b4"] [style*="color: #3d5a1f"],
+.pixel-panel [style*="background: #d4e8b4"] [style*="color: #6b5210"],
+.pixel-panel [style*="background: #e8c547"] [style*="color: #5a4a2a"],
+.pixel-panel [style*="background: #e8c547"] [style*="color: #6b5210"],
+.pixel-panel [style*="background: #e8d4a8"] [style*="color: #5a4a2a"],
+.pixel-panel [style*="background: #e8d4a8"] [style*="color: #6b5210"],
+.pixel-panel [style*="background: linear-gradient(180deg, #f9f1dd"] [style*="color: #5a4a2a"],
+.pixel-panel [style*="background: linear-gradient(180deg, #f9f1dd"] [style*="color: #6b5210"],
+.pixel-panel [style*="rgba(245,230,200"] [style*="color: #5a4a2a"],
+.pixel-panel [style*="rgba(245,230,200"] [style*="color: #6b5210"] {
+  color: var(--on-panel-fg) !important;
+}
+
+.pixel-panel:not(.pixel-panel-light):not([style*="#f5e6c8"]) .text-primary {
+  color: #b8e4f9 !important;
+}
+
+.pixel-panel:not(.pixel-panel-light):not([style*="#f5e6c8"]) [class*="drop-shadow"] {
+  filter: none !important;
+}
+
+/* Pixel button styles */
+.pixel-btn {
+  border: 3px solid;
+  box-shadow: 
+    inset -3px -3px 0 0 rgba(0,0,0,0.25),
+    inset 3px 3px 0 0 rgba(255,255,255,0.25),
+    3px 3px 0 0 rgba(0,0,0,0.3);
+  transition: transform 0.1s, box-shadow 0.1s;
+  image-rendering: pixelated;
+}
+
+.pixel-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 
+    inset -3px -3px 0 0 rgba(0,0,0,0.25),
+    inset 3px 3px 0 0 rgba(255,255,255,0.25),
+    4px 4px 0 0 rgba(0,0,0,0.3);
+}
+
+.pixel-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 
+    inset 3px 3px 0 0 rgba(0,0,0,0.25),
+    inset -3px -3px 0 0 rgba(255,255,255,0.15),
+    1px 1px 0 0 rgba(0,0,0,0.2);
+}
+
+.pixel-btn-green {
+  background: linear-gradient(180deg, #6fcf6f 0%, #4ca84c 100%);
+  border-color: #3d8a3d;
+  color: #fff;
+}
+
+.pixel-btn-red {
+  background: linear-gradient(180deg, #e66767 0%, #c94b4b 100%);
+  border-color: #a33a3a;
+  color: #fff;
+}
+
+.pixel-btn-blue {
+  background: linear-gradient(180deg, #6bc9e8 0%, #4aa8c7 100%);
+  border-color: #3a8aa3;
+  color: #fff;
+}
+
+.pixel-btn-wood {
+  background: linear-gradient(180deg, var(--pixel-wood-light) 0%, var(--pixel-wood) 100%);
+  border-color: var(--pixel-wood-dark);
+  color: #fff;
+}
+
+/* Pixel input field */
+.pixel-input {
+  background: var(--pixel-cream);
+  border: 3px solid var(--pixel-wood);
+  box-shadow: 
+    inset 2px 2px 0 0 rgba(0,0,0,0.1),
+    2px 2px 0 0 rgba(0,0,0,0.15);
+  color: var(--pixel-wood-dark);
+}
+
+.pixel-input:focus {
+  outline: none;
+  border-color: var(--pixel-grass);
+  box-shadow: 
+    inset 2px 2px 0 0 rgba(0,0,0,0.1),
+    0 0 0 2px var(--pixel-grass-dark);
+}
+
+/* Pixel progress bar - crop growth style */
+.pixel-progress {
+  background: var(--pixel-stone);
+  border: 3px solid var(--pixel-stone-dark);
+  box-shadow: inset 2px 2px 0 0 rgba(0,0,0,0.2);
+  height: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pixel-progress-bar {
+  background: linear-gradient(
+    180deg,
+    var(--pixel-grass) 0%,
+    var(--pixel-grass-dark) 50%,
+    var(--pixel-grass) 100%
+  );
+  height: 100%;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.pixel-progress-bar::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  height: 4px;
+  background: rgba(255,255,255,0.3);
+}
+
+/* Pixel card style */
+.pixel-card {
+  background: var(--pixel-cream);
+  border: 4px solid var(--pixel-wood);
+  box-shadow: 
+    inset -3px -3px 0 0 var(--pixel-cream-dark),
+    inset 3px 3px 0 0 #fff,
+    4px 4px 0 0 rgba(0,0,0,0.2);
+}
+
+/* Pixel decorative elements */
+.pixel-grass-deco {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--pixel-grass);
+  clip-path: polygon(
+    50% 0%, 
+    60% 40%, 
+    100% 40%, 
+    65% 60%, 
+    80% 100%, 
+    50% 75%, 
+    20% 100%, 
+    35% 60%, 
+    0% 40%, 
+    40% 40%
+  );
+}
+
+.pixel-flower-deco {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ff9999;
+  border-radius: 50%;
+  box-shadow: 
+    6px 0 0 #ff9999,
+    -6px 0 0 #ff9999,
+    0 6px 0 #ff9999,
+    0 -6px 0 #ff9999;
+}
+
+.pixel-flower-deco::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  background: var(--pixel-wheat);
+  border-radius: 50%;
+}
+
+/* Pixel shadow for depth */
+.pixel-shadow {
+  box-shadow: 4px 4px 0 0 rgba(0,0,0,0.25);
+}
+
+.pixel-shadow-lg {
+  box-shadow: 6px 6px 0 0 rgba(0,0,0,0.25);
+}
+
+/* Stardew-style background pattern */
+.pixel-bg-pattern {
+  background-color: var(--pixel-cream);
+  background-image: 
+    linear-gradient(45deg, var(--pixel-cream-dark) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--pixel-cream-dark) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--pixel-cream-dark) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--pixel-cream-dark) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+}
+
+/* Pixel theme container */
+.pixel-theme {
+  --background: var(--pixel-cream);
+  --foreground: var(--pixel-wood-dark);
+  background: linear-gradient(
+    180deg,
+    var(--pixel-sky-light) 0%,
+    var(--pixel-sky) 30%,
+    var(--pixel-grass) 70%,
+    var(--pixel-grass-dark) 100%
+  );
+}
+
+/* Pixel text styling */
+.pixel-text {
+  letter-spacing: 0.5px;
+}
+
+.pixel-title {
+  letter-spacing: 1px;
+}
+
+/* Pixel divider */
+.pixel-divider {
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--pixel-wood) 0px,
+    var(--pixel-wood) 8px,
+    var(--pixel-wood-light) 8px,
+    var(--pixel-wood-light) 16px
+  );
+}
+
+/* Pixel chip/tag */
+.pixel-chip {
+  background: var(--pixel-cream);
+  border: 2px solid var(--pixel-wood);
+  padding: 4px 12px;
+  box-shadow: 2px 2px 0 0 rgba(0,0,0,0.15);
+}
+
+/* Pixel selection highlight */
+.pixel-selected {
+  outline: 4px solid var(--pixel-grass);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px rgba(126, 200, 80, 0.3);
+}
+
+/* Animated pixel sparkle */
+@keyframes pixel-sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.pixel-sparkle {
+  animation: pixel-sparkle 1.5s ease-in-out infinite;
+}
+
+/* Pixel bounce animation */
+@keyframes pixel-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.pixel-bounce {
+  animation: pixel-bounce 0.8s ease-in-out infinite;
+}
+
+/* Teacher dashboard: remove map wallpaper behind PixelPage */
+html.teacher-dashboard-active body {
+  background-image: none !important;
+  background-color: var(--pixel-sky-light, #b8e4f9);
+}
+
+/* Readability: no decorative text shadows site-wide (overrides inline styles) */
+*,
+*::before,
+*::after {
+  text-shadow: none !important;
+}
