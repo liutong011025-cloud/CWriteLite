@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npm run db:migrate && npm run build",
+  "buildCommand": "node scripts/vercel-migrate.mjs && npm run build",
   "installCommand": "npm install --legacy-peer-deps"
 }
