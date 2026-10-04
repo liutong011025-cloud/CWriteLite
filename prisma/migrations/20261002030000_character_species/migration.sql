@@ -1,0 +1,1 @@
+ALTER TABLE "Character" ADD COLUMN "species" TEXT NOT NULL DEFAULT '';

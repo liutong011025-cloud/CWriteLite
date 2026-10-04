@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),ts=require('typescript');
+require.extensions['.ts']=(module,path)=>module._compile(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,path);
+const {placeDramaBubble}=require('../lib/drama-bubble-layout.ts'),{dramaVideoPlan}=require('../lib/drama-video-plan.ts');
+const overlap=(a,b)=>Math.max(0,Math.min(a.left+a.width,b.left+b.width)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.top+a.height,b.top+b.height)-Math.max(a.top,b.top));
+const stage={width:750,height:530},actor={left:410,top:20,width:160,height:220};
+const side=placeDramaBubble(actor,{width:260,height:250},stage,[actor]);
+assert.equal(side.side,'left');assert.equal(overlap(side,actor),0);assert.ok(side.left>=0&&side.top>=0&&side.top+side.height<=stage.height);
+const bottomActor={...actor,top:300},above=placeDramaBubble(bottomActor,{width:220,height:115},stage,[bottomActor]);assert.equal(above.side,'above');assert.equal(overlap(above,bottomActor),0);
+const actors=[{left:180,top:300,width:160,height:210},{left:500,top:300,width:160,height:210}];
+const first=placeDramaBubble(actors[0],{width:260,height:250},stage,actors),second=placeDramaBubble(actors[1],{width:220,height:115},stage,actors,[first]);assert.equal(overlap(first,second),0);assert.equal(actors.reduce((n,a)=>n+overlap(second,a),0),0);
+const scenes=[{id:'scene1',backgroundPrompt:'A quiet garden',actors:[],lines:[{id:'l1',characterId:'fox',kind:'dialogue',text:'Where is the letter?'},{id:'l2',characterId:'pip',kind:'thought',text:'I think Fox needs help.'}]}],story={title:'Letter',canvas:{drama:{scenes}},characterSnapshots:[{id:'fox',name:'Fox'},{id:'pip',name:'Pip'}]};
+const plan=dramaVideoPlan(story,{scenes:[{sceneId:'scene1',lineIds:['l2','l1']}]});assert.deepEqual(plan.beats.map(b=>b.kind),['background','cast','thought','dialogue']);assert.equal(plan.beats[2].text,scenes[0].lines[1].text);assert.equal(plan.generatedVideo,false);
+assert.equal(plan.videoTarget.model,'doubao-seedance-2-5-260628');
+assert.equal(plan.videoTarget.createTaskUrl,'https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks');
+assert.equal(plan.videoTarget.status,'planned');
+for(const lineIds of [['l1','l1'],['invented','l1'],['l1']])assert.deepEqual(dramaVideoPlan(story,{scenes:[{sceneId:'scene1',lineIds}]}).beats.slice(2).map(b=>b.id),['l1','l2']);
+assert.ok(plan.beats[2].motion.includes('Do not make the character speak'));
+console.log('Passed: side placement, actor / bubble clearance, immutable video words, complete unique line ordering and thought handling.');

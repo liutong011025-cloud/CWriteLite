@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+model User {
+  id String @id @default(cuid())
+  username String @unique
+  password String
+  role String @default("student")
+  email String?
+  profile Json @default("{}")
+  mapState Json @default("{}")
+  vocabulary Json @default("[]")
+  createdAt DateTime @default(now())
+  sessions Session[]
+  characters Character[]
+  stories Story[]
+  events ResearchEvent[]
+}
+model Session {
+  token String @id
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  expiresAt DateTime
+}
+model Character {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  name String
+  age String @default("")
+  species String @default("")
+  appearance String @default("")
+  traits String @default("")
+  background String @default("")
+  strength String @default("")
+  challenge String @default("")
+  imageUrl String @default("")
+  sketch String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Story {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  title String @default("Untitled adventure")
+  status String @default("draft")
+  stage String @default("characters")
+  level Int @default(2)
+  characterIds String[]
+  characterSnapshots Json @default("[]")
+  canvas Json @default("{\"nodes\":[],\"edges\":[]}")
+  sections Json @default("[\"\",\"\",\"\",\"\",\"\"]")
+  activeSection Int @default(0)
+  content String @default("")
+  pin Json?
+  chapterIndex Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  revisions Revision[]
+}
+model Revision {
+  id String @id @default(cuid())
+  storyId String
+  story Story @relation(fields:[storyId],references:[id],onDelete:Cascade)
+  sections Json
+  createdAt DateTime @default(now())
+}
+model ResearchEvent {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  storyId String?
+  type String
+  payload Json
+  createdAt DateTime @default(now())
+}
+model WorkReview {
+  id String @id @default(cuid())
+  authorUsername String
+  reviewerUsername String
+  reviewerRole String @default("student")
+  workType String @default("story")
+  workTitle String?
+  workContent String?
+  content String
+  readAt DateTime?
+  createdAt DateTime @default(now())
+}
