@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "packageManager": "npm@10.8.1",
   "private": true,
+  "allowScripts": {
+    "@prisma/client@6.19.2": true,
+    "@prisma/engines@6.19.2": true,
+    "prisma@6.19.2": true,
+    "sharp@0.34.5": true
+  },
   "scripts": {
     "dev": "next dev --webpack -p 3010",
     "build": "prisma generate && next build --webpack",
