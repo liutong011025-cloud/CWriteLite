@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-03T11:21:08.812Z",
+  "account": "DramaPreviewQA",
+  "checks": [
+    "Changed draft requires fresh recap",
+    "Published writing rejected",
+    "Missing or unowned ID rejected",
+    "Confirmed disposable draft removed",
+    "Shared cast and other works unchanged",
+    "Map reference removal preserves other chapters and shared pin locations"
+  ]
+}

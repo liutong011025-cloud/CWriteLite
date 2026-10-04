@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-03T07:25:23.870Z",
+  "account": "DramaPreviewQA",
+  "dramaId": "cmus2htgx0012oc38ip4rzrir",
+  "storyDraftId": "cmus2htl70016oc38xpslvxam",
+  "checks": [
+    "Server refuses empty drama publication",
+    "Scenes/dialogue/thought/actions round-trip",
+    "Drama saves atomically at original pin",
+    "Writing Board work type retained",
+    "Published drama can reopen for edits",
+    "Story five-part gate still rejects unchecked sections"
+  ]
+}

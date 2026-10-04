@@ -1,0 +1,62 @@
+[
+  {
+    "name": "dramaReview",
+    "ready": true,
+    "message": "Your scene is clear and connected. Fox asks for help. Pip wants to help.",
+    "suggestions": [],
+    "requestId": "cmutlavto00brocp4abvsw8du"
+  },
+  {
+    "name": "dramaVideoPlan",
+    "beats": [
+      {
+        "id": "qa-scene-background",
+        "sceneId": "qa-scene",
+        "kind": "background",
+        "text": "A quiet forest. Fox is searching for a lost letter and Pip wants to help.",
+        "duration": 2,
+        "motion": "Establish the background. Keep the camera steady."
+      },
+      {
+        "id": "qa-scene-cast",
+        "sceneId": "qa-scene",
+        "kind": "cast",
+        "text": "Characters enter the picture.",
+        "duration": 2,
+        "motion": "Reveal the existing cast at their saved positions."
+      },
+      {
+        "id": "fox-line",
+        "sceneId": "qa-scene",
+        "kind": "dialogue",
+        "lineId": "fox-line",
+        "characterId": "cmus2htg0000yoc38aav2mgvu",
+        "text": "Could you help me find the letter?",
+        "duration": 4,
+        "motion": "Fox: A small speaking gesture; other characters listen."
+      },
+      {
+        "id": "pip-line",
+        "sceneId": "qa-scene",
+        "kind": "thought",
+        "lineId": "pip-line",
+        "characterId": "cmus2htgh0010oc38n2dwjw0p",
+        "text": "I think Fox needs my help.",
+        "duration": 4,
+        "motion": "Pip: A gentle pause; show a thought bubble. Do not make the character speak."
+      }
+    ],
+    "generatedVideo": false
+  },
+  {
+    "name": "Unrelated scene requests optional revision",
+    "ready": false,
+    "message": "The scene setting says lost letter, but the lines talk about football and Mars.",
+    "suggestions": [
+      "Why does Fox talk about football, not the lost letter?",
+      "Why does Pip think about Mars and spaceships?",
+      "Can you make Fox and Pip talk about the letter?"
+    ],
+    "requestId": "cmutlaxab00bzocp47jux9wzr"
+  }
+]

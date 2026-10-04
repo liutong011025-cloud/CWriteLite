@@ -1,0 +1,7 @@
+{
+  "concurrentSave": "pass",
+  "retry": "pass",
+  "independentSameName": "pass",
+  "concurrentPack": "pass",
+  "uniqueTestCards": 3
+}

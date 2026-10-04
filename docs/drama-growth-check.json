@@ -1,0 +1,18 @@
+{
+  "account": "DramaPreviewQA",
+  "workId": "cmus2jgi20018oc38lvewlyf9",
+  "supportedEvidence": [
+    {
+      "treeId": 7,
+      "sentence": "You look worried, Pip. Can I help you?",
+      "reason": "The character offers to help someone."
+    },
+    {
+      "treeId": 12,
+      "sentence": "They look for the letter together and find it under the bench.",
+      "reason": "The characters act together to help each other."
+    }
+  ],
+  "recordCount": 2,
+  "idempotent": true
+}

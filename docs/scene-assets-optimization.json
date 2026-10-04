@@ -1,0 +1,30 @@
+[
+  {
+    "file": "cagent-planning-v2.webp",
+    "width": 460,
+    "height": 561,
+    "alpha": true,
+    "bytes": 52768
+  },
+  {
+    "file": "cagent-director-v2.webp",
+    "width": 460,
+    "height": 555,
+    "alpha": true,
+    "bytes": 49546
+  },
+  {
+    "file": "cagent-celebrate-v2.webp",
+    "width": 460,
+    "height": 535,
+    "alpha": true,
+    "bytes": 52722
+  },
+  {
+    "file": "farm-scene-cloudless.webp",
+    "width": 1905,
+    "height": 826,
+    "alpha": false,
+    "bytes": 178974
+  }
+]

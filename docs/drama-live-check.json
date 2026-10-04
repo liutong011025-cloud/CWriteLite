@@ -1,0 +1,91 @@
+{
+  "status": "published",
+  "scenes": 2,
+  "pin": {
+    "x": 53.53011573802424,
+    "y": 34.82423545224668
+  },
+  "mapPin": {
+    "x": 53.53011573802424,
+    "y": 34.82423545224668,
+    "id": "cmus2jgi20018oc38lvewlyf9",
+    "title": "A Small Act of Kindness",
+    "content": "Scene 1: A friend in the park\nSetting: A sunny park with a bench and a shady tree.\n[Stage directions: Pip sits beside the bench. Fox walks over and listens.]\nFox: You look worried, Pip. Can I help you?\nPip: I lost my letter. Thank you for helping me.\n[They look for the letter together and find it under the bench.]\nPip (thinking): I feel less worried because my friend cares.\n\nScene 2: Scene 2\nSetting: The same sunny park at sunset, with the letter safe in Pip’s bag.\nPip: I will deliver the letter now. We found it together!\nFox: I am happy to help a friend. See you tomorrow!",
+    "workType": "drama",
+    "previewArt": {
+      "imageUrl": "/dramacharacter/Fox Vendor.webp"
+    }
+  },
+  "growth": [
+    {
+      "treeId": "7",
+      "workType": "drama",
+      "excerpt": "You look worried, Pip. Can I help you?"
+    },
+    {
+      "treeId": "12",
+      "workType": "drama",
+      "excerpt": "They look for the letter together and find it under the bench."
+    }
+  ],
+  "events": [
+    {
+      "type": "suggestions_shown",
+      "kind": "growth",
+      "at": "2026-10-03T09:48:15.017Z",
+      "result": {
+        "evidence": [
+          {
+            "reason": "The character offers to help someone.",
+            "treeId": 7,
+            "sentence": "You look worried, Pip. Can I help you?"
+          },
+          {
+            "reason": "The characters act together to help each other.",
+            "treeId": 12,
+            "sentence": "They look for the letter together and find it under the bench."
+          }
+        ]
+      }
+    },
+    {
+      "type": "ai_requested",
+      "kind": "growth",
+      "at": "2026-10-03T09:48:15.009Z"
+    },
+    {
+      "type": "suggestions_shown",
+      "kind": "growth",
+      "at": "2026-10-03T09:48:14.944Z",
+      "result": {
+        "evidence": [
+          {
+            "reason": "The character offers to help someone.",
+            "treeId": 7,
+            "sentence": "You look worried, Pip. Can I help you?"
+          },
+          {
+            "reason": "The characters act together to help each other.",
+            "treeId": 12,
+            "sentence": "They look for the letter together and find it under the bench."
+          }
+        ]
+      }
+    },
+    {
+      "type": "ai_requested",
+      "kind": "growth",
+      "at": "2026-10-03T09:48:14.932Z"
+    },
+    {
+      "type": "ai_requested",
+      "kind": "growth",
+      "at": "2026-10-03T09:44:08.822Z"
+    },
+    {
+      "type": "ai_requested",
+      "kind": "coach",
+      "at": "2026-10-03T07:31:07.420Z"
+    }
+  ]
+}

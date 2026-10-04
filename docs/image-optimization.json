@@ -1,0 +1,32 @@
+[
+  {
+    "asset": "storybook-forest",
+    "original": 2263798,
+    "webp": 180580
+  },
+  {
+    "asset": "storybook-wood-frame",
+    "original": 679134,
+    "webp": 106676
+  },
+  {
+    "asset": "cagent-thinking",
+    "original": 1918073,
+    "webp": 54692
+  },
+  {
+    "asset": "cagent-welcome",
+    "original": 1741342,
+    "webp": 53428
+  },
+  {
+    "asset": "cagent-board",
+    "original": 1546920,
+    "webp": 46484
+  },
+  {
+    "asset": "cwrite-lite-logo",
+    "original": 778104,
+    "webp": 53324
+  }
+]

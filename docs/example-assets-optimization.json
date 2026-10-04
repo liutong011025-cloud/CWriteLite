@@ -1,0 +1,51 @@
+[
+  {
+    "file": "public/examples/park.webp",
+    "width": 900,
+    "height": 600,
+    "alpha": false,
+    "bytes": 99576
+  },
+  {
+    "file": "public/examples/letter.webp",
+    "width": 320,
+    "height": 213,
+    "alpha": true,
+    "bytes": 11172
+  },
+  {
+    "file": "public/examples/space.webp",
+    "width": 900,
+    "height": 600,
+    "alpha": false,
+    "bytes": 99280
+  },
+  {
+    "file": "public/examples/nova.webp",
+    "width": 320,
+    "height": 480,
+    "alpha": true,
+    "bytes": 28986
+  },
+  {
+    "file": "public/examples/robot.webp",
+    "width": 320,
+    "height": 384,
+    "alpha": true,
+    "bytes": 30492
+  },
+  {
+    "file": "public/examples/battery.webp",
+    "width": 320,
+    "height": 300,
+    "alpha": true,
+    "bytes": 17664
+  },
+  {
+    "file": "public/examples/shuttle.webp",
+    "width": 320,
+    "height": 213,
+    "alpha": true,
+    "bytes": 15534
+  }
+]

@@ -1,0 +1,409 @@
+[
+  {
+    "name": "New story starts without previous cast",
+    "pass": true
+  },
+  {
+    "name": "Valid EFL part 1",
+    "pass": true,
+    "message": "Beginning introduces Fox in the forest with a clear goal to find the letter.",
+    "question": "What problem or obstacle will Fox meet first?",
+    "checks": {
+      "intelligible": true,
+      "characterGrounded": true,
+      "planLinked": true,
+      "sectionFit": true,
+      "progresses": true
+    },
+    "evidence": {
+      "character": {
+        "characterId": "cmus2htg0000yoc38aav2mgvu",
+        "quote": "Fox live in a quiet forest. He has a bag and wants to find a letter."
+      },
+      "plan": {
+        "nodeId": "letter",
+        "edgeId": "search",
+        "quote": "wants to find a letter"
+      },
+      "structure": {
+        "quote": "Fox live in a quiet forest. He has a bag and wants to find a letter.",
+        "reason": "Introduces the planned character Fox in the starting setting and situation."
+      },
+      "progress": {
+        "quote": "He has a bag and wants to find a letter."
+      }
+    },
+    "signature": "{\"section\":0,\"sections\":[\"Fox live in a quiet forest. He has a bag and wants to find a letter.\"],\"characters\":[{\"id\":\"cmus2htg0000yoc38aav2mgvu\",\"name\":\"Fox\",\"traits\":\"kind, curious\",\"appearance\":\"\"},{\"id\":\"cmus2htgh0010oc38n2dwjw0p\",\"name\":\"Pip\",\"traits\":\"helpful, quick\",\"appearance\":\"\"}],\"nodes\":[{\"id\":\"actor-0\",\"type\":\"character\",\"label\":\"Fox\",\"details\":\"kind, curious\"},{\"id\":\"actor-1\",\"type\":\"character\",\"label\":\"Pip\",\"details\":\"helpful, quick\"},{\"id\":\"forest\",\"type\":\"setting\",\"label\":\"Quiet forest\",\"details\":\"\"},{\"id\":\"goal\",\"type\":\"goal\",\"label\":\"Find and return the lost letter\",\"details\":\"\"},{\"id\":\"letter\",\"type\":\"object\",\"label\":\"Lost letter\",\"details\":\"\"}],\"edges\":[{\"source\":\"actor-0\",\"target\":\"letter\",\"label\":\"wants to find\"},{\"source\":\"actor-1\",\"target\":\"actor-0\",\"label\":\"helps with the search\"},{\"source\":\"letter\",\"target\":\"goal\",\"label\":\"return to its owner\"}]}"
+  },
+  {
+    "name": "Valid EFL part 2",
+    "pass": true,
+    "message": "Good rising action: Fox faces a river obstacle and Pip joins to help.",
+    "question": "How will Pip help Fox get past the river?",
+    "checks": {
+      "intelligible": true,
+      "characterGrounded": true,
+      "planLinked": true,
+      "sectionFit": true,
+      "progresses": true
+    },
+    "evidence": {
+      "character": {
+        "characterId": "cmus2htgh0010oc38n2dwjw0p",
+        "quote": "Pip came to help him."
+      },
+      "plan": {
+        "nodeId": "letter",
+        "edgeId": "search",
+        "quote": "Fox looked for the letter"
+      },
+      "structure": {
+        "quote": "a river blocked the path",
+        "reason": "This introduces an obstacle to Fox's goal, which is the core of Rising Action."
+      },
+      "progress": {
+        "quote": "Pip came to help him."
+      }
+    },
+    "signature": "{\"section\":1,\"sections\":[\"Fox live in a quiet forest. He has a bag and wants to find a letter.\",\"Fox looked for the letter, but a river blocked the path. Pip came to help him.\"],\"characters\":[{\"id\":\"cmus2htg0000yoc38aav2mgvu\",\"name\":\"Fox\",\"traits\":\"kind, curious\",\"appearance\":\"\"},{\"id\":\"cmus2htgh0010oc38n2dwjw0p\",\"name\":\"Pip\",\"traits\":\"helpful, quick\",\"appearance\":\"\"}],\"nodes\":[{\"id\":\"actor-0\",\"type\":\"character\",\"label\":\"Fox\",\"details\":\"kind, curious\"},{\"id\":\"actor-1\",\"type\":\"character\",\"label\":\"Pip\",\"details\":\"helpful, quick\"},{\"id\":\"forest\",\"type\":\"setting\",\"label\":\"Quiet forest\",\"details\":\"\"},{\"id\":\"goal\",\"type\":\"goal\",\"label\":\"Find and return the lost letter\",\"details\":\"\"},{\"id\":\"letter\",\"type\":\"object\",\"label\":\"Lost letter\",\"details\":\"\"}],\"edges\":[{\"source\":\"actor-0\",\"target\":\"letter\",\"label\":\"wants to find\"},{\"source\":\"actor-1\",\"target\":\"actor-0\",\"label\":\"helps with the search\"},{\"source\":\"letter\",\"target\":\"goal\",\"label\":\"return to its owner\"}]}"
+  },
+  {
+    "name": "Valid EFL part 3",
+    "pass": true,
+    "message": "Good climax: Fox makes a choice and Pip helps cross the river.",
+    "question": "What happens after they cross the river?",
+    "checks": {
+      "intelligible": true,
+      "characterGrounded": true,
+      "planLinked": true,
+      "sectionFit": true,
+      "progresses": true
+    },
+    "evidence": {
+      "character": {
+        "characterId": "cmus2htgh0010oc38n2dwjw0p",
+        "quote": "Pip held his paw"
+      },
+      "plan": {
+        "nodeId": "letter",
+        "edgeId": "help",
+        "quote": "together they crossed the river"
+      },
+      "structure": {
+        "quote": "Fox decided to cross on a fallen tree.",
+        "reason": "This is a consequential choice/action, fitting the Climax stage."
+      },
+      "progress": {
+        "quote": "Fox decided to cross on a fallen tree."
+      }
+    },
+    "signature": "{\"section\":2,\"sections\":[\"Fox live in a quiet forest. He has a bag and wants to find a letter.\",\"Fox looked for the letter, but a river blocked the path. Pip came to help him.\",\"Fox decided to cross on a fallen tree. Pip held his paw, and together they crossed the river.\"],\"characters\":[{\"id\":\"cmus2htg0000yoc38aav2mgvu\",\"name\":\"Fox\",\"traits\":\"kind, curious\",\"appearance\":\"\"},{\"id\":\"cmus2htgh0010oc38n2dwjw0p\",\"name\":\"Pip\",\"traits\":\"helpful, quick\",\"appearance\":\"\"}],\"nodes\":[{\"id\":\"actor-0\",\"type\":\"character\",\"label\":\"Fox\",\"details\":\"kind, curious\"},{\"id\":\"actor-1\",\"type\":\"character\",\"label\":\"Pip\",\"details\":\"helpful, quick\"},{\"id\":\"forest\",\"type\":\"setting\",\"label\":\"Quiet forest\",\"details\":\"\"},{\"id\":\"goal\",\"type\":\"goal\",\"label\":\"Find and return the lost letter\",\"details\":\"\"},{\"id\":\"letter\",\"type\":\"object\",\"label\":\"Lost letter\",\"details\":\"\"}],\"edges\":[{\"source\":\"actor-0\",\"target\":\"letter\",\"label\":\"wants to find\"},{\"source\":\"actor-1\",\"target\":\"actor-0\",\"label\":\"helps with the search\"},{\"source\":\"letter\",\"target\":\"goal\",\"label\":\"return to its owner\"}]}"
+  },
+  {
+    "name": "Valid EFL part 4",
+    "pass": true,
+    "message": "Good falling action: Fox finds the letter after crossing, and Pip helps.",
+    "question": "What will Fox and Pip do with the letter next?",
+    "checks": {
+      "intelligible": true,
+      "characterGrounded": true,
+      "planLinked": true,
+      "sectionFit": true,
+      "progresses": true
+    },
+    "evidence": {
+      "character": {
+        "characterId": "cmus2htgh0010oc38n2dwjw0p",
+        "quote": "Pip helped him pick it up safely."
+      },
+      "plan": {
+        "nodeId": "letter",
+        "edgeId": "search",
+        "quote": "Fox found the letter under a bush."
+      },
+      "structure": {
+        "quote": "On the other side, Fox found the letter under a bush.",
+        "reason": "This shows the consequence of crossing the river: finding the letter."
+      },
+      "progress": {
+        "quote": "Fox found the letter under a bush."
+      }
+    },
+    "signature": "{\"section\":3,\"sections\":[\"Fox live in a quiet forest. He has a bag and wants to find a letter.\",\"Fox looked for the letter, but a river blocked the path. Pip came to help him.\",\"Fox decided to cross on a fallen tree. Pip held his paw, and together they crossed the river.\",\"On the other side, Fox found the letter under a bush. Pip helped him pick it up safely.\"],\"characters\":[{\"id\":\"cmus2htg0000yoc38aav2mgvu\",\"name\":\"Fox\",\"traits\":\"kind, curious\",\"appearance\":\"\"},{\"id\":\"cmus2htgh0010oc38n2dwjw0p\",\"name\":\"Pip\",\"traits\":\"helpful, quick\",\"appearance\":\"\"}],\"nodes\":[{\"id\":\"actor-0\",\"type\":\"character\",\"label\":\"Fox\",\"details\":\"kind, curious\"},{\"id\":\"actor-1\",\"type\":\"character\",\"label\":\"Pip\",\"details\":\"helpful, quick\"},{\"id\":\"forest\",\"type\":\"setting\",\"label\":\"Quiet forest\",\"details\":\"\"},{\"id\":\"goal\",\"type\":\"goal\",\"label\":\"Find and return the lost letter\",\"details\":\"\"},{\"id\":\"letter\",\"type\":\"object\",\"label\":\"Lost letter\",\"details\":\"\"}],\"edges\":[{\"source\":\"actor-0\",\"target\":\"letter\",\"label\":\"wants to find\"},{\"source\":\"actor-1\",\"target\":\"actor-0\",\"label\":\"helps with the search\"},{\"source\":\"letter\",\"target\":\"goal\",\"label\":\"return to its owner\"}]}"
+  },
+  {
+    "name": "Valid EFL part 5",
+    "pass": true,
+    "message": "Ending resolves the goal and shows Fox's lesson clearly.",
+    "question": "How did the owner feel when Fox returned the letter?",
+    "checks": {
+      "intelligible": true,
+      "characterGrounded": true,
+      "planLinked": true,
+      "sectionFit": true,
+      "progresses": true
+    },
+    "evidence": {
+      "character": {
+        "characterId": "cmus2htg0000yoc38aav2mgvu",
+        "quote": "Fox gave the letter to its owner"
+      },
+      "plan": {
+        "nodeId": "goal",
+        "edgeId": "return",
+        "quote": "gave the letter to its owner"
+      },
+      "structure": {
+        "quote": "He learned that asking a friend for help was a good idea.",
+        "reason": "This resolves the story by showing the lesson Fox learned."
+      },
+      "progress": {
+        "quote": "Fox gave the letter to its owner"
+      }
+    },
+    "signature": "{\"section\":4,\"sections\":[\"Fox live in a quiet forest. He has a bag and wants to find a letter.\",\"Fox looked for the letter, but a river blocked the path. Pip came to help him.\",\"Fox decided to cross on a fallen tree. Pip held his paw, and together they crossed the river.\",\"On the other side, Fox found the letter under a bush. Pip helped him pick it up safely.\",\"Fox gave the letter to its owner and thanked Pip. He learned that asking a friend for help was a good idea.\"],\"characters\":[{\"id\":\"cmus2htg0000yoc38aav2mgvu\",\"name\":\"Fox\",\"traits\":\"kind, curious\",\"appearance\":\"\"},{\"id\":\"cmus2htgh0010oc38n2dwjw0p\",\"name\":\"Pip\",\"traits\":\"helpful, quick\",\"appearance\":\"\"}],\"nodes\":[{\"id\":\"actor-0\",\"type\":\"character\",\"label\":\"Fox\",\"details\":\"kind, curious\"},{\"id\":\"actor-1\",\"type\":\"character\",\"label\":\"Pip\",\"details\":\"helpful, quick\"},{\"id\":\"forest\",\"type\":\"setting\",\"label\":\"Quiet forest\",\"details\":\"\"},{\"id\":\"goal\",\"type\":\"goal\",\"label\":\"Find and return the lost letter\",\"details\":\"\"},{\"id\":\"letter\",\"type\":\"object\",\"label\":\"Lost letter\",\"details\":\"\"}],\"edges\":[{\"source\":\"actor-0\",\"target\":\"letter\",\"label\":\"wants to find\"},{\"source\":\"actor-1\",\"target\":\"actor-0\",\"label\":\"helps with the search\"},{\"source\":\"letter\",\"target\":\"goal\",\"label\":\"return to its owner\"}]}"
+  },
+  {
+    "name": "All verified parts allow review",
+    "pass": true
+  },
+  {
+    "name": "Repeated beginning as rising action",
+    "pass": false,
+    "message": "This repeats an earlier part. Tell a new event that fits this story part.",
+    "question": "What does your character want? What gets in the way?"
+  },
+  {
+    "name": "Lightly edited copied paragraph",
+    "pass": false,
+    "message": "This repeats the beginning; Rising Action needs a new obstacle or event.",
+    "question": "What problem or event stops Fox from finding the message?",
+    "checks": {
+      "intelligible": true,
+      "characterGrounded": true,
+      "planLinked": true,
+      "sectionFit": false,
+      "progresses": false
+    },
+    "evidence": {
+      "character": {
+        "characterId": "cmus2htg0000yoc38aav2mgvu",
+        "quote": "Fox live in a peaceful forest. He has a bag and wants to find a message."
+      },
+      "plan": {
+        "nodeId": "letter",
+        "edgeId": "search",
+        "quote": "wants to find a message"
+      },
+      "structure": {
+        "quote": "Fox live in a peaceful forest. He has a bag and wants to find a message.",
+        "reason": "This only restates the starting situation and goal; it does not develop an obstacle or event for Rising Action."
+      },
+      "progress": {
+        "quote": "Fox live in a peaceful forest. He has a bag and wants to find a message."
+      }
+    }
+  },
+  {
+    "name": "Description instead of climax",
+    "pass": false,
+    "message": "This part only describes and repeats; it lacks a climax challenge or choice.",
+    "question": "What big problem or choice will Fox face now?",
+    "checks": {
+      "intelligible": true,
+      "characterGrounded": true,
+      "planLinked": true,
+      "sectionFit": false,
+      "progresses": false
+    },
+    "evidence": {
+      "character": {
+        "characterId": "cmus2htg0000yoc38aav2mgvu",
+        "quote": "Fox is friendly and curious."
+      },
+      "plan": {
+        "nodeId": "letter",
+        "edgeId": "search",
+        "quote": "enjoy talking about the letter"
+      },
+      "structure": {
+        "quote": "They like the quiet forest and enjoy talking about the letter.",
+        "reason": "This is general description and repeated dialogue, not a climax challenge or choice."
+      },
+      "progress": {
+        "quote": "They like the quiet forest and enjoy talking about the letter."
+      }
+    }
+  },
+  {
+    "name": "Unrelated story with token Fox mention",
+    "pass": false,
+    "message": "Fox only watches TV; the lost letter and Pip are missing, so the plan is not developed.",
+    "question": "Can you start with Fox in the quiet forest finding the lost letter?",
+    "checks": {
+      "intelligible": true,
+      "characterGrounded": false,
+      "planLinked": false,
+      "sectionFit": false,
+      "progresses": true
+    },
+    "evidence": {
+      "character": {
+        "characterId": "cmus2htg0000yoc38aav2mgvu",
+        "quote": "Fox watched television at home."
+      },
+      "plan": {
+        "nodeId": "letter",
+        "edgeId": "search",
+        "quote": "Tom was a football player in a big city."
+      },
+      "structure": {
+        "quote": "Tom was a football player in a big city.",
+        "reason": "This introduces a character in a starting situation, but it is Tom, not the planned Fox."
+      },
+      "progress": {
+        "quote": "He scored a goal and won a medal."
+      }
+    }
+  },
+  {
+    "name": "Direct finish/publish bypass blocked",
+    "pass": true,
+    "status": 409
+  },
+  {
+    "name": "Forged approval event blocked",
+    "pass": true,
+    "status": 400
+  },
+  {
+    "name": "Real AI: selected Pip thought frames",
+    "suggestions": [
+      {
+        "characterId": "cmus2htgh0010oc38n2dwjw0p",
+        "kind": "thought",
+        "prompt": "Pip wonders where the letter could be hiding in the forest",
+        "keywords": [
+          "letter",
+          "hiding",
+          "forest"
+        ],
+        "frame": "I wonder where the letter ___."
+      },
+      {
+        "characterId": "cmus2htgh0010oc38n2dwjw0p",
+        "kind": "thought",
+        "prompt": "Pip thinks about how worried Fox must feel",
+        "keywords": [
+          "worried",
+          "Fox",
+          "lost"
+        ],
+        "frame": "I think Fox feels ___ about the letter."
+      },
+      {
+        "characterId": "cmus2htgh0010oc38n2dwjw0p",
+        "kind": "thought",
+        "prompt": "Pip plans to search near the trees and bushes",
+        "keywords": [
+          "search",
+          "trees",
+          "bushes"
+        ],
+        "frame": "I will look near the ___."
+      }
+    ],
+    "keywords": [],
+    "question": "What is Pip thinking while Fox searches for the letter?",
+    "requestId": "cmutj8ps2007tocp4884jwnuh"
+  },
+  {
+    "name": "Real AI: whole-scene suggestions",
+    "suggestions": [
+      {
+        "characterId": "cmus2htgh0010oc38n2dwjw0p",
+        "kind": "dialogue",
+        "prompt": "Pip offers to search the bushes for the lost letter",
+        "keywords": [
+          "search",
+          "bushes",
+          "lost letter"
+        ],
+        "frame": "I can look for it near the ___."
+      },
+      {
+        "characterId": "cmus2htg0000yoc38aav2mgvu",
+        "kind": "thought",
+        "prompt": "Fox worries the letter may be gone forever",
+        "keywords": [
+          "worried",
+          "letter",
+          "gone"
+        ],
+        "frame": "I hope my letter is not ___."
+      },
+      {
+        "characterId": "cmus2htgh0010oc38n2dwjw0p",
+        "kind": "thought",
+        "prompt": "Pip wonders what the letter says and who sent it",
+        "keywords": [
+          "letter",
+          "says",
+          "who"
+        ],
+        "frame": "I wonder what the letter ___."
+      }
+    ],
+    "keywords": [],
+    "question": "How can Fox and Pip work together to find the lost letter?",
+    "requestId": "cmutj8s8c007xocp4q5d91vbe"
+  },
+  {
+    "name": "Disconnected canvas receives optional advice",
+    "ready": false,
+    "message": "Your cards need a story connection.",
+    "suggestions": [
+      "How could Fox connect to Pip?"
+    ],
+    "requestId": "cmutjc9y50085ocp4vaeixdn4"
+  },
+  {
+    "name": "Browser Says/Thinks switch saves one contribution per actor",
+    "pass": true
+  },
+  {
+    "name": "Drama review blocks unfinished sentence frames",
+    "pass": true,
+    "status": 409
+  },
+  {
+    "name": "Connected canvas passes optional plan review",
+    "ready": true,
+    "message": "Fox and Pip can search for the lost letter together. Good story idea!",
+    "suggestions": [
+      "Where in the quiet forest did Fox find the lost letter?",
+      "How does quick Pip help Fox return the letter?",
+      "Who is the lost letter for, and why does it matter?"
+    ],
+    "requestId": "cmutjx4ti009nocp45o0fl03m"
+  },
+  {
+    "name": "Story writing desktop width ratio",
+    "editorWidth": 689.73486328125,
+    "assistantWidth": 344.87091064453125,
+    "ratio": 1.9999798243122344,
+    "horizontalOverflow": false
+  },
+  {
+    "name": "Browser: optional advice can be ignored",
+    "pass": true
+  },
+  {
+    "name": "Browser: pack inserts cast into an initially empty new story deck",
+    "pass": true
+  },
+  {
+    "name": "Browser: selected Pip frame inserts into actor thought input",
+    "pass": true
+  }
+]
