@@ -7,9 +7,9 @@ function prisma(args) {
 }
 
 try {
-  prisma(['migrate', 'deploy'])
-} catch {
-  console.log(`Clearing failed migration ${failedMigration}, then creating tables.`)
   prisma(['migrate', 'resolve', '--rolled-back', failedMigration])
-  prisma(['migrate', 'deploy'])
+} catch {
+  // Already cleared, or this migration is not in a failed state.
 }
+
+prisma(['migrate', 'deploy'])
