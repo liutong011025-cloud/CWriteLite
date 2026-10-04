@@ -1,1 +1,5 @@
-{"framework":"nextjs","buildCommand":"npm run build","installCommand":"npm install --legacy-peer-deps"}
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run db:migrate && npm run build",
+  "installCommand": "npm install --legacy-peer-deps"
+}
