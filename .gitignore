@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.next-production/
+.env*
+!.env.example
+.local-postgres/
+*.tsbuildinfo
+test-results/
+playwright-report/
+lib/generated/
+.tool-cache/
