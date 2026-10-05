@@ -1,4 +1,5 @@
 import { fal } from "@fal-ai/client";
+import { hostedPicture } from "./sprite";
 export const FAL_IMAGE_MODEL = "fal-ai/nano-banana-2";
 export const FAL_IMAGE_EDIT_MODEL = "fal-ai/nano-banana-2/edit";
 export type FalAspectRatio = "auto" | "21:9" | "16:9" | "3:2" | "4:3" | "5:4" | "1:1" | "4:5" | "3:4" | "2:3" | "9:16";
@@ -56,6 +57,28 @@ export function extractFalImageResult(data: unknown): {
         });
     }
     return { imageUrl, description: record.description || "" };
+}
+export { illustrationPrompt } from './image-prompts';
+/** Extra fal call. A model prompt that says "transparent" is not treated as a real alpha channel. */
+export async function removeBackground(imageUrl: string) {
+    if (!hostedPicture(imageUrl))
+        throw new FalImageError('This picture cannot be made transparent here.', { status: 400 });
+    if (!getFalKey())
+        throw new FalImageError('FAL_KEY is not configured.', { status: 500 });
+    fal.config({ credentials: getFalKey() || undefined });
+    try {
+        const result = await fal.subscribe('fal-ai/imageutils/rembg', { input: { image_url: imageUrl }, logs: false });
+        const url = (result.data as { image?: { url?: string } })?.image?.url?.trim() || '';
+        if (!url.startsWith('https://'))
+            throw new FalImageError('Background removal did not return a picture.');
+        return url;
+    }
+    catch (error) {
+        if (error instanceof FalImageError)
+            throw error;
+        const err = error as { message?: string; status?: number };
+        throw new FalImageError(err.message || 'Background removal failed.', { status: err.status });
+    }
 }
 export async function generateFalImage(options: GenerateFalImageOptions) {
     if (!getFalKey()) {

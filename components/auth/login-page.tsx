@@ -251,7 +251,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 </div>
                 <p className="text-white font-semibold text-base md:text-lg">
                   
-                  {mode === "login" ? "Login to start your creative journey" : "Register to begin your creative journey"}
+                  {mode === "login" ? "Log in to start writing" : "Register to begin your creative journey"}
                 </p>
               </div>
 

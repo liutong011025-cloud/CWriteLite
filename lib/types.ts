@@ -9,6 +9,7 @@ export type Character = {
     strength: string;
     challenge: string;
     imageUrl: string;
+    spriteUrl?: string;
     sketch: string;
 };
 export type CanvasNode = {
@@ -48,6 +49,7 @@ export type DramaScene = {
     id: string;
     name: string;
     backgroundPrompt: string;
+    settingDescription?: string;
     backgroundImageUrl: string;
     notes: string;
     actors: DramaActor[];
@@ -93,5 +95,5 @@ export type MapFlagItem = {
     title: string;
     content?: string;
     workType?: MapWorkType;
-    previewArt?: {imageUrl:string};
+    previewArt?: {imageUrl:string;storyId?:string;anchor?:'bottom-center';version?:string};
 };

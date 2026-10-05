@@ -21,7 +21,7 @@ export function dramaVideoPlan(story:Story,raw:unknown,videoTarget=arkVideoTarge
             const actor=story.characterSnapshots.find(c=>c.id===line.characterId);
             // Exact student words and asset identities stay outside the model's output.
             const motion=line.kind==='thought'?'A gentle pause; show a thought bubble. Do not make the character speak.':'A small speaking gesture; other characters listen.';
-            beats.push({id:line.id,sceneId:scene.id,kind:line.kind as 'dialogue'|'thought',lineId:line.id,characterId:line.characterId,text:line.text,duration:Math.min(12,Math.max(4,Math.ceil(line.text.trim().split(/\s+/).length/2.2))),motion:(actor?.name?actor.name+': ':'')+motion});
+            beats.push({id:line.id,sceneId:scene.id,kind:line.kind as 'dialogue'|'thought',lineId:line.id,characterId:line.characterId,text:line.text,duration:Math.max(4,Math.ceil(line.text.trim().split(/\s+/).length/2.2)),motion:(actor?.name?actor.name+': ':'')+motion});
         }
     }
     return {version:1,title:story.title,ratio:'16:9',beats,scenes,characters:story.characterSnapshots,generatedVideo:false,videoTarget};

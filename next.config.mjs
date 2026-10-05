@@ -1,4 +1,5 @@
 export default {
+  outputFileTracingRoot: process.cwd(),
   distDir: process.env.CWRITE_BUILD_DIR || '.next',
   devIndicators: false,
   images: { unoptimized: true },

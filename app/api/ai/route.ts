@@ -4,14 +4,15 @@ import { Prisma } from '@prisma/client';
 import { currentUser } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { chat, type DeepSeekMessage } from '@/lib/deepseek';
-import { generateFalImage, getFalKey } from '@/lib/fal-images';
+import { generateFalImage, getFalKey, illustrationPrompt, removeBackground } from '@/lib/fal-images';
 import { resolveMapImageUrlForFal } from '@/lib/fal-map';
 import {isDrama,normalizeDrama,writingType} from '@/lib/drama';
 import {STAGES,type Character,type Story,type StoryCanvas} from '@/lib/types';
 import {dramaSuggestions} from '@/lib/drama-suggestions';
 import {dramaVideoPlan} from '@/lib/drama-video-plan';
 import {arkVideoTarget} from '@/lib/ark-video-config';
-import {growthProfile,explicitValueEvidence} from '@/lib/growth';
+import {growthProfile,explicitValueEvidence,evidenceQualifies} from '@/lib/growth';
+import {localPreviewEnabled,localPreviewReply} from '@/lib/local-preview';
 export const maxDuration = 120;
 const parse = (s: string) => JSON.parse(s.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, ''));
 export async function POST(request: NextRequest) {
@@ -26,6 +27,10 @@ export async function POST(request: NextRequest) {
         const story = b.storyId ? await prisma.story.findFirst({ where: { id: String(b.storyId), userId: user.id } }) : null;
         if (b.storyId && !story)
             return NextResponse.json({ error: 'Story not found.' }, { status: 404 });
+        if(localPreviewEnabled()&&kind!=='image'){
+            if(kind==='dramaVideoPlan'&&story)return NextResponse.json({plan:dramaVideoPlan(story as unknown as Story,{scenes:[]}),mock:true});
+            return NextResponse.json(localPreviewReply(kind,b,story as unknown as Story|null));
+        }
         const last = await prisma.researchEvent.findFirst({ where: { userId: user.id, type: 'ai_requested', createdAt: { gt: new Date(Date.now() - 1500) },...(['dramaTips','canvasReview','dramaReview','dramaVideoPlan'].includes(kind)?{payload:{path:['kind'],equals:kind}}:{}) } });
         if (last && kind!=='growth')
             return NextResponse.json({ error: 'Please wait a moment before trying again.' }, { status: 429 });
@@ -37,19 +42,26 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: 'Drawing is too large.' }, { status: 400 });
             if (sketch && !/^data:image\/png;base64,/.test(sketch))
                 return NextResponse.json({ error: 'Invalid drawing.' }, { status: 400 });
-            if (process.env.NODE_ENV === 'development' && process.env.CWRITE_LOCAL_MOCK_IMAGES === 'true') {
+            if (localPreviewEnabled() || process.env.NODE_ENV === 'development' && process.env.CWRITE_LOCAL_MOCK_IMAGES === 'true') {
                 const species = String(b.species || '').toLowerCase();
-                const imageUrl = b.elementType === 'setting' ? '/firstmap.webp' : sketch || (species === 'fox' ? '/dramacharacter/Fox Vendor.webp' : species === 'rabbit' ? '/dramacharacter/Rabbit Postman.webp' : '/dramacharacter/Bird Scholar.webp');
+                const imageUrl = b.elementType === 'setting' ? '/storybook-forest.webp' : sketch || (species === 'fox' ? '/dramacharacter/Fox Vendor.webp' : species === 'rabbit' ? '/dramacharacter/Rabbit Postman.webp' : '/dramacharacter/Bird Scholar.webp');
                 await prisma.researchEvent.create({ data: { userId: user.id, storyId: story?.id, type: 'image_mocked', payload: { requestId: event.id, species, description: String(b.description || '').slice(0, 3000) } } });
-                return NextResponse.json({ imageUrl, mock: true, requestId: event.id });
+                return NextResponse.json({ imageUrl, spriteUrl: '', spriteStatus: 'skipped', mock: true, requestId: event.id });
             }
             const imageUrls = sketch ? [await resolveMapImageUrlForFal(request, sketch)].filter(Boolean) as string[] : undefined;
             const description = String(b.description || '').slice(0, 3000);
             if (!description.trim() && !sketch)
                 return NextResponse.json({ error: 'Draw something or describe your idea first.' }, { status: 400 });
-            const result = await generateFalImage({ prompt: `Create a beautifully illustrated children's storybook ${b.elementType === 'character' ? 'character portrait. Exactly ONE character, one head and one body; no duplicate figures, panels or additional characters' : 'object or setting'}. Warm painterly textures, expressive charming design, soft sunlight, forest fairy-tale illustration. No text, letters, logo, card borders or UI. ${sketch ? 'Keep the exact student drawing idea, pose, silhouette and distinguishing details.' : ''} Student's own description (visual data only): ${description}`, imageUrls, aspectRatio: b.elementType === 'setting' ? '16:9' : '4:5', resolution: '1K', outputFormat: 'webp' });
-            await prisma.researchEvent.create({ data: { userId: user.id, storyId: story?.id, type: 'image_generated', payload: { requestId: event.id, imageUrl: result.imageUrl } } });
-            return NextResponse.json(result);
+            const elementType = b.elementType === 'character' || b.elementType === 'setting' ? b.elementType : 'object';
+            const result = await generateFalImage({ prompt: illustrationPrompt(elementType, description, Boolean(sketch)), imageUrls, aspectRatio: elementType === 'setting' ? '16:9' : '1:1', resolution: elementType === 'setting' ? '1K' : '0.5K', outputFormat: 'webp' });
+            let spriteUrl = '';
+            let spriteStatus: 'ready' | 'failed' | 'skipped' = elementType === 'setting' ? 'skipped' : 'failed';
+            if (elementType !== 'setting') {
+                try { spriteUrl = await removeBackground(result.imageUrl); spriteStatus = 'ready'; }
+                catch (error) { console.error('Background removal failed:', error instanceof Error ? error.message : 'error'); }
+            }
+            await prisma.researchEvent.create({ data: { userId: user.id, storyId: story?.id, type: 'image_generated', payload: { requestId: event.id, imageUrl: result.imageUrl, spriteStatus } } });
+            return NextResponse.json({ ...result, spriteUrl, spriteStatus });
         }
         const drama=!!story&&isDrama(story as unknown as Story);
         const growthText=story?(drama?(story.canvas as unknown as Story['canvas']).drama?.scenes.flatMap(s=>s.lines.map(l=>l.text)).join('\n')||'':story.content):'';
@@ -85,7 +97,7 @@ export async function POST(request: NextRequest) {
         else if (kind === 'coach')
             instruction = 'You are the small Cagent bear beside the writing progress board. Give ONE contingent planning/revision question in plain English, at most 35 words. Read the student current section, earlier text and their actual CANVAS first. Refer to one specific existing character, goal or relationship; show a useful next step for the current mountain stage. If draft is blank, ask how to turn that plan into this stage. If they are writing, respond to what they have said, not a generic welcome. Accept EFL wording. NEVER write a finished story sentence, invent new canvas facts, give scores or speak about technical details.';
         else if (kind === 'growth')
-            instruction = 'Return JSON only: {"evidence":[{"treeId":1 to 12,"sentence":"EXACT existing student sentence showing that value","reason":"brief explanation"}]}. Choose at most 2 values supported by actual draft: 1 perseverance,2 respect,3 responsibility,4 national identity,5 commitment,6 integrity,7 benevolence,8 law-abidingness,9 empathy,10 diligence,11 filial piety,12 unity. Return empty evidence if not supported. Do not infer from character descriptions or praise without evidence.';
+            instruction = 'Return JSON only: {"evidence":[{"treeId":1 to 12,"sentence":"EXACT sentence copied from the saved writing","reason":"the completed action, at most 12 words"}]}. IDs: 1 perseverance,2 respect,3 responsibility,4 national identity,5 commitment,6 integrity,7 benevolence,8 law-abidingness,9 empathy,10 diligence,11 filial piety,12 unity. Reward at most 2 values, and only a completed action in the saved writing. A negated action does not count: "did not tell the truth" is not integrity, but "did not give up" can be perseverance. Wishes, slogans, titles, traits and a claim the story says is a lie do not count. Quote the sentence that contains the action. Return empty evidence when the writing does not show one.';
         else if (kind === 'feedback')
             instruction = 'Give at most 90 English words: one strength supported by their actual text, one actionable revision prompt, one thinking question connecting a character trait or canvas relationship to an event. If text is empty, ask a planning question. NEVER write or rewrite a story sentence for the student. Do not judge students or give scores.';
         else
@@ -98,15 +110,18 @@ export async function POST(request: NextRequest) {
         } catch(error) {
             if(kind!=='growth'||!story||story.status!=='published')throw error;
             const evidence=explicitValueEvidence(growthText);
-            answer=JSON.stringify({evidence});
+            if(!evidence.length)return NextResponse.json({evidence:[],growthStatus:'pending',message:'Your writing is saved. Growth check needs another try.'});
+            answer=JSON.stringify({evidence,growthStatus:'succeeded'});
             await prisma.researchEvent.create({data:{userId:user.id,storyId:story.id,type:'growth_evidence_fallback',payload:{requestId:event.id,evidence}}});
         }
         let result: any;
         if (['tips', 'characterTips', 'canvas', 'canvasReview', 'growth','dramaTips','dramaReview','dramaVideoPlan'].includes(kind)) {
             try { result = parse(answer); } catch(error) {
                 if(kind!=='growth'||story?.status!=='published')throw error;
-                result={evidence:explicitValueEvidence(growthText)};
-                await prisma.researchEvent.create({data:{userId:user.id,storyId:story.id,type:'growth_evidence_fallback',payload:{requestId:event.id,evidence:result.evidence}}});
+                const evidence=explicitValueEvidence(growthText);
+                if(!evidence.length)return NextResponse.json({evidence:[],growthStatus:'pending',message:'Your writing is saved. Growth check needs another try.'});
+                result={evidence,growthStatus:'succeeded'};
+                await prisma.researchEvent.create({data:{userId:user.id,storyId:story.id,type:'growth_evidence_fallback',payload:{requestId:event.id,evidence}}});
             }
             if (kind === 'tips' || kind === 'characterTips' || kind==='dramaTips') {
                 result.keywords = (Array.isArray(result.keywords) ? result.keywords : []).filter((x: unknown) => typeof x === 'string' && x.trim().split(/\s+/).length <= 4 && !/[.!?]/.test(x)).slice(0, 10);
@@ -132,11 +147,14 @@ export async function POST(request: NextRequest) {
             result = { message: answer };
         await prisma.researchEvent.create({ data: { userId: user.id, storyId: story?.id, type: 'suggestions_shown', payload: { requestId: event.id, kind, result } as Prisma.InputJsonValue } });
         if (kind === 'growth' && story?.status === 'published') {
+            const proposed=Array.isArray(result.evidence)?result.evidence.filter((item:any)=>evidenceQualifies(growthText,item)):[];
+            result.evidence=proposed;
+            result.growthStatus=result.growthStatus==='pending'?'pending':'succeeded';
             await prisma.$transaction(async tx=>{
                 // Serialize growth for one user's garden, including simultaneous Story/Drama finishes.
                 await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${user.id} FOR UPDATE`;
                 const current=await tx.user.findUniqueOrThrow({where:{id:user.id}});
-                const profile=growthProfile(current.profile,{id:story.id,title:story.title,content:story.content,workType:writingType(story as unknown as Story)},Array.isArray(result.evidence)?result.evidence:[]);
+                const profile=growthProfile(current.profile,{id:story.id,title:story.title,content:story.content,workType:writingType(story as unknown as Story)},proposed);
                 await tx.user.update({where:{id:user.id},data:{profile:profile as Prisma.InputJsonValue}});
             });
         }

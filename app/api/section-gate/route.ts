@@ -7,6 +7,7 @@ import { sectionSignature } from '@/lib/story-plan';
 import type { Story } from '@/lib/types';
 import { STAGES, QUESTIONS } from '@/lib/types';
 import {isDrama} from '@/lib/drama';
+import {localPreviewEnabled} from '@/lib/local-preview';
 export const maxDuration = 120;
 
 export async function GET(request:Request) {
@@ -38,6 +39,7 @@ export async function POST(request:Request) {
         let result:{pass:boolean;message:string;question:string;checks?:Record<string,boolean>;evidence?:unknown};
         const issue=draftBasics(text,story.sections.slice(0,section));
         if(issue)result={pass:false,message:issue,question:QUESTIONS[section]};
+        else if(localPreviewEnabled())return NextResponse.json({pass:false,mock:true,message:'Local preview cannot approve a story structure. Your draft is saved. Open the demo story to preview the finished page.',question:QUESTIONS[section]});
         else {
             const recent=await prisma.researchEvent.findFirst({where:{userId:user.id,storyId:story.id,type:'section_gate_checked',createdAt:{gt:new Date(Date.now()-2000)}}});
             if(recent)return NextResponse.json({error:'Give Cagent a moment before checking again.'},{status:429});

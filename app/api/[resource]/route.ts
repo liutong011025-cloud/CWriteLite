@@ -8,6 +8,11 @@ import { approvedSections } from '@/lib/section-gate';
 import type { Story } from '@/lib/types';
 import { blankDramaScene, dramaProblems, dramaSections, isDrama, normalizeDrama, writingType } from '@/lib/drama';
 import {mapWithoutDraft} from '@/lib/draft-recap';
+import {freeMapPoint} from '@/lib/map-markers';
+import {hostedPicture} from '@/lib/sprite';
+import {removeBackground} from '@/lib/fal-images';
+import {claimAsset,finishAsset,failAsset} from '@/lib/asset-generation';
+import {localPreviewEnabled} from '@/lib/local-preview';
 const json = (value: unknown) => value as Prisma.InputJsonValue;
 type Context = {
     params: Promise<{
@@ -82,7 +87,8 @@ export async function POST(request: Request, context: Context) {
                 const name = String(d.name || '').trim().slice(0, 80);
                 if (!name)
                     return NextResponse.json({ error: 'Give your character a name.' }, { status: 400 });
-                const data = { name, species: String(d.species || '').slice(0, 60), age: String(d.age || '').slice(0, 20), appearance: String(d.appearance || '').slice(0, 1000), traits: String(d.traits || '').slice(0, 1000), background: String(d.background || '').slice(0, 1000), strength: String(d.strength || '').slice(0, 1000), challenge: String(d.challenge || '').slice(0, 1000), imageUrl: String(d.imageUrl || ''), sketch: String(d.sketch || '') };
+                const spriteUrl = hostedPicture(String(d.spriteUrl || '')) ? String(d.spriteUrl) : '';
+                const data = { name, species: String(d.species || '').slice(0, 60), age: String(d.age || '').slice(0, 20), appearance: String(d.appearance || '').slice(0, 1000), traits: String(d.traits || '').slice(0, 1000), background: String(d.background || '').slice(0, 1000), strength: String(d.strength || '').slice(0, 1000), challenge: String(d.challenge || '').slice(0, 1000), imageUrl: String(d.imageUrl || ''), spriteUrl, sketch: String(d.sketch || '') };
                 if (data.sketch.length > 3000000)
                     return NextResponse.json({ error: 'Drawing is too large.' }, { status: 400 });
                 if (data.imageUrl.length > 3000000 || data.imageUrl && !/^https:\/\//.test(data.imageUrl) && !/^\/dramacharacter\//.test(data.imageUrl) && !/^data:image\/png;base64,/.test(data.imageUrl))
@@ -108,6 +114,28 @@ export async function POST(request: Request, context: Context) {
                     if (!character) throw error;
                 }
                 return NextResponse.json({ character });
+            }
+            if (b.action === 'ensureSprite') {
+                const character = await prisma.character.findFirst({ where: { id: String(b.id), userId: user.id } });
+                if (!character) return NextResponse.json({ error: 'Character not found.' }, { status: 404 });
+                if(localPreviewEnabled())return NextResponse.json({character,spriteStatus:'skipped',mock:true});
+                if (character.spriteUrl) return NextResponse.json({ character, spriteStatus: 'ready' });
+                if (!hostedPicture(character.imageUrl)) return NextResponse.json({ character, spriteStatus: 'skipped' });
+                const claimId=`sprite:${user.id}:${character.id}:${createHash('sha256').update(character.imageUrl).digest('hex')}`;
+                const claim=await claimAsset(claimId);
+                if(!claim.claimed&&!claim.imageUrl)return NextResponse.json({character,spriteStatus:'processing'});
+                try {
+                    const spriteUrl = claim.imageUrl || await removeBackground(character.imageUrl);
+                    if(claim.claimed)await finishAsset(claimId,spriteUrl);
+                    await prisma.character.updateMany({ where: { id: character.id, userId: user.id, imageUrl:character.imageUrl, spriteUrl: '' }, data: { spriteUrl } });
+                    const saved = await prisma.character.findFirst({ where: { id: character.id, userId: user.id } });
+                    return NextResponse.json({ character: saved, spriteStatus: saved?.spriteUrl ? 'ready' : 'failed' });
+                }
+                catch (error) {
+                    if(claim.claimed)await failAsset(claimId);
+                    console.error('Sprite retry failed:', error instanceof Error ? error.message : 'error');
+                    return NextResponse.json({ character, spriteStatus: 'failed' });
+                }
             }
             if (b.action === 'deleteCharacter') {
                 await prisma.character.deleteMany({ where: { id: String(b.id), userId: user.id } });
@@ -160,13 +188,17 @@ export async function POST(request: Request, context: Context) {
                     const chapters=Array.isArray(state?.chapters)?[...state.chapters]:[];
                     while(chapters.length<=story.chapterIndex) chapters.push({mapImageUrl:chapters.length?'/secondmap.webp':'/firstmap.webp',mapFlags:[],currentPin:null});
                     const chapter=chapters[story.chapterIndex];
-                    const pin=story.pin as {x:number;y:number}|null;
+                    const savedPin=story.pin as {x:number;y:number}|null;
+                    const previous=(chapter.mapFlags||[]).find((flag:any)=>flag.id===story.id);
+                    const occupied=(chapter.mapFlags||[]).filter((flag:any)=>flag.id!==story.id).map((flag:any)=>({x:Number(flag.x)||0,y:Number(flag.y)||0}));
+                    const pin=savedPin&&Number.isFinite(savedPin.x)&&Number.isFinite(savedPin.y)?savedPin:freeMapPoint(occupied);
+                    const placed=savedPin?story:await tx.story.update({where:{id:story.id},data:{pin:json(pin)}});
                     const localPreview=process.env.NODE_ENV==='development'&&process.env.CWRITE_LOCAL_MOCK_IMAGES==='true';
-                    const flag={id:story.id,x:pin?.x??50,y:pin?.y??50,title:story.title,content:story.content,workType:drama?'drama':'story',...(localPreview?{previewArt:{imageUrl:characterSnapshots[0]?.imageUrl||''}}:{})};
+                    const flag={id:story.id,x:pin.x,y:pin.y,title:story.title,content:story.content,workType:drama?'drama':'story',...(previous?.previewArt?{previewArt:previous.previewArt}:{}),...(localPreview?{previewArt:{imageUrl:characterSnapshots[0]?.imageUrl||'',storyId:story.id,anchor:'bottom-center'}}:{})};
                     chapters[story.chapterIndex]={...chapter,currentPin:null,mapFlags:[...(chapter.mapFlags||[]).filter((f:any)=>f.id!==story.id),flag]};
                     const mapState={...state,chapters,activeChapterIndex:story.chapterIndex};
                     await tx.user.update({where:{id:user.id},data:{mapState:json(mapState)}});
-                    return {story,mapState};
+                    return {story:placed,mapState};
                 });
                 return NextResponse.json(result);
             }

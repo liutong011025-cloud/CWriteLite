@@ -33,7 +33,7 @@ export function normalizeDrama(input: unknown, cast: Character[]): DramaProject 
             return {id:lineId, kind:(['dialogue','thought','action'].includes(l.kind) ? l.kind : 'dialogue') as 'dialogue'|'thought'|'action', characterId:actorIds.has(l.characterId) ? l.characterId : '', text:safeText(l.text, 1500)};
         });
         const archivedLines=(Array.isArray(s?.archivedLines)?s.archivedLines:[]).slice(0,160).filter(l=>l?.kind==='action'||actorIds.has(l?.characterId)).map(l=>({id:safeText(l.id,100),kind:(['dialogue','thought','action'].includes(l.kind)?l.kind:'dialogue') as DramaLine['kind'],characterId:actorIds.has(l.characterId)?l.characterId:'',text:safeText(l.text,1500)}));
-        return {id, name:safeText(s?.name, 80) || `Scene ${index + 1}`, backgroundPrompt:safeText(s?.backgroundPrompt), backgroundImageUrl:safeImage(s?.backgroundImageUrl), notes:safeText(s?.notes), actors, lines,archivedLines};
+        return {id, name:safeText(s?.name, 80) || `Scene ${index + 1}`, backgroundPrompt:safeText(s?.backgroundPrompt), settingDescription:safeText(s?.settingDescription, 500), backgroundImageUrl:safeImage(s?.backgroundImageUrl), notes:safeText(s?.notes), actors, lines,archivedLines};
     });
     if (!scenes.length) scenes.push(blankDramaScene('scene-1'));
     const project={scenes, activeScene:Math.floor(bounded(source?.activeScene, 0, scenes.length - 1, 0))};
@@ -56,10 +56,20 @@ export function actorContribution(scene:DramaScene,characterId:string,kind:'dial
     const line={id:previous?.id||crypto.randomUUID(),characterId,kind,text:text??previous?.text??''};
     return {...scene,lines:[...scene.lines.filter(l=>l.characterId!==characterId),line]};
 }
+export function sceneTitle(index: number, name: string) {
+    const number = `Scene ${index + 1}`;
+    const custom = name.trim().replace(new RegExp(`^scene\\s*${index + 1}\\s*[:\\-—]?\\s*`, 'i'), '').trim();
+    if (!custom || custom.toLowerCase() === number.toLowerCase()) return number;
+    return `${number} — ${custom}`;
+}
+export function sceneSettingText(scene: { backgroundPrompt?: string; settingDescription?: string }) {
+    return (scene.settingDescription || scene.backgroundPrompt || '').replace(/\b(?:no characters?|no people(?: or animals)?|no animals|no text|no letters|do not include people)[^.]*/gi, '').replace(/\s+/g, ' ').trim();
+}
 export function dramaSections(canvas: StoryCanvas, cast: Character[]) {
     return (canvas.drama?.scenes || []).map((s, i) => {
         const actorName = (id: string) => cast.find(c => c.id === id)?.name || 'Stage';
-        return [`Scene ${i + 1}: ${s.name}`, `Setting: ${s.backgroundPrompt}`, s.notes ? `[Stage directions: ${s.notes}]` : '', ...s.lines.filter(l => l.text.trim()).map(l => l.kind === 'action' ? `[${l.text}]` : `${actorName(l.characterId)}${l.kind === 'thought' ? ' (thinking)' : ''}: ${l.text}`)].filter(Boolean).join('\n');
+        const setting = sceneSettingText(s);
+        return [sceneTitle(i, s.name), setting, s.notes ? `[Stage directions: ${s.notes}]` : '', ...s.lines.filter(l => l.text.trim()).map(l => l.kind === 'action' ? `[${l.text}]` : `${actorName(l.characterId)} ${l.kind === 'thought' ? 'thinks' : 'says'}: ${l.text}`)].filter(Boolean).join('\n');
     });
 }
 export function withDrama(work: Story, drama: DramaProject): Story {

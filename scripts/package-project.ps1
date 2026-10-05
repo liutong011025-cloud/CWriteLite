@@ -6,8 +6,8 @@ if (Test-Path -LiteralPath $archivePath) {
     $archiveName = 'CWrite-Lite-' + (Get-Date -Format 'yyyy-MM-dd-HHmmss') + '.zip'
     $archivePath = Join-Path $projectRoot $archiveName
 }
-$sourceDirectories = @('app', 'components', 'hooks', 'lib', 'prisma', 'public', 'scripts', 'docs')
-$rootFiles = @('.env.example', '.gitignore', 'README.md', 'package.json', 'package-lock.json', 'next-env.d.ts', 'next.config.mjs', 'postcss.config.mjs', 'tsconfig.json', 'vercel.json')
+$sourceDirectories = @('app', 'components', 'hooks', 'lib', 'prisma', 'public', 'scripts', 'docs', 'worker')
+$rootFiles = @('.env.example', '.gitignore', '.dockerignore', 'README.md', 'package.json', 'package-lock.json', 'next-env.d.ts', 'next.config.mjs', 'postcss.config.mjs', 'tsconfig.json', 'vercel.json', 'CURSOR_FIX_PLAN.md', 'AUDIT.md')
 $files = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
 foreach ($directory in $sourceDirectories) {
     Get-ChildItem -LiteralPath (Join-Path $projectRoot $directory) -Recurse -File -Force |

@@ -603,13 +603,13 @@ export default function UserProfilePage({
         { id: "farmbacktomap", label: "Start writing!", imageSrc: "/farmbacktomap.webp", baseWidthPercent: 16, useNaturalAspect: true },
         { id: "theirmap", label: "Writing Map", imageSrc: "/theirmap.webp", baseWidthPercent: 16, useNaturalAspect: true },
         { id: "farmwrittingboard", label: "Writing Board", imageSrc: "/farmwritingboard.webp" },
-        { id: "vistothersfarm", label: "Visit Others' Farms", imageSrc: "/visitothersfarm.webp", baseWidthPercent: 16, useNaturalAspect: true },
+        { id: "vistothersfarm", label: "Visit friends' farms", imageSrc: "/visitothersfarm.webp", baseWidthPercent: 16, useNaturalAspect: true },
       ]
     : [
     { id: "farmbacktomap", label: "Start writing!", imageSrc: "/farmbacktomap.webp", baseWidthPercent: 16, useNaturalAspect: true },
     { id: "farmsetting", label: "Settings", imageSrc: "/farmsetting.webp" },
     { id: "farmwrittingboard", label: "Writing Board", imageSrc: "/farmwritingboard.webp" },
-    { id: "vistothersfarm", label: "Visit Others' Farms", imageSrc: "/visitothersfarm.webp", baseWidthPercent: 16, useNaturalAspect: true },
+    { id: "vistothersfarm", label: "Visit friends' farms", imageSrc: "/visitothersfarm.webp", baseWidthPercent: 16, useNaturalAspect: true },
   ]
 
   const farmTreeStates = DEFAULT_TREE_LAYOUT
@@ -1665,6 +1665,7 @@ export default function UserProfilePage({
 
       <div
         ref={cagentBubbleRef}
+        hidden={selectedTreeId != null || showOtherWritingMap || Boolean(selectedReview)}
         className={`farm-cagent-bubble fixed z-[80] rounded-2xl border border-amber-200/90 bg-[#fff6e4]/95 shadow-xl ${
           cagentBubbleOpen ? "w-[min(36rem,72vw)] px-4 py-2" : "max-w-xs px-4 py-2"
         } ${isOtherFarm ? "animate-pulse px-3 py-2" : ""} ${cagentBubbleOpen ? "pointer-events-auto" : "pointer-events-none"}`}
