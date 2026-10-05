@@ -2,10 +2,23 @@
 import {useEffect,useRef,useState} from 'react';
 import {Clapperboard} from 'lucide-react';
 import {api} from './common';
-type Job={id:string;sceneId:string;status:string;errorCode?:string;errorMessage:string;outputUrl:string};
+type Job={id:string;sceneId:string;status:string;errorCode?:string;errorMessage:string;outputUrl:string;renderVersion?:number;captionsVtt?:string};
 type Scene={id:string;name:string};
-type State={scenes:Scene[];jobs:Job[];mock?:boolean;configured?:boolean};
+type State={scenes:Scene[];jobs:Job[];renderVersion?:number;mock?:boolean;configured?:boolean};
 const pending=(status?:string)=>['preparing','submitting','generating'].includes(status||'');
+function SceneVideo({job,name}:{job:Job;name:string}){
+    const [captionsUrl,setCaptionsUrl]=useState('');
+    useEffect(()=>{
+        if(!job.captionsVtt){setCaptionsUrl('');return;}
+        const url=URL.createObjectURL(new Blob([job.captionsVtt],{type:'text/vtt;charset=utf-8'}));
+        setCaptionsUrl(url);return()=>URL.revokeObjectURL(url);
+    },[job.captionsVtt]);
+    return <><video src={job.outputUrl} controls playsInline preload="metadata" aria-label={name+' video'}>
+        {captionsUrl&&<track key={captionsUrl} kind="captions" src={captionsUrl} srcLang={/[\u3400-\u9fff]/.test(job.captionsVtt||'')?'zh':'en'} label="Dialogue & thoughts" default onLoad={event=>{event.currentTarget.track.mode='showing';}}/>}
+    </video><a className="outline-button" target="_blank" rel="noopener noreferrer" href={job.outputUrl}>Open / download video</a>
+        {captionsUrl&&<a className="outline-button" href={captionsUrl} download={name+'.vtt'}>Download captions</a>}
+    </>;
+}
 export default function DramaVideoPanel({storyId}:{storyId:string}){
     const [state,setState]=useState<State>({scenes:[],jobs:[]}),[busy,setBusy]=useState(false),[error,setError]=useState('');
     const submitting=useRef(false),mounted=useRef(true);
@@ -32,13 +45,13 @@ export default function DramaVideoPanel({storyId}:{storyId:string}){
     },[pendingIds]);
     async function start(){
         if(submitting.current)return;submitting.current=true;setBusy(true);setError('');
-        const scenes=state.scenes.filter(scene=>{const job=state.jobs.find(j=>j.sceneId===scene.id);return !job||job.status==='failed';});
+        const scenes=state.scenes.filter(scene=>{const job=state.jobs.find(j=>j.sceneId===scene.id);return !job||job.status==='failed'||job.status==='ready'&&(job.renderVersion||0)<(state.renderVersion||0);});
         // Submit every scene immediately. Ark renders independently; the page only polls task IDs.
         const results=await Promise.allSettled(scenes.map(async scene=>{
             const r=await api('/api/drama-video',{storyId,sceneId:scene.id,retry:state.jobs.some(j=>j.sceneId===scene.id&&j.status==='failed')});
             if(mounted.current)setState(s=>({...s,jobs:[...s.jobs.filter(j=>j.sceneId!==scene.id),r.job]}));
         }));
-        if(mounted.current){if(results.some(r=>r.status==='rejected'))setError('Some scenes could not start. Please try the remaining scenes again.');setBusy(false);}
+        if(mounted.current){const failure=results.find(r=>r.status==='rejected');if(failure?.status==='rejected')setError(failure.reason?.message||'Some scenes could not start. Please try the remaining scenes again.');setBusy(false);}
         submitting.current=false;
     }
     async function retryUnsubmitted(sceneId:string){
@@ -49,17 +62,18 @@ export default function DramaVideoPanel({storyId}:{storyId:string}){
         }catch(e){if(mounted.current)setError((e as Error).message);}
         finally{submitting.current=false;if(mounted.current)setRetrying('');}
     }
-    const active=state.jobs.some(j=>pending(j.status)),remaining=state.scenes.some(s=>{const j=state.jobs.find(j=>j.sceneId===s.id);return !j||j.status==='failed';});
+    const active=state.jobs.some(j=>pending(j.status)),upgrade=state.jobs.some(j=>j.status==='ready'&&(j.renderVersion||0)<(state.renderVersion||0));
+    const remaining=upgrade||state.scenes.some(s=>{const j=state.jobs.find(j=>j.sceneId===s.id);return !j||j.status==='failed';});
     const allReady=state.scenes.length>0&&state.scenes.every(s=>state.jobs.some(j=>j.sceneId===s.id&&Boolean(j.outputUrl)));
     return <section className="drama-video-panel"><h3><Clapperboard size={20}/>Drama video</h3>
         {(busy||active)&&<div className="drama-video-wait" role="status"><img src="/Cagentdraw.webp" alt=""/><p>Making your scenes come to life…</p></div>}
         {state.scenes.map(scene=>{const job=state.jobs.find(j=>j.sceneId===scene.id);return job?<div className="drama-video-result" key={scene.id}><h4>{scene.name}</h4>
-            {job.outputUrl&&<><video src={job.outputUrl} controls playsInline preload="metadata" aria-label={scene.name+' video'}/><a className="outline-button" target="_blank" rel="noopener noreferrer" href={job.outputUrl}>Open / download video</a></>}
+            {job.outputUrl&&<SceneVideo job={job} name={scene.name}/>}
             {pending(job.status)&&<p role="status">Generating…</p>}{job.errorMessage&&<p className="error-text" role="alert">{job.errorMessage}</p>}
             {job.errorCode==='ModelNotOpen'&&<a className="outline-button" target="_blank" rel="noopener noreferrer" href="https://ark.volcengine.com/region:cn-beijing/openManagement?advancedActiveKey=model&projectName=default&tab=ComputerVision">Enable Seedance 2.5 in Ark</a>}
             {job.status==='needs_confirmation'&&<button className="outline-button" disabled={!!retrying||busy||active||state.mock} onClick={()=>void retryUnsubmitted(scene.id)}>{retrying===scene.id?'Submitting…':'I checked Ark: no task. Try again'}</button>}
         </div>:null;})}
         {error&&<p className="error-text" role="alert">{error}</p>}
-        <button className="suggestions-action" disabled={!state.scenes.length||busy||!!retrying||active||state.mock||!state.configured||!remaining} onClick={()=>void start()}>{busy||active||retrying?'Generating…':allReady?'Videos ready':'Generate video'}</button>
+        <button className="suggestions-action" disabled={!state.scenes.length||busy||!!retrying||active||state.mock||!state.configured||!remaining} onClick={()=>void start()}>{busy||active||retrying?'Generating…':upgrade?'Make a new version':allReady?'Videos ready':'Generate video'}</button>
     </section>;
 }

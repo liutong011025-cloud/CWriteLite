@@ -7,6 +7,7 @@ import ffmpeg from 'ffmpeg-static';
 import {renderVideoClip,mergeVideoClips} from '../lib/video-render';
 import {videoSubtitles} from '../lib/video-subtitles';
 import {createSeedanceTask,readSeedanceTask} from '../lib/ark-video';
+import {SEEDANCE_VIDEO_MODEL} from '../lib/ark-video-config';
 import {videoAsset} from '../lib/video-assets';
 async function main(){
     const words='I will help you carry every bag, then we can walk home together.';
@@ -17,10 +18,10 @@ async function main(){
     const originalFetch=globalThis.fetch;process.env.ARK_API_KEY='unit-test-only';
     let submissions=0;
     globalThis.fetch=async(_url,init)=>{
-        if(init?.method==='POST'){submissions++;const body=JSON.parse(String(init.body));assert.equal(body.duration,24);assert.equal(body.content[1].role,'first_frame');assert.equal(body.model,'test-model');return Response.json({id:'task-test'});}
+        if(init?.method==='POST'){submissions++;const body=JSON.parse(String(init.body));assert.equal(body.duration,24);assert.equal(body.content[1].role,'first_frame');assert.equal(body.model,SEEDANCE_VIDEO_MODEL);return Response.json({id:'task-test'});}
         return Response.json({status:'succeeded',content:{video_url:'https://example.test/video.mp4'}});
     };
-    try{assert.equal(await createSeedanceTask('test','https://example.test/frame.png',24,'test-model'),'task-test');assert.equal((await readSeedanceTask('task-test')).status,'succeeded');assert.equal(submissions,1);}finally{globalThis.fetch=originalFetch;delete process.env.ARK_API_KEY;}
+    try{assert.equal(await createSeedanceTask('test','https://example.test/frame.png',24,SEEDANCE_VIDEO_MODEL),'task-test');assert.equal((await readSeedanceTask('task-test')).status,'succeeded');assert.equal(submissions,1);}finally{globalThis.fetch=originalFetch;delete process.env.ARK_API_KEY;}
     assert.ok(ffmpeg);const run=promisify(execFile);
     const dir=await mkdtemp(join(resolve('.tool-cache'),'video-render-test-'));
     await run(ffmpeg!,['-y','-f','lavfi','-i','color=c=green:s=1280x720:r=24','-t','1','-c:v','libx264','raw.mp4'],{cwd:dir});
