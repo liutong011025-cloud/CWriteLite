@@ -1398,6 +1398,9 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 .drama-preview-actor>img { height:auto; }
 .drama-scene-preview { min-height:0; }
 .drama-actor-name,.drama-preview-actor>b { position:absolute; top:100%; left:50%; transform:translateX(-50%); }
+.drama-character-writing .drama-bubble-preview,.drama-character-writing .drama-left-editor textarea { font-size:var(--drama-word-size,17px); }
+.drama-character-writing .drama-bubble-preview b,.drama-character-writing .drama-left-editor header,.drama-character-writing .drama-bubble-kinds button { font-size:calc(var(--drama-word-size,17px) * .9); }
+.drama-character-writing .drama-left-editor textarea { height:90px; min-height:90px; max-height:90px; }
 .drama-video-panel { display:grid; gap:14px; padding:16px 0; border-bottom:1px solid #dfcfad; }
 .drama-video-panel h3 { display:flex; gap:8px; align-items:center; }
 .drama-video-panel label { display:grid; gap:6px; font-size:16px; }
