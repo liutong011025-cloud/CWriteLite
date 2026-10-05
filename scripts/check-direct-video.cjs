@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),ts=require('typescript'),Module=require('node:module'),sharp=require('sharp');
 const root=path.resolve(__dirname,'..'),originalLoad=Module._load;
 require.extensions['.ts']=(module,file)=>module._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText,file);
-let userId='owner',story,jobs=[],submissions=0,providerFailure=false,providerStatus=500;
+let userId='owner',story,jobs=[],submissions=0,providerFailure=false,providerStatus=500,providerCode='provider_error';
 const {Prisma}=require('@prisma/client');
 const copy=value=>value?structuredClone(value):null;
 const find=where=>jobs.find(j=>where.id?j.id===where.id:j.storyId===where.storyId_revisionHash.storyId&&j.revisionHash===where.storyId_revisionHash.revisionHash);
@@ -26,7 +26,7 @@ global.fetch=async(url,init)=>{
         submissions++;const body=JSON.parse(init.body);
         assert.ok(body.callback_url.startsWith('https://c-write-lite.vercel.app/api/drama-video/callback?'));assert.equal(body.ratio,'adaptive');assert.equal(body.duration,5);assert.equal(body.generate_audio,false);assert.equal(body.content[1].role,'first_frame');assert.ok(body.content[1].image_url.url.startsWith('data:image/png;base64,'));
         const info=await sharp(Buffer.from(body.content[1].image_url.url.split(',')[1],'base64')).metadata();assert.equal(info.width,1280);assert.equal(info.height,880);
-        if(providerFailure)return Response.json({error:{message:'test server failure'}},{status:providerStatus});
+        if(providerFailure)return Response.json({error:{code:providerCode,message:'test server failure'}},{status:providerStatus});
         return Response.json({id:'cgt-test-'+submissions});
     }
     return Response.json({status:'succeeded',content:{video_url:'https://example.volccdn.com/video.mp4'}});
@@ -59,7 +59,7 @@ async function main(){
     story.canvas.drama.scenes[0].notes='Retry a lost submission';await route.POST(request());const retryJob=jobs[2],oldSigned=videoCallbackUrl(retryJob.id,retryJob.revisionHash+'|'+retryJob.plan.callbackNonce);
     const retryRequest=()=>new Request('http://localhost/api/drama-video',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({storyId:'story',sceneId:'scene',noTaskConfirmed:true})});
     await route.POST(request());assert.equal(submissions,countBefore+1);providerFailure=false;await Promise.all([route.POST(retryRequest()),route.POST(retryRequest())]);assert.equal(submissions,countBefore+2);assert.equal(jobs[2].status,'direct_generating');assert.equal((await callback.POST(notify(oldSigned))).status,403);
-    providerFailure=true;providerStatus=400;story.canvas.drama.scenes[0].notes='Rejected access';await route.POST(request());assert.equal(jobs[3].status,'failed');providerStatus=500;
+    providerFailure=true;providerStatus=400;story.canvas.drama.scenes[0].notes='Rejected access';await route.POST(request());assert.equal(jobs[3].status,'failed');providerStatus=404;providerCode='ModelNotOpen';story.canvas.drama.scenes[0].notes='Model not enabled';const notOpen=await (await route.POST(request())).json();assert.equal(notOpen.job.errorCode,'ModelNotOpen');assert.match(notOpen.job.errorMessage,/Enable the model in Ark/);assert.equal(notOpen.job.status,'failed');providerStatus=500;providerCode='provider_error';
     providerFailure=false;jobs=[];submissions=0;story.canvas.drama.scenes.push({...copy(story.canvas.drama.scenes[0]),id:'scene-2'});
     await Promise.all([route.POST(request()),route.POST(request('ignored','scene-2')),route.POST(request())]);assert.equal(submissions,2);assert.equal(jobs.length,2);assert.ok(jobs.every(j=>j.clips[0].duration===5));
     const batch=await (await route.GET(new Request('http://localhost/api/drama-video?storyId=story'))).json();assert.equal(batch.jobs.length,2);assert.equal(batch.scenes.length,2);

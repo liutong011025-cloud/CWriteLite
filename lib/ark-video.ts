@@ -15,6 +15,12 @@ export class ArkVideoError extends Error {
 
 type ArkTask = { id?: string; status?: string; content?: { video_url?: string }; error?: { code?: string; message?: string } };
 
+export function videoFailureMessage(error:unknown){
+    if(error instanceof ArkVideoError&&error.code==='ModelNotOpen')return 'Seedance 2.5 is not enabled for the connected Ark account. Enable the model in Ark, then try again.';
+    if(error instanceof ArkVideoError&&(error.status===401||error.status===403))return 'Ark did not accept the video API key or its permissions. Check the connected account and model access.';
+    return 'The video service rejected this scene. Check the model access or try again.';
+}
+
 function key() {
     const value = process.env.ARK_API_KEY?.trim();
     if (!value) throw new ArkVideoError('ARK_API_KEY is not configured.', 500, 'not_configured');

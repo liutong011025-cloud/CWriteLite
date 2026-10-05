@@ -11,7 +11,7 @@ import {localPreviewEnabled} from '@/lib/local-preview';
 import {dramaMotionPrompt} from '@/lib/drama-video-prompt';
 import {dramaVideoReference} from '@/lib/drama-video-reference';
 import {directVideoJob} from '@/lib/direct-video-job';
-import {ArkVideoError,createSeedanceTask} from '@/lib/ark-video';
+import {ArkVideoError,createSeedanceTask,videoFailureMessage} from '@/lib/ark-video';
 import {videoCallbackUrl} from '@/lib/video-callback';
 export const maxDuration=120;
 export const preferredRegion='hkg1';
@@ -68,7 +68,7 @@ export async function POST(request:Request){
             return NextResponse.json({job:directVideoJob(job)},{status:202});
         }
         const uncertain=submitting&&(!(error instanceof ArkVideoError)||error.code==='needs_confirmation'||error.status>=500);
-        job=await prisma.videoJob.update({where:{id:job.id},data:{status:uncertain?'needs_confirmation':'failed',errorCode:uncertain?'needs_confirmation':'generation_failed',errorMessage:uncertain?'Submission result is unknown. Check the Ark task history before generating another video.':submitting?'The video service rejected this scene. Check the model access or try again.':'The stage picture could not be prepared. Check the saved background and character pictures.'},include:{clips:true}});
+        job=await prisma.videoJob.update({where:{id:job.id},data:{status:uncertain?'needs_confirmation':'failed',errorCode:uncertain?'needs_confirmation':error instanceof ArkVideoError?error.code:'generation_failed',errorMessage:uncertain?'Submission result is unknown. Check the Ark task history before generating another video.':submitting?videoFailureMessage(error):'The stage picture could not be prepared. Check the saved background and character pictures.'},include:{clips:true}});
         console.error('drama_video_failed',{jobId:job.id,phase:submitting?'submission':'reference',code:job.errorCode});
     }
     return NextResponse.json({job:directVideoJob(job)},{status:202});

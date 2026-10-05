@@ -2,7 +2,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {Clapperboard} from 'lucide-react';
 import {api} from './common';
-type Job={id:string;sceneId:string;status:string;errorMessage:string;outputUrl:string};
+type Job={id:string;sceneId:string;status:string;errorCode?:string;errorMessage:string;outputUrl:string};
 type Scene={id:string;name:string};
 type State={scenes:Scene[];jobs:Job[];mock?:boolean;configured?:boolean};
 const pending=(status?:string)=>['preparing','submitting','generating'].includes(status||'');
@@ -56,6 +56,7 @@ export default function DramaVideoPanel({storyId}:{storyId:string}){
         {state.scenes.map(scene=>{const job=state.jobs.find(j=>j.sceneId===scene.id);return job?<div className="drama-video-result" key={scene.id}><h4>{scene.name}</h4>
             {job.outputUrl&&<><video src={job.outputUrl} controls playsInline preload="metadata" aria-label={scene.name+' video'}/><a className="outline-button" target="_blank" rel="noopener noreferrer" href={job.outputUrl}>Open / download video</a></>}
             {pending(job.status)&&<p role="status">Generating…</p>}{job.errorMessage&&<p className="error-text" role="alert">{job.errorMessage}</p>}
+            {job.errorCode==='ModelNotOpen'&&<a className="outline-button" target="_blank" rel="noopener noreferrer" href="https://ark.volcengine.com/region:cn-beijing/openManagement?advancedActiveKey=model&projectName=default&tab=ComputerVision">Enable Seedance 2.5 in Ark</a>}
             {job.status==='needs_confirmation'&&<button className="outline-button" disabled={!!retrying||busy||active||state.mock} onClick={()=>void retryUnsubmitted(scene.id)}>{retrying===scene.id?'Submitting…':'I checked Ark: no task. Try again'}</button>}
         </div>:null;})}
         {error&&<p className="error-text" role="alert">{error}</p>}
