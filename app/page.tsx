@@ -49,6 +49,25 @@ export default function Page() {
     const storyDeck = deck.filter(c=>chosen.includes(c.id));
     const latest = useRef<Story | null>(null), pending = useRef<ReturnType<typeof setTimeout> | null>(null), queue = useRef(Promise.resolve()), mapRef = useRef(mapState);
     const chapter = mapState.chapters[mapState.activeChapterIndex] || blankChapter();
+    const repairedMapArt=useRef(new Set<string>());
+    useEffect(()=>{
+        if(screen!=='map'||mapBusy)return;
+        const old=chapter.mapFlags.filter(flag=>flag.previewArt?.imageUrl?.startsWith('https://')&&flag.previewArt.source!=='local-preview'&&!flag.previewArt.backgroundRemoved&&!repairedMapArt.current.has(flag.id+flag.previewArt.imageUrl));
+        if(!old.length)return;
+        old.forEach(flag=>repairedMapArt.current.add(flag.id+flag.previewArt!.imageUrl));
+        setMapBusy(true);
+        void (async()=>{
+            try{for(const flag of old){
+                let result=await api('/api/map-update',{storyId:flag.id,repairOnly:true});
+                for(let attempt=0;attempt<12&&result.previewArt&&!result.previewArt.backgroundRemoved&&!result.error;attempt++){
+                    await new Promise(resolve=>setTimeout(resolve,5000));
+                    result=await api('/api/map-update',{storyId:flag.id,repairOnly:true});
+                }
+                if(result.mapState?.chapters?.length){mapRef.current=result.mapState;setMapState(result.mapState);}
+                if(result.error)toast.error(result.message);
+            }}catch(error){toast.error((error as Error).message);}finally{setMapBusy(false);}
+        })();
+    },[screen,mapBusy,chapter.mapFlags]);
     const [studioReturn,setStudioReturn]=useState<'characters'|'drama-scenes'|'drama-write'>('characters');
     const [discardDraft,setDiscardDraft]=useState<Story|null>(null),[discardBusy,setDiscardBusy]=useState(false),[growthRetry,setGrowthRetry]=useState<string|null>(null),[growthBusy,setGrowthBusy]=useState(false);
     const refresh = useCallback(async () => { const data = await api('/api/data'); setUser(data.user); setCharacters(data.characters); setStories(data.stories); setProfile(data.profile || {}); if (data.mapState?.chapters?.length) {
@@ -153,7 +172,8 @@ export default function Page() {
     async function updateMapArt(s: Story) { setMapBusy(true); try {
         const r = await api('/api/map-update', { storyId: s.id });
         if (r.mapState?.chapters?.length) { mapRef.current = r.mapState; setMapState(r.mapState); }
-        if (r.previewArt) toast.success(r.previewArt.source==='local-preview' ? 'Local preview: example picture shown. No AI image was generated.' : r.reused ? 'Saved picture shown. No new AI request needed.' : 'Your writing map has a new illustration.');
+        if(r.error||r.previewArt?.source==='fal'&&!r.previewArt.backgroundRemoved)toast.info(r.message||'Your transparent map picture is being made. Check again shortly.');
+        else if (r.previewArt) toast.success(r.previewArt.source==='local-preview' ? 'Local preview: example picture shown. No AI image was generated.' : r.reused ? 'Saved picture shown. No new AI request needed.' : 'Your writing map has a new illustration.');
         else toast.info(r.message || 'Story saved. Map illustration could not update; you can try again.');
     }
     catch {
@@ -171,7 +191,8 @@ export default function Page() {
             for(const work of works){
                 const r=await api('/api/map-update',{storyId:work.id});
                 if(r.mapState?.chapters?.length){mapRef.current=r.mapState;setMapState(r.mapState);}
-                if(r.previewArt){updated++;if(r.previewArt.source==='local-preview')examples++;}
+                if(r.error||r.previewArt?.source==='fal'&&!r.previewArt.backgroundRemoved)issues.push(r.message||'Your transparent map picture is being made. Check again shortly.');
+                else if(r.previewArt){updated++;if(r.previewArt.source==='local-preview')examples++;}
                 else issues.push(r.message||'Some pictures could not be made. Try again.');
             }
             if(issues.length)toast.info(issues[0]);

@@ -55,7 +55,7 @@ export default function JourneyMap({ illustrating, creatingPin, mapImageUrl, map
     const box = surface.current, image = artwork.current
     if (!box || !image?.naturalWidth) return
     const r = box.getBoundingClientRect()
-    const scale = Math.max(r.width / image.naturalWidth, r.height / image.naturalHeight)
+    const scale = Math.min(r.width / image.naturalWidth, r.height / image.naturalHeight)
     const width = image.naturalWidth * scale, height = image.naturalHeight * scale
     setFrame({ left: (r.width - width) / 2, top: (r.height - height) / 2, width, height, containerWidth: r.width, containerHeight: r.height })
   }, [])
@@ -65,8 +65,8 @@ export default function JourneyMap({ illustrating, creatingPin, mapImageUrl, map
   const point=(x:number,y:number)=>({x:frame.left+x/100*frame.width,y:frame.top+y/100*frame.height});
   const draftIds=new Set(drafts?.map(d=>d.id));
   const visibleFlags=mapFlags.filter(f=>!draftIds.has(f.id));
-  const artSize=frame.containerWidth<768?120:164;
-  const illustrations=visibleFlags.map(f=>({id:'art-'+f.id,...point(f.x,f.y),width:artSize,height:artSize}));
+  const artSize=frame.containerWidth<768?88:124;
+  const illustrations=visibleFlags.map(f=>{const p=point(f.x,f.y);const nearest=visibleFlags.filter(other=>other.id!==f.id).map(other=>{const q=point(other.x,other.y);return Math.max(Math.abs(p.x-q.x),Math.abs(p.y-q.y))*.8;});const size=f.previewArt?.backgroundRemoved||f.previewArt?.source==='local-preview'?Math.max(36,Math.min(artSize,p.x*2,(frame.containerWidth-p.x)*2,p.y,...nearest)):36;return {id:'art-'+f.id,...p,width:size,height:size};});
   const labels=[...visibleFlags.map(f=>({id:f.id,x:point(f.x,f.y).x,y:point(f.x,f.y).y+62,width:142,height:44})),...(drafts||[]).filter(d=>d.pin).map(d=>({id:d.id,...point(d.pin!.x,d.pin!.y),width:220,height:135}))];
   const arranged=arrangeMapMarkers(labels,frame.containerWidth,frame.containerHeight,illustrations);
   const labelPosition=(id:string,fallback:{x:number;y:number})=>{const label=arranged.find(p=>p.id===id);return label?{left:`${label.x}px`,top:`${label.y}px`}:position(fallback.x,fallback.y);};
@@ -90,7 +90,7 @@ export default function JourneyMap({ illustrating, creatingPin, mapImageUrl, map
         <button className="map-farm-link" onClick={e => { e.stopPropagation(); onGoProfile?.() }} aria-label="Go to My Farm"><img src="/myfarm.webp" alt=""/><span>My Farm</span></button>
         <span className="chapter-label map-chapter-label">Chapter {chapterIndex + 1}</span>
         <RoofDock contained layout={{ ...DEFAULT_ROOF_LAYOUT, roofWidth: 204, roofRight: 24, roofBottom: 145 }} showCoach={!resumeJourney && !mapFlags.length} onDragPinStart={id=>setPlacing(id==='drama'?'drama':'story')} onDragPinEnd={() => setPlacing(null)} onSelectPin={id=>!creatingPin&&setPlacing(id==='drama'?'drama':'story')}/>
-        {visibleFlags.map(f=><div key={`art-${f.id}`} className="map-work-illustration" style={position(f.x,f.y)}><MapIllustration flag={f}/></div>)}
+        {visibleFlags.map(f=>{const art=illustrations.find(item=>item.id==='art-'+f.id)!;return <div key={`art-${f.id}`} className="map-work-illustration" style={{...position(f.x,f.y),width:art.width,height:art.height}}><MapIllustration flag={f}/></div>;})}
         <svg className="map-label-leaders" width={frame.containerWidth} height={frame.containerHeight} aria-hidden="true">{arranged.map(label=>{const flag=visibleFlags.find(f=>f.id===label.id);const original=flag?point(flag.x,flag.y):labels.find(p=>p.id===label.id)!;return Math.hypot(original.x-label.x,original.y-label.y)>20?<line key={label.id} x1={original.x} y1={original.y} x2={label.x} y2={label.y}/>:null;})}</svg>
         {visibleFlags.map(flag => <button key={flag.id} className={`saved-story-flag ${flag.workType==='drama'?'drama-map-flag':''}`} style={labelPosition(flag.id,flag)} onClick={e => { e.stopPropagation(); setSelected(flag) }} aria-label={`${flag.workType==='drama'?'Drama: ':''}${flag.title}`}><span>{flag.title}</span></button>)}
         {drafts ? drafts.filter(d=>d.pin).map(d=><div key={d.id} className="resume-story-pin resume-story-with-dismiss" style={labelPosition(d.id,d.pin!)}>
@@ -108,7 +108,7 @@ export default function JourneyMap({ illustrating, creatingPin, mapImageUrl, map
 
 function MapIllustration({flag}:{flag:MapFlagItem}) {
   const [failed,setFailed]=useState(false);
-  const imageUrl=flag.previewArt?.imageUrl;
+  const imageUrl=flag.previewArt?.backgroundRemoved||flag.previewArt?.source==='local-preview'?flag.previewArt?.imageUrl:undefined;
   useEffect(()=>setFailed(false),[imageUrl]);
-  return imageUrl&&!failed ? <img src={imageUrl} alt={`Illustration for ${flag.title}`} onError={()=>setFailed(true)}/> : <div className="map-art-placeholder"><MapPin size={28}/><span>{failed?'Picture unavailable':'Picture pending'}</span></div>;
+  return imageUrl&&!failed ? <img src={imageUrl} alt={`Illustration for ${flag.title}`} onError={()=>setFailed(true)}/> : <div className="map-art-placeholder" title={failed?'Picture unavailable':'Picture pending'}><MapPin size={24}/></div>;
 }

@@ -198,7 +198,7 @@ main[data-stage="characters"] .page-intro { text-align:left; }
 .chapter-label { font-size:16px; font-weight:800; padding:9px 15px; border:1px solid #dbbc87; border-radius:10px; background:#fff4d9; white-space:nowrap; }
 .map-paper-frame { border:3px solid #cead73; border-radius:17px; background:#fff8e7; box-shadow:inset 0 0 0 3px #ffebbf,0 4px 0 #bc955547; padding:8px; overflow:hidden; }
 .map-drawing-surface { position:relative; overflow:hidden; height:460px; border-radius:10px; border:1px solid #d0c79c; isolation:isolate; background:#dce8bb; }
-.map-artwork { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none; }
+.map-artwork { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; pointer-events:none; }
 .map-drawing-surface.placing { cursor:crosshair; }
 .map-farm-link { position:absolute; top:16px; left:24px; width:116px; display:flex; flex-direction:column; gap:4px; align-items:center; background:none; border:0; color:#fff; text-shadow:0 2px 3px #516033; font-size:19px; font-weight:800; z-index:3; }
 .map-farm-link img { width:104px; height:110px; object-fit:contain; }
@@ -666,7 +666,7 @@ main[data-stage="map"] .map-drawing-surface { height:calc(100dvh - var(--cwrite-
 .drama-shelf-pin { top:62%; }
 .drama-resume-art { width:65px; height:68px; object-fit:contain; }
 .drama-map-flag { color:#754b3b; }
-.map-label-leaders { position:absolute; inset:0; pointer-events:none; z-index:3; }
+.map-label-leaders { position:absolute; inset:0; pointer-events:none; z-index:1; }
 .map-label-leaders line { stroke:#8d7551; stroke-width:2; stroke-dasharray:5 5; opacity:.65; }
 .saved-story-flag,.resume-story-pin>span { background:linear-gradient(#fffdf0,#f3e0b7); border:1px solid #b49562; color:#624830; box-shadow:0 2px 0 #80643533; }
 .map-work-illustration { position:absolute; width:94px; height:78px; transform:translate(-50%,-100%); pointer-events:none; }
@@ -1356,8 +1356,8 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 
 /* Map artwork stays anchored; compact labels sit below it and avoid all picture bounds. */
 .map-work-illustration { width:164px; height:164px; z-index:2; filter:drop-shadow(0 5px 5px #526c3433); }
-.map-work-illustration>img { position:static; width:100%; height:100%; object-fit:contain; border-radius:24px; }
-.map-art-placeholder { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; border:2px dashed #72916c; border-radius:50%; background:#eef4da99; color:#4d694e; font-size:13px; }
+.map-work-illustration>img { position:static; width:100%; height:100%; object-fit:contain; border-radius:0; }
+.map-art-placeholder { width:36px; height:36px; display:grid; place-items:center; border:1px dashed #72916c; border-radius:50%; background:#eef4da99; color:#4d694e; }
 .map-drawing-surface .saved-story-flag { width:142px; min-width:0; max-width:142px; min-height:0; height:44px; padding:5px 9px; font-size:14px; line-height:1.2; transform:translate(-50%,-100%); z-index:4; }
 .saved-story-flag span { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 .map-creating-pin { position:absolute; transform:translate(-50%,-100%); display:flex; flex-direction:column; align-items:center; z-index:30; pointer-events:none; }
