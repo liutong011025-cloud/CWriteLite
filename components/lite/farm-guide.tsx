@@ -8,7 +8,7 @@ const steps = [
   {target:'cagent',title:'Meet Cagent',text:'Click the bear to chat freely. Ask for ideas or ask what to do next.',side:'right'},
   {target:'garden',title:'Watch your values grow',text:'After you finish a story, trees grow for the values your story shows. Tap a tree to see its growth record.',side:'above'},
   {target:'board',title:'Your Writing Board',text:'Read your past writing and the comments your teachers and friends have left for you.',side:'left'},
-  {target:'friends',title:'Visit Others’ Farms',text:'Visit your friends’ farms and read their writing.',side:'left'},
+  {target:'friends',title:'Visit friends’ farms',text:'Visit your friends’ farms and read their writing.',side:'left'},
   {target:'settings',title:'Your Settings',text:'Set up your personal information and choose your avatar.',side:'right'},
 ] as const;
 

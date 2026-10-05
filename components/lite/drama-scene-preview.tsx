@@ -1,6 +1,7 @@
 'use client';
 import {useLayoutEffect,useRef,useState} from 'react';
 import type {Character,DramaActor,DramaScene} from '@/lib/types';
+import {actorImage} from '@/lib/sprite';
 import {placeDramaBubble,type Rect} from '@/lib/drama-bubble-layout';
 import DramaConnector from './drama-connector';
 
@@ -17,7 +18,7 @@ export default function DramaScenePreview({scene,characters,activeLineId,backgro
     void version;
     return <div ref={stage} className="drama-scene-preview" aria-label={'Complete stage: '+scene.name}>
         {scene.backgroundImageUrl&&<img className="drama-complete-background" src={scene.backgroundImageUrl} alt={scene.backgroundPrompt}/>}
-        {!backgroundOnly&&scene.actors.map(a=>{const c=characters.find(c=>c.id===a.characterId);return c?<div ref={n=>{if(n)actors.current.set(a.characterId,n);else actors.current.delete(a.characterId);}} key={a.characterId} className={'drama-preview-actor '+(activeLineId&&scene.lines.find(l=>l.id===activeLineId)?.characterId===a.characterId?'is-speaking':'')} style={{left:a.x+'%',top:a.y+'%',width:26*a.scale+'%',height:38*a.scale+'%'}}><img src={c.imageUrl||'/Cagentsit.webp'} alt={c.name} style={{transform:a.flipped?'scaleX(-1)':undefined}}/><b>{c.name}</b></div>:null;})}
+        {!backgroundOnly&&scene.actors.map(a=>{const c=characters.find(c=>c.id===a.characterId);return c?<div ref={n=>{if(n)actors.current.set(a.characterId,n);else actors.current.delete(a.characterId);}} key={a.characterId} className={'drama-preview-actor '+(activeLineId&&scene.lines.find(l=>l.id===activeLineId)?.characterId===a.characterId?'is-speaking':'')} style={{left:a.x+'%',top:a.y+'%',width:26*a.scale+'%',height:38*a.scale+'%'}}><img src={actorImage(c)} alt={c.name} style={{transform:a.flipped?'scaleX(-1)':undefined}}/><b>{c.name}</b></div>:null;})}
         {!backgroundOnly&&!hideWords&&scene.actors.map(a=>{const c=characters.find(c=>c.id===a.characterId),line=scene.lines.find(l=>l.characterId===a.characterId&&l.text.trim());if(!c||!line||activeLineId&&activeLineId!==line.id)return null;
             const p=placeDramaBubble(actorRect(a),{width:Math.min(220,Math.max(150,size.width*.35)),height:bubbles.current.get(a.characterId)?.offsetHeight||100},size,rects,occupied);occupied.push(p);
             return <div className={'drama-character-writing drama-final-bubble '+line.kind} key={'words-'+a.characterId} ref={n=>{if(n)bubbles.current.set(a.characterId,n);else bubbles.current.delete(a.characterId);}} style={{left:p.left,top:p.top,width:p.width}}><div className={'drama-bubble-preview '+line.kind}><b>{c.name}{line.kind==='thought'?' thinks':' says'}</b><span>{line.text}</span></div><DramaConnector placement={p} thought={line.kind==='thought'}/></div>;

@@ -20,6 +20,7 @@ model User {
   characters Character[]
   stories Story[]
   events ResearchEvent[]
+  videoJobs VideoJob[]
 }
 model Session {
   token String @id
@@ -40,6 +41,7 @@ model Character {
   strength String @default("")
   challenge String @default("")
   imageUrl String @default("")
+  spriteUrl String @default("")
   sketch String @default("")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -63,6 +65,7 @@ model Story {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   revisions Revision[]
+  videoJobs VideoJob[]
 }
 model Revision {
   id String @id @default(cuid())
@@ -80,6 +83,41 @@ model ResearchEvent {
   payload Json
   createdAt DateTime @default(now())
 }
+model VideoJob {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  storyId String
+  story Story @relation(fields:[storyId],references:[id],onDelete:Cascade)
+  revisionHash String
+  model String
+  plan Json
+  status String @default("planning")
+  errorCode String @default("")
+  errorMessage String @default("")
+  outputUrl String @default("")
+  leaseUntil DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  clips VideoClip[]
+  @@unique([storyId, revisionHash])
+  @@index([userId])
+}
+model VideoClip {
+  id String @id @default(cuid())
+  jobId String
+  job VideoJob @relation(fields:[jobId],references:[id],onDelete:Cascade)
+  sceneId String
+  sequence Int
+  duration Int @default(0)
+  providerTaskId String @default("")
+  status String @default("planned")
+  sourceUrl String @default("")
+  storedUrl String @default("")
+  error String @default("")
+  subtitle Json @default("{}")
+  @@unique([jobId, sequence])
+}
 model WorkReview {
   id String @id @default(cuid())
   authorUsername String
@@ -91,4 +129,10 @@ model WorkReview {
   content String
   readAt DateTime?
   createdAt DateTime @default(now())
+}
+model AssetGeneration {
+  id String @id
+  status String @default("processing")
+  imageUrl String @default("")
+  updatedAt DateTime @updatedAt
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "VideoJob" ADD COLUMN "leaseUntil" TIMESTAMP(3);

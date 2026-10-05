@@ -186,7 +186,7 @@ export default function UserSettingsPage({
                   </label>
                 </div>
                 <div>
-                  <p className="mb-2 font-hand text-sm text-muted-foreground">AI generate (Fal.ai)</p>
+                  <p className="mb-2 font-hand text-sm text-muted-foreground">Make a picture</p>
                   <div className="flex gap-2">
                     <Input
                       placeholder="e.g. cute panda avatar"
