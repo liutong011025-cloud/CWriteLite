@@ -282,7 +282,10 @@ main[data-stage="map"] .map-update-status { position:absolute; left:50%; bottom:
 @media print { body { min-width:0; } .storybook-banner { display:none!important; } }
 
 /* Spacious desktop workspace, with scenery visible only outside the panel. */
-body { min-width:1120px; }
+body { min-width:0; }
+.local-preview-banner { position:fixed; bottom:8px; right:8px; max-width:390px; z-index:500; padding:6px 12px; border-radius:8px; background:#fff1c9; color:#513c1d; font:700 14px/1.4 sans-serif; pointer-events:none; }
+.writing-layout,.canvas-layout,.finish-layout,.studio-grid,.story-header { min-width:0; }
+.growth-retry { position:fixed; left:50%; bottom:28px; z-index:240; transform:translateX(-50%); display:flex; align-items:center; gap:12px; max-width:min(640px,calc(100% - 32px)); padding:12px 16px; border:2px solid #d7b56a; border-radius:14px; background:#fff8e8; color:#4d3b22; font-weight:800; box-shadow:0 8px 24px #3c2a121f; }
 .lite-stage { padding:22px 24px 24px; min-height:calc(100dvh - 5.67vw); }
 .storybook-app { max-width:none; width:100%; }
 .story-shell { padding-bottom:0; min-height:calc(100dvh - 5.67vw - 48px); border-radius:20px; }
@@ -666,7 +669,7 @@ main[data-stage="map"] .map-drawing-surface { height:calc(100dvh - var(--cwrite-
 .map-label-leaders { position:absolute; inset:0; pointer-events:none; z-index:3; }
 .map-label-leaders line { stroke:#8d7551; stroke-width:2; stroke-dasharray:5 5; opacity:.65; }
 .saved-story-flag,.resume-story-pin>span { background:linear-gradient(#fffdf0,#f3e0b7); border:1px solid #b49562; color:#624830; box-shadow:0 2px 0 #80643533; }
-.map-work-illustration { position:absolute; width:94px; height:78px; transform:translate(-50%,-35%); pointer-events:none; }
+.map-work-illustration { position:absolute; width:94px; height:78px; transform:translate(-50%,-100%); pointer-events:none; }
 .map-work-illustration>svg { width:100%; height:100%; }
 .map-work-illustration>img { position:absolute; left:34%; top:43%; width:34%; height:47%; object-fit:contain; }
 .drama-page-intro { display:flex; justify-content:space-between; align-items:center; gap:24px; margin-bottom:16px; }
@@ -1298,16 +1301,16 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 .drama-tableau .drama-background-controls>label { flex:1 1 210px; }
 .drama-tableau .drama-background-controls>button { flex:0 0 auto; width:auto; min-width:0; max-width:none; white-space:nowrap; padding:12px 14px; font-size:17px; min-height:50px; }
 
-/* The bear's paws rest on the next panel. The reserved space follows its words. */
+/* The coach shares the editor's top edge in the right support column. */
 .writing-top { display:block; min-height:0; }
-.writing-coach-shelf { position:relative; min-height:170px; transition:height 450ms ease; margin:0; }
-.writing-coach-message { position:absolute; left:0; right:184px; bottom:14px; max-width:none; margin:0; padding:15px 20px; font-size:21px; line-height:1.45; color:#68627f; background:#f2ecfa; border:2px solid #ae96d2; border-radius:17px; overflow-wrap:anywhere; }
+.writing-coach-shelf { display:flex; align-items:flex-start; gap:12px; min-width:0; margin:0; }
+.writing-coach-message { position:relative; flex:1; min-width:0; max-width:none; margin:0; padding:14px 16px; font-size:20px; line-height:1.45; color:#68627f; background:#f2ecfa; border:2px solid #ae96d2; border-radius:17px; overflow-wrap:anywhere; }
 .writing-coach-message:before { left:auto; right:-9px; top:50%; background:#f2ecfa; border:0; border-right:2px solid #ae96d2; border-top:2px solid #ae96d2; transform:translateY(-50%) rotate(45deg); }
-.writing-canvas-bear { position:absolute; right:12px; bottom:-12px; z-index:2; width:160px; pointer-events:none; }
+.writing-canvas-bear { position:relative; align-self:flex-end; flex:0 0 100px; width:100px; transform:translateY(22px); z-index:2; pointer-events:none; }
 .writing-canvas-bear .bear-guide { display:block; padding:0; margin:0; max-width:none; }
 .writing-canvas-bear .cagent-little-tools { display:none; }
-.writing-canvas-bear .cagent-avatar { width:160px; height:160px; }
-.writing-canvas-bear .cagent-main-pose { display:block; width:160px; height:160px; margin:0; animation:cagent-frame-breathe 6s ease-in-out infinite; transform-origin:center bottom; }
+.writing-canvas-bear .cagent-avatar { width:100px; height:100px; }
+.writing-canvas-bear .cagent-main-pose { display:block; width:100px; height:100px; margin:0; animation:cagent-frame-breathe 6s ease-in-out infinite; transform-origin:center bottom; }
 .writing-layout .canvas-preview { position:relative; }
 .drama-scene-preview { position:relative; width:100%; aspect-ratio:16/11; min-height:360px; overflow:hidden; border:2px solid #cdb88c; border-radius:13px; margin:14px 0; background:#f2e9d2; isolation:isolate; }
 .drama-complete-background { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
@@ -1325,5 +1328,19 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 .drama-preview-actor.is-speaking>img { animation:drama-speaking 2s ease-in-out infinite; transform-origin:50% 100%; }
 @keyframes drama-scene-arrive { from {opacity:.4} to {opacity:1} }
 @keyframes drama-speaking { 0%,100% {translate:0 0} 50% {translate:0 -3px} }
-@media(max-width:760px) { .writing-coach-message { right:130px; font-size:18px; padding:12px; } .writing-canvas-bear { right:2px; width:115px; } .writing-canvas-bear .cagent-avatar,.writing-canvas-bear .cagent-main-pose { width:115px; height:115px; } .drama-scene-preview { min-height:320px; } }
-@media(prefers-reduced-motion:reduce) { .writing-coach-shelf { transition:none; } .drama-animation-picture,.drama-preview-actor.is-speaking>img { animation:none; } }
+@media(max-width:760px) { .writing-coach-message { font-size:18px; padding:12px; } .drama-scene-preview { min-height:320px; } }
+@media(prefers-reduced-motion:reduce) { .writing-canvas-bear .cagent-main-pose,.drama-animation-picture,.drama-preview-actor.is-speaking>img { animation:none; } }
+@media (max-width:1024px) {
+  .story-header { height:auto; flex-wrap:wrap; }
+  .story-header .progress-nav { flex-wrap:wrap; justify-content:flex-start; }
+  .canvas-layout,.finish-layout { grid-template-columns:minmax(0,1.5fr) minmax(220px,.8fr); }
+  .studio-footer { position:sticky; bottom:0; z-index:4; background:#fff9ec; }
+}
+@media (max-width:768px) {
+  .story-header .progress-nav { width:100%; }
+  .canvas-layout,.finish-layout,.writing-layout { grid-template-columns:minmax(0,1fr); }
+  .story-content :is(.purple-button,.outline-button) { min-height:48px; }
+  .drama-video-panel video { width:100%; }
+}
+.portrait-window { background:#fff6e4; }
+.drama-actor img,.drama-preview-actor>img { background:transparent; }
