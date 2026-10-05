@@ -11,9 +11,9 @@ Module._load=function(request,parent,isMain){
    calls++;const context=JSON.parse(options.messages[1].content);
    assert.deepEqual(context.characters,[{id:'zhu-id',name:'Zhu'},{id:'friend-id',name:'Friend'}]);
    assert.equal(context.canvas.drama.scenes.length,1);assert.equal(context.canvas.drama.scenes[0].id,'current');
-   assert.equal(context.selectedNode.characterId,'zhu-id');assert.deepEqual(context.sections,[]);assert.equal(context.character,undefined);
+   assert.equal(context.selectedNode.characterId,'zhu-id');assert.deepEqual(context.requestedContribution,{characterId:'zhu-id',kind:'dialogue'});assert.deepEqual(context.sections,[]);assert.equal(context.character,undefined);
    assert.ok(!JSON.stringify(context).includes('brave'));assert.ok(!JSON.stringify(context).includes('ride fast'));
-   return JSON.stringify({suggestions:[{characterId:alwaysWrong||calls%2?'friend-id':'Zhu',kind:'dialogue',prompt:'What could Zhu say about waiting?',frame:'Could we wait near ___?',keywords:['wait','nearby','together']}],question:'Where could they wait?'});
+   return JSON.stringify({suggestions:[{characterId:alwaysWrong||calls%2?'friend-id':'Zhu',kind:'Says',prompt:'What could Zhu say about waiting?',frame:'Could we wait near ___?',keywords:['wait','nearby','together']}],question:'Where could they wait?'});
  }};
  if(request.startsWith('@/'))request=path.join(root,request.slice(2));return load.call(this,request,parent,isMain);
 };

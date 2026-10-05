@@ -9,16 +9,18 @@ export function dramaSuggestions(value:unknown,canvas:StoryCanvas,cast:Character
     const result=value as {suggestions?:unknown[];keywords?:unknown;question?:unknown};
     const scene=canvas.drama?.scenes.find(s=>s.id===sceneId)||canvas.drama?.scenes[canvas.drama.activeScene];
     const ids=new Set(scene?.actors.map(a=>a.characterId).filter(id=>cast.some(c=>c.id===id))||[]);
-    const suggestions=(Array.isArray(result?.suggestions)?result.suggestions:[]).flatMap(item=>{
+    const suggestions=(Array.isArray(result?.suggestions)?result.suggestions:[]).flatMap<DramaSuggestion>(item=>{
         const s=item as Partial<DramaSuggestion>;
         if(!s)return [];
         // Some providers return the speaker's name despite being asked for an ID. Resolve only an unambiguous placed name.
         const names=cast.filter(c=>ids.has(c.id)&&c.name.trim().toLowerCase()===String(s.characterId).trim().toLowerCase());
         const characterId=ids.has(String(s.characterId))?String(s.characterId):names.length===1?names[0].id:'';
-        if(!characterId||typeof s.prompt!=='string'||!s.prompt.trim()||!['dialogue','thought'].includes(String(s.kind)))return [];
-        if(selection?.characterId&&characterId!==selection.characterId||selection?.kind&&selection.kind!=='scene'&&s.kind!==selection.kind)return [];
+        const rawKind=String(s.kind).trim().toLowerCase();
+        const kind=['dialogue','says','speech'].includes(rawKind)?'dialogue':['thought','thinks'].includes(rawKind)?'thought':null;
+        if(!characterId||typeof s.prompt!=='string'||!s.prompt.trim()||!kind)return [];
+        if(selection?.characterId&&characterId!==selection.characterId||selection?.kind&&selection.kind!=='scene'&&kind!==selection.kind)return [];
         if(typeof s.frame!=='string'||!s.frame.includes('___')||s.frame.split(/\s+/).length>14)return [];
-        return [{characterId,kind:s.kind!,prompt:s.prompt.trim().slice(0,240),keywords:words(s.keywords),frame:typeof s.frame==='string'&&s.frame.includes('___')&&s.frame.split(/\s+/).length<=14?s.frame.slice(0,180):''}];
+        return [{characterId,kind,prompt:s.prompt.trim().slice(0,240),keywords:words(s.keywords),frame:typeof s.frame==='string'&&s.frame.includes('___')&&s.frame.split(/\s+/).length<=14?s.frame.slice(0,180):''}];
     }).slice(0,3);
     return {suggestions,keywords:words(result?.keywords),question:typeof result?.question==='string'?result.question.slice(0,300):''};
 }
