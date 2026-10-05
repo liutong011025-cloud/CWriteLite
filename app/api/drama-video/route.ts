@@ -14,15 +14,16 @@ import {directVideoJob} from '@/lib/direct-video-job';
 import {ArkVideoError,createSeedanceTask} from '@/lib/ark-video';
 export const maxDuration=60;
 const model=()=>process.env.ARK_VIDEO_MODEL?.trim()||SEEDANCE_VIDEO_MODEL;
+const snapshot=(story:Story)=>dramaRevisionHash(story,model()+'|direct-five-second-v2');
 export async function GET(request:Request){
     const user=await currentUser();if(!user)return NextResponse.json({error:'Please log in.'},{status:401});
     const saved=await prisma.story.findFirst({where:{id:new URL(request.url).searchParams.get('storyId')||'',userId:user.id}});
     if(!saved||!isDrama(saved as unknown as Story))return NextResponse.json({error:'Drama not found.'},{status:404});
-    const story=saved as unknown as Story,snapshotHash=dramaRevisionHash(story,model());
+    const story=saved as unknown as Story,snapshotHash=snapshot(story);
     const jobs=await prisma.videoJob.findMany({where:{storyId:story.id,userId:user.id,plan:{path:['snapshotHash'],equals:snapshotHash}},include:{clips:true},orderBy:{createdAt:'desc'},take:60});
     const latest=new Map<string,ReturnType<typeof directVideoJob>>();
     for(const job of jobs)if(!latest.has(job.clips[0]?.sceneId))latest.set(job.clips[0]?.sceneId,directVideoJob(job));
-    return NextResponse.json({status:'idle',mock:localPreviewEnabled(),configured:Boolean(process.env.ARK_API_KEY?.trim()),scenes:story.canvas.drama!.scenes.map((s,i)=>({id:s.id,name:sceneTitle(i,s.name),prompt:dramaMotionPrompt(story,s)})),jobs:[...latest.values()]});
+    return NextResponse.json({status:'idle',mock:localPreviewEnabled(),configured:Boolean(process.env.ARK_API_KEY?.trim()),scenes:story.canvas.drama!.scenes.map((s,i)=>({id:s.id,name:sceneTitle(i,s.name)})),jobs:[...latest.values()]});
 }
 export async function POST(request:Request){
     const user=await currentUser();if(!user)return NextResponse.json({error:'Please log in.'},{status:401});
@@ -33,9 +34,8 @@ export async function POST(request:Request){
     if(!saved||!isDrama(saved as unknown as Story))return NextResponse.json({error:'Drama not found.'},{status:404});
     const story=saved as unknown as Story,scene=story.canvas.drama!.scenes.find(s=>s.id===body.sceneId);
     if(!scene?.backgroundImageUrl||!scene.actors.length)return NextResponse.json({error:'Choose a scene with a background and characters.'},{status:409});
-    const prompt=String(body.prompt||'').trim(),duration=Number(body.duration??8);
-    if(!prompt||prompt.length>6000||!Number.isInteger(duration)||duration<4||duration>15)return NextResponse.json({error:'Use a motion prompt up to 6,000 characters and a duration of 4–15 seconds.'},{status:400});
-    const selectedModel=model(),snapshotHash=dramaRevisionHash(story,selectedModel);
+    const prompt=dramaMotionPrompt(story,scene),duration=5;
+    const selectedModel=model(),snapshotHash=snapshot(story);
     const revisionHash=createHash('sha256').update(JSON.stringify({mode:'direct-v1',snapshotHash,sceneId:scene.id,prompt,duration})).digest('hex');
     let job=await prisma.videoJob.findUnique({where:{storyId_revisionHash:{storyId:story.id,revisionHash}},include:{clips:true}}),claimed=false;
     if(!job){try{

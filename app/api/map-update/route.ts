@@ -4,7 +4,7 @@ import { fal } from "@fal-ai/client";
 import { Prisma } from "@prisma/client";
 import { currentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { generateFalImage, getFalKey, FAL_IMAGE_EDIT_MODEL } from "@/lib/fal-images";
+import { generateFalImage, removeBackground, getFalKey, FAL_IMAGE_EDIT_MODEL } from "@/lib/fal-images";
 import { freeMapPoint } from "@/lib/map-markers";
 import type { Story } from "@/lib/types";
 import { isDrama } from "@/lib/drama";
@@ -35,15 +35,18 @@ export async function POST(request: NextRequest) {
         const savedPin = story.pin as { x: number; y: number } | null;
         const occupied = flags.filter((flag: any) => flag.id !== story.id).map((flag: any) => ({ x: Number(flag.x) || 0, y: Number(flag.y) || 0 }));
         const pin = savedPin && Number.isFinite(savedPin.x) && Number.isFinite(savedPin.y) ? { x: clamp(savedPin.x), y: clamp(savedPin.y) } : freeMapPoint(occupied);
-        const version = artVersion(story, pin);
-        const claimId=`map-edit:${user.id}:${story.id}:${version}`;
         const current = flags.find((flag: any) => flag.id === story.id);
+        const repairOnly=body.repairOnly===true;
+        const version = repairOnly && current?.previewArt?.version || artVersion(story, pin);
+        const claimId=`map-edit:${user.id}:${story.id}:${version}`;
         const mock = localPreviewEnabled() || process.env.NODE_ENV === "development" && process.env.CWRITE_LOCAL_MOCK_IMAGES === "true";
         const source=mock?'local-preview':'fal';
-        if ((current?.previewArt?.source===source || !mock&&!current?.previewArt?.source&&current?.previewArt?.imageUrl?.startsWith("https://")) && current?.previewArt?.version === version && current.previewArt.imageUrl)
+        const cached=(current?.previewArt?.source===source || !mock&&!current?.previewArt?.source&&current?.previewArt?.imageUrl?.startsWith("https://")) && (repairOnly || current?.previewArt?.version === version) && current?.previewArt?.imageUrl;
+        if (cached && (mock || current.previewArt.backgroundRemoved===true))
             return NextResponse.json({ previewArt: {...current.previewArt,source}, mapX: pin.x, mapY: pin.y, reused: true, mapState: state });
+        if(repairOnly&&!cached)return NextResponse.json({saved:true,skipped:true});
         let imageUrl = "";
-        let requestId:string|undefined;
+        let requestId:string|undefined=current?.previewArt?.requestId;
         if (mock) {
             const cast = Array.isArray(story.characterSnapshots) ? story.characterSnapshots as { imageUrl?: string }[] : [];
             imageUrl = cast[0]?.imageUrl || "/storypin.webp";
@@ -52,6 +55,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "map_unavailable", message: "Image generation is unavailable. Your writing is saved. Please try again later.", saved: true }, { status: 200 });
         }
         else {
+            if(cached)imageUrl=current.previewArt.originalImageUrl||current.previewArt.imageUrl;
+            else {
             const claim=await claimAsset(claimId);
             if(!claim.claimed&&!claim.imageUrl)return NextResponse.json({saved:true,message:'Your map picture is being made. Check again shortly.'},{status:202});
             if(claim.imageUrl)imageUrl=claim.imageUrl;
@@ -74,8 +79,19 @@ export async function POST(request: NextRequest) {
             console.info('[map-update] generation_finished',{storyId:story.id,model:picture.model,requestId});
             await finishAsset(claimId,imageUrl);
             }catch(error){await failAsset(claimId);throw error;}
+            }
         }
-        const previewArt = { imageUrl, storyId: story.id, anchor: "bottom-center" as const, version, source, ...(mock?{}:{model:FAL_IMAGE_EDIT_MODEL,...(requestId?{requestId}:{})}) };
+        const originalImageUrl=imageUrl;
+        let backgroundRemoved=false,cutoutPending=false,cutoutFailed=false;
+        if(!mock){
+            const cutoutId=`map-cutout:${user.id}:${story.id}:${createHash('sha256').update(originalImageUrl).digest('hex').slice(0,24)}`;
+            const claim=await claimAsset(cutoutId);
+            if(claim.imageUrl){imageUrl=claim.imageUrl;backgroundRemoved=true;}
+            else if(!claim.claimed)cutoutPending=true;
+            else try{imageUrl=await removeBackground(originalImageUrl);await finishAsset(cutoutId,imageUrl);backgroundRemoved=true;}
+            catch(error){await failAsset(cutoutId);cutoutFailed=true;console.error('[map-update] cutout_failed',{storyId:story.id,message:(error as Error).message});}
+        }
+        const previewArt = { imageUrl, originalImageUrl, backgroundRemoved, storyId: story.id, anchor: "bottom-center" as const, version, source, ...(mock?{}:{model:cached?current.previewArt.model||FAL_IMAGE_EDIT_MODEL:FAL_IMAGE_EDIT_MODEL,...(requestId?{requestId}:{})}) };
         const flag = { id: story.id, x: pin.x, y: pin.y, title: story.title, content: story.content, workType: isDrama(story as unknown as Story) ? "drama" : "story", previewArt };
         chapters[story.chapterIndex] = { ...chapter, mapImageUrl: chapter.mapImageUrl || (story.chapterIndex ? "/secondmap.webp" : "/firstmap.webp"), currentPin: null, mapFlags: [...flags.filter((item: any) => item.id !== story.id), flag] };
         const mapState = await prisma.$transaction(async tx=>{
@@ -90,7 +106,7 @@ export async function POST(request: NextRequest) {
             await tx.story.update({where:{id:story.id},data:{pin:json(pin)}});
             await tx.user.update({where:{id:user.id},data:{mapState:json(result)}});return result;
         });
-        return NextResponse.json({ previewArt, mapX: pin.x, mapY: pin.y, mapState, reused: false });
+        return NextResponse.json({ previewArt, mapX: pin.x, mapY: pin.y, mapState, reused: false, ...(cutoutFailed?{error:'map_cutout_failed',message:'Your writing is saved. The transparent map picture needs another try.'}:{}),...(cutoutPending?{message:'Your transparent map picture is being made. Check again shortly.'}:{}) },{status:cutoutPending?202:200});
     }
     catch (error) {
         console.error("[map-update] Error:", (error as { message?: string })?.message || "unknown");

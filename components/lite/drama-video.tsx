@@ -2,43 +2,53 @@
 import {useEffect,useRef,useState} from 'react';
 import {Clapperboard} from 'lucide-react';
 import {api} from './common';
-type Job={id:string;sceneId:string;status:string;errorMessage:string;outputUrl:string;prompt:string;duration:number};
-type Scene={id:string;name:string;prompt:string};
+type Job={id:string;sceneId:string;status:string;errorMessage:string;outputUrl:string};
+type Scene={id:string;name:string};
 type State={scenes:Scene[];jobs:Job[];mock?:boolean;configured?:boolean};
 const pending=(status?:string)=>['preparing','submitting','generating'].includes(status||'');
 export default function DramaVideoPanel({storyId}:{storyId:string}){
-    const [state,setState]=useState<State>({scenes:[],jobs:[]}),[sceneId,setSceneId]=useState(''),[prompt,setPrompt]=useState(''),[duration,setDuration]=useState(8),[busy,setBusy]=useState(false),[error,setError]=useState('');
-    const selected=useRef(''),submitting=useRef(false);selected.current=sceneId;
-    const job=state.jobs.find(j=>j.sceneId===sceneId),jobId=job?.id,jobStatus=job?.status;
+    const [state,setState]=useState<State>({scenes:[],jobs:[]}),[busy,setBusy]=useState(false),[error,setError]=useState('');
+    const submitting=useRef(false),mounted=useRef(true);
     useEffect(()=>{
-        let active=true;
-        void api('/api/drama-video?storyId='+encodeURIComponent(storyId)).then((result:State)=>{if(!active)return;setState(result);const scene=result.scenes[0],saved=result.jobs.find(j=>j.sceneId===scene?.id);setSceneId(scene?.id||'');setPrompt(saved?.prompt||scene?.prompt||'');setDuration(saved?.duration||8);}).catch(e=>{if(active)setError(e.message);});
-        return()=>{active=false;};
+        mounted.current=true;let active=true;
+        void api('/api/drama-video?storyId='+encodeURIComponent(storyId)).then((result:State)=>{if(active)setState(result);}).catch(e=>{if(active)setError(e.message);});
+        return()=>{active=false;mounted.current=false;};
     },[storyId]);
+    const pendingIds=state.jobs.filter(j=>pending(j.status)).map(j=>j.id).sort().join('|');
     useEffect(()=>{
-        if(!jobId||!pending(jobStatus))return;
+        if(!pendingIds)return;
         let active=true,timer:ReturnType<typeof setTimeout>;
-        async function poll(){try{const r=await api('/api/drama-video/'+jobId);if(active){setState(s=>({...s,jobs:s.jobs.map(j=>j.id===jobId?r.job:j)}));setError('');}}catch(e){if(active)setError((e as Error).message);}finally{if(active)timer=setTimeout(poll,5000);}}
+        async function poll(){
+            const results=await Promise.allSettled(pendingIds.split('|').map(id=>api('/api/drama-video/'+id)));
+            if(!active)return;
+            const updates=results.flatMap(result=>result.status==='fulfilled'?[result.value.job as Job]:[]);
+            setState(s=>({...s,jobs:s.jobs.map(j=>updates.find(update=>update.id===j.id)||j)}));
+            const failure=results.find(result=>result.status==='rejected');
+            setError(failure?.status==='rejected'?'Checking your videos again shortly…':'');
+            timer=setTimeout(poll,5000);
+        }
         timer=setTimeout(poll,5000);return()=>{active=false;clearTimeout(timer);};
-    },[jobId,jobStatus]);
-    function choose(id:string){const scene=state.scenes.find(s=>s.id===id),saved=state.jobs.find(j=>j.sceneId===id);setSceneId(id);setPrompt(saved?.prompt||scene?.prompt||'');setDuration(saved?.duration||8);setError('');}
+    },[pendingIds]);
     async function start(){
         if(submitting.current)return;submitting.current=true;setBusy(true);setError('');
-        const requestedScene=sceneId;
-        try{const r=await api('/api/drama-video',{storyId,sceneId,prompt,duration,retry:job?.status==='failed'});setState(s=>({...s,jobs:[...s.jobs.filter(j=>j.sceneId!==requestedScene),r.job]}));}
-        catch(e){if(selected.current===requestedScene)setError((e as Error).message);}
-        finally{submitting.current=false;setBusy(false);}
+        const scenes=state.scenes.filter(scene=>{const job=state.jobs.find(j=>j.sceneId===scene.id);return !job||job.status==='failed';});
+        // Submit every scene immediately. Ark renders independently; the page only polls task IDs.
+        const results=await Promise.allSettled(scenes.map(async scene=>{
+            const r=await api('/api/drama-video',{storyId,sceneId:scene.id,retry:state.jobs.some(j=>j.sceneId===scene.id&&j.status==='failed')});
+            if(mounted.current)setState(s=>({...s,jobs:[...s.jobs.filter(j=>j.sceneId!==scene.id),r.job]}));
+        }));
+        if(mounted.current){if(results.some(r=>r.status==='rejected'))setError('Some scenes could not start. Please try the remaining scenes again.');setBusy(false);}
+        submitting.current=false;
     }
-    const active=pending(jobStatus),unknown=jobStatus==='needs_confirmation';
-    return <section className="drama-video-panel"><h3><Clapperboard size={20}/>Animate your scene</h3>
-        {state.scenes.length>0&&<><label>Scene<select aria-label="Video scene" value={sceneId} disabled={busy} onChange={e=>choose(e.target.value)}>{state.scenes.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
-        <label>Animation prompt<textarea aria-label="Animation prompt" value={prompt} maxLength={6000} rows={7} disabled={busy||active||unknown} onChange={e=>setPrompt(e.target.value)}/></label>
-        <label>Length<select aria-label="Video length" value={duration} disabled={busy||active||unknown} onChange={e=>setDuration(Number(e.target.value))}>{[5,8,10,15].map(n=><option key={n} value={n}>{n} seconds</option>)}</select></label></>}
-        {job?.outputUrl&&<><video src={job.outputUrl} controls playsInline preload="metadata" aria-label="Generated scene video"/><a className="outline-button" target="_blank" rel="noopener noreferrer" href={job.outputUrl}>Open / download video</a><p className="field-hint">Download your video while the link is available.</p></>}
-        {(busy||active)&&<div className="drama-video-wait" role="status"><img src="/Cagentdraw.webp" alt=""/><p>{busy?'Preparing your stage…':'Making smooth moves for your scene…'}</p></div>}
-        {state.mock&&<p className="field-hint">Local preview: edit your prompt here. Video generation is available on the live site.</p>}
-        {state.configured===false&&!state.mock&&<p>The video API key needs to be connected.</p>}
-        {job?.errorMessage&&<p className="error-text" role="alert">{job.errorMessage}</p>}{error&&<p className="error-text" role="alert">{error}</p>}
-        <button className="suggestions-action" disabled={!sceneId||!prompt.trim()||busy||active||unknown||state.mock||!state.configured||Boolean(job?.outputUrl&&prompt===job.prompt&&duration===job.duration)} onClick={()=>void start()}>{busy||active?'Generating…':job?.outputUrl&&prompt===job.prompt&&duration===job.duration?'Video ready':jobStatus==='failed'?'Try again':'Generate video'}</button>
+    const active=Boolean(pendingIds),remaining=state.scenes.some(s=>{const j=state.jobs.find(j=>j.sceneId===s.id);return !j||j.status==='failed';});
+    const allReady=state.scenes.length>0&&state.scenes.every(s=>state.jobs.some(j=>j.sceneId===s.id&&Boolean(j.outputUrl)));
+    return <section className="drama-video-panel"><h3><Clapperboard size={20}/>Drama video</h3>
+        {(busy||active)&&<div className="drama-video-wait" role="status"><img src="/Cagentdraw.webp" alt=""/><p>Making your scenes come to life…</p></div>}
+        {state.scenes.map(scene=>{const job=state.jobs.find(j=>j.sceneId===scene.id);return job?<div className="drama-video-result" key={scene.id}><h4>{scene.name}</h4>
+            {job.outputUrl&&<><video src={job.outputUrl} controls playsInline preload="metadata" aria-label={scene.name+' video'}/><a className="outline-button" target="_blank" rel="noopener noreferrer" href={job.outputUrl}>Open / download video</a></>}
+            {pending(job.status)&&<p role="status">Generating…</p>}{job.errorMessage&&<p className="error-text" role="alert">{job.errorMessage}</p>}
+        </div>:null;})}
+        {error&&<p className="error-text" role="alert">{error}</p>}
+        <button className="suggestions-action" disabled={!state.scenes.length||busy||active||state.mock||!state.configured||!remaining} onClick={()=>void start()}>{busy||active?'Generating…':allReady?'Videos ready':'Generate video'}</button>
     </section>;
 }

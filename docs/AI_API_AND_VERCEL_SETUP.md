@@ -27,7 +27,7 @@ ARK_VIDEO_MODEL=doubao-seedance-2-5-260628
 ARK_API_KEY=填写火山方舟控制台的APIKey
 ```
 
-`ARK_API_KEY` 与模型权限就能提交图生视频；无需对象存储或合并 worker。完成页提供可编辑动画提示词与临时视频播放、下载。数据库新增 `spriteUrl`、`VideoJob` 和 `VideoClip` 后，需要运行 `npm run db:migrate`。构建成功不等于这些表已经在生产库里。
+`ARK_API_KEY` 与模型权限就能提交图生视频；无需对象存储或合并 worker。完成页一键生成所有场景的视频，默认每幕 5 秒；提供临时视频播放、下载。数据库新增 `spriteUrl`、`VideoJob` 和 `VideoClip` 后，需要运行 `npm run db:migrate`。构建成功不等于这些表已经在生产库里。
 
 ## 2. 当前所有 AI API 名称
 
@@ -39,7 +39,7 @@ ARK_API_KEY=填写火山方舟控制台的APIKey
 | fal / `fal-ai/nano-banana-2` | fal SDK 的 `fal.subscribe("fal-ai/nano-banana-2", …)` | 从描述生成角色、物品和背景；输出 WebP |
 | fal / `fal-ai/nano-banana-2/edit` | fal SDK 的 `fal.subscribe("fal-ai/nano-banana-2/edit", …)` | 根据学生画稿生成图片；地图使用裁剪的底图参考生成独立插画 |
 | fal / `fal-ai/imageutils/rembg` | fal SDK 的 `fal.subscribe("fal-ai/imageutils/rembg", …)` | 角色和物品生成后的去背景。失败时保留原图，不把原图当作透明图。共用 `FAL_KEY` |
-| 火山方舟 / `doubao-seedance-2-5-260628` | `POST /contents/generations/tasks`；`GET /contents/generations/tasks/{id}` | 根据画板合成首帧，以可编辑提示词直接提交图生视频；无需 TOS 或 worker，返回临时 MP4 链接 |
+| 火山方舟 / `doubao-seedance-2-5-260628` | `POST /contents/generations/tasks`；`GET /contents/generations/tasks/{id}` | 根据画板合成首帧，自动编写提示词，一键为所有场景各提交 5 秒图生视频；无需 TOS 或 worker，返回临时 MP4 链接 |
 
 ### 网站内部接口
 
@@ -60,12 +60,12 @@ ARK_API_KEY=填写火山方舟控制台的APIKey
 | `POST /api/section-gate` | 无 `kind`，传 `storyId` 与 `section` | Story 五部分检查：角色、画板联系、当前结构和新情节 / DeepSeek + 服务端证据核对 |
 | `POST /api/dify-cagent-guide` | 无 `kind`，传 `userMessage` | My Farm 小熊指导 / **实际调用 DeepSeek，名字保留了旧 Dify 命名**；不需要 Dify 密钥 |
 | `POST /api/map-update` | 无 `kind`，传 `storyId` | 裁出原地图的小块作为风格参考，调用 `fal-ai/nano-banana-2/edit` 生成独立插画并固定在图钉上；保留底图，同一版本复用缓存。模型名和 fal 请求编号存在 `previewArt` |
-| `POST /api/drama-video` | 无 `kind`，传 `storyId` | 传 `storyId`、`sceneId`、`prompt`、`duration`，直接创建 Seedance 任务；相同画板/提示词/时长复用任务 |
+| `POST /api/drama-video` | 无 `kind`，传 `storyId` | 传 `storyId`、`sceneId`，自动编写提示词并创建 5 秒 Seedance 任务；相同画板版本复用任务 |
 
 其余 `/api/data`、角色库、登录等接口是保存或读取数据，不调用独立 AI 服务。Story / Drama 共用上述密钥和同一用户的角色库。
 
 ## 3. Drama 图生视频
 
-完成页选择一幕，编辑根据场景与人物话语生成的动作提示词，选择 5/8/10/15 秒后点击 Generate video。服务端合成画板背景与角色作为首帧，保留人物图片、大小、位置和翻转。使用无声、连续动画；不额外添加字幕。视频临时链接可播放与打开下载，无需长期保存。
+完成页只需点击 Generate video，为每幕分别生成一个 5 秒视频，动画提示词由场景与人物话语自动编写。服务端合成画板背景与角色作为首帧，保留人物图片、大小、位置和翻转。使用无声、连续动画；不额外添加字幕。视频临时链接可播放与打开下载，无需长期保存。
 
-任务号写入现有 VideoJob / VideoClip；刷新恢复状态，相同输入防重复提交。当地预览不调用付费视频 API。详细配置和恢复说明见 [VIDEO_DEPLOYMENT.md](VIDEO_DEPLOYMENT.md)。
+任务号写入现有 VideoJob / VideoClip；刷新恢复状态，相同输入防重复提交。本地预览不调用付费视频 API。详细配置和恢复说明见 [VIDEO_DEPLOYMENT.md](VIDEO_DEPLOYMENT.md)。

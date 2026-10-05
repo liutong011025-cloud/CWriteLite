@@ -24,7 +24,7 @@ global.fetch=async(url,init)=>{
     assert.ok(url.startsWith('https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks'));
     if(init.method==='POST'){
         submissions++;const body=JSON.parse(init.body);
-        assert.equal(body.ratio,'adaptive');assert.equal(body.duration,8);assert.equal(body.generate_audio,false);assert.equal(body.content[1].role,'first_frame');assert.ok(body.content[1].image_url.url.startsWith('data:image/png;base64,'));
+        assert.equal(body.ratio,'adaptive');assert.equal(body.duration,5);assert.equal(body.generate_audio,false);assert.equal(body.content[1].role,'first_frame');assert.ok(body.content[1].image_url.url.startsWith('data:image/png;base64,'));
         const info=await sharp(Buffer.from(body.content[1].image_url.url.split(',')[1],'base64')).metadata();assert.equal(info.width,1280);assert.equal(info.height,880);
         if(providerFailure)return Response.json({error:{message:'test server failure'}},{status:500});
         return Response.json({id:'provider-'+submissions});
@@ -42,13 +42,16 @@ async function main(){
     assert.deepEqual(await sample(png,400,700),[255,255,255]);assert.deepEqual(await sample(await reference.dramaVideoReference(bigger,bigger.canvas.drama.scenes[0]),400,700),[255,0,0]);
     assert.match(dramaMotionPrompt(story,story.canvas.drama.scenes[0]),/thinks silently/);
     const route=require('../app/api/drama-video/route.ts'),poll=require('../app/api/drama-video/[id]/route.ts');
-    const request=(prompt='Gentle movement')=>new Request('http://localhost/api/drama-video',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({storyId:'story',sceneId:'scene',prompt,duration:8})});
+    const request=(prompt='Gentle movement',sceneId='scene')=>new Request('http://localhost/api/drama-video',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({storyId:'story',sceneId,prompt,duration:15})});
     await Promise.all([route.POST(request()),route.POST(request())]);assert.equal(submissions,1);assert.equal(jobs.length,1);assert.equal(jobs[0].clips[0].providerTaskId,'provider-1');
     await route.POST(request());assert.equal(submissions,1);
     const result=await (await poll.GET(new Request('http://localhost'),{params:Promise.resolve({id:jobs[0].id})})).json();assert.equal(result.job.status,'ready');assert.ok(result.job.outputUrl.endsWith('.mp4'));
     const restored=await (await route.GET(new Request('http://localhost/api/drama-video?storyId=story'))).json();assert.equal(restored.jobs[0].id,jobs[0].id);assert.equal(restored.scenes.length,1);
     userId='other';assert.equal((await poll.GET(new Request('http://localhost'),{params:Promise.resolve({id:jobs[0].id})})).status,404);assert.equal((await route.POST(request())).status,404);userId='owner';
-    providerFailure=true;await route.POST(request('Different movement'));assert.equal(jobs[1].status,'needs_confirmation');await route.POST(request('Different movement'));assert.equal(submissions,2);
+    story.canvas.drama.scenes[0].notes='A different motion';providerFailure=true;await route.POST(request());assert.equal(jobs[1].status,'needs_confirmation');await route.POST(request());assert.equal(submissions,2);
+    providerFailure=false;jobs=[];submissions=0;story.canvas.drama.scenes.push({...copy(story.canvas.drama.scenes[0]),id:'scene-2'});
+    await Promise.all([route.POST(request()),route.POST(request('ignored','scene-2')),route.POST(request())]);assert.equal(submissions,2);assert.equal(jobs.length,2);assert.ok(jobs.every(j=>j.clips[0].duration===5));
+    const batch=await (await route.GET(new Request('http://localhost/api/drama-video?storyId=story'))).json();assert.equal(batch.jobs.length,2);assert.equal(batch.scenes.length,2);
     console.log('Passed: stage composition / scale, first-frame data URI, adaptive aspect, silent animation, concurrent deduplication, polling, ownership and ambiguous submission recovery. No paid API calls.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

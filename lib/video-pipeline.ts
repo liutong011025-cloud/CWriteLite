@@ -21,6 +21,9 @@ export function dramaRevisionHash(story: Pick<Story, 'title' | 'canvas' | 'chara
         scenes: scenes.map(scene => ({
             id: scene.id,
             background: scene.backgroundImageUrl,
+            backgroundPrompt: scene.backgroundPrompt,
+            settingDescription: scene.settingDescription,
+            notes: scene.notes,
             actors: scene.actors,
             lines: scene.lines.map(line => ({ id: line.id, kind: line.kind, characterId: line.characterId, text: line.text })),
         })),
