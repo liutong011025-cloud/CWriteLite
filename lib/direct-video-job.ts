@@ -4,7 +4,7 @@ import {readSeedanceTask} from './ark-video';
 export type DirectJob=VideoJob&{clips:VideoClip[]};
 export function directVideoJob(job:DirectJob){
     return {id:job.id,sceneId:job.clips[0]?.sceneId,status:job.status.replace(/^direct_/,''),errorMessage:job.errorMessage,
-        outputUrl:job.status==='ready'?job.outputUrl:'',prompt:(job.plan as {prompt?:string}).prompt||'',duration:job.clips[0]?.duration||8};
+        outputUrl:job.status==='ready'?job.outputUrl:'',prompt:(job.plan as {prompt?:string}).prompt||'',duration:job.clips[0]?.duration||5};
 }
 export async function pollDirectVideo(job:DirectJob){
     if(job.status==='direct_preparing'||job.status==='direct_submitting'){

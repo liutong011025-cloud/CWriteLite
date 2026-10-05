@@ -1417,3 +1417,5 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 .drama-workbench .drama-scenes-strip .drama-scene-remove { position:absolute; right:0; top:50%; transform:translateY(-50%); width:44px; height:44px; min-height:44px; padding:6px; border:0; background:transparent; color:#9d594a; }
 .drama-workbench .drama-scenes-strip .drama-scene-remove:hover { background:#f3e0d5; }
 .drama-workbench .drama-scenes-strip .drama-add-scene { flex:0 0 155px; white-space:nowrap; }
+
+.character-pack-card{width:100%;max-width:175px;justify-self:center;display:flex;flex-direction:column;gap:8px}.character-pack-delete{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border:1px solid #d8b8a0;border-radius:9px;background:#fff8ef;color:#9a4e38;font-size:15px}.character-pack-delete:hover{background:#ffe8da}.drama-cast-member{display:flex;gap:4px;min-width:0}.drama-cast-member>button:first-child{flex:1;min-width:0}.drama-tableau .drama-chosen-cast .drama-cast-remove{flex:0 0 36px;justify-content:center;color:#9a4e38;min-height:48px}

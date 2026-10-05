@@ -1,5 +1,5 @@
 import {NextResponse} from 'next/server';
-import {createHash} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
 import {Prisma} from '@prisma/client';
 import {prisma} from '@/lib/prisma';
 import {currentUser} from '@/lib/session';
@@ -12,7 +12,9 @@ import {dramaMotionPrompt} from '@/lib/drama-video-prompt';
 import {dramaVideoReference} from '@/lib/drama-video-reference';
 import {directVideoJob} from '@/lib/direct-video-job';
 import {ArkVideoError,createSeedanceTask} from '@/lib/ark-video';
-export const maxDuration=60;
+import {videoCallbackUrl} from '@/lib/video-callback';
+export const maxDuration=120;
+export const preferredRegion='hkg1';
 const model=()=>process.env.ARK_VIDEO_MODEL?.trim()||SEEDANCE_VIDEO_MODEL;
 const snapshot=(story:Story)=>dramaRevisionHash(story,model()+'|direct-five-second-v2');
 export async function GET(request:Request){
@@ -39,23 +41,32 @@ export async function POST(request:Request){
     const revisionHash=createHash('sha256').update(JSON.stringify({mode:'direct-v1',snapshotHash,sceneId:scene.id,prompt,duration})).digest('hex');
     let job=await prisma.videoJob.findUnique({where:{storyId_revisionHash:{storyId:story.id,revisionHash}},include:{clips:true}}),claimed=false;
     if(!job){try{
-        job=await prisma.videoJob.create({data:{userId:user.id,storyId:story.id,revisionHash,model:selectedModel,status:'direct_preparing',plan:{mode:'direct-v1',snapshotHash,prompt},clips:{create:{sceneId:scene.id,sequence:0,duration,status:'preparing'}}},include:{clips:true}});claimed=true;
+        job=await prisma.videoJob.create({data:{userId:user.id,storyId:story.id,revisionHash,model:selectedModel,status:'direct_preparing',plan:{mode:'direct-v1',snapshotHash,prompt,callbackNonce:randomUUID()},clips:{create:{sceneId:scene.id,sequence:0,duration,status:'preparing'}}},include:{clips:true}});claimed=true;
     }catch(error){if(!(error instanceof Prisma.PrismaClientKnownRequestError&&error.code==='P2002'))throw error;job=await prisma.videoJob.findUniqueOrThrow({where:{storyId_revisionHash:{storyId:story.id,revisionHash}},include:{clips:true}});}}
-    if(job?.status==='failed'&&body.retry===true){
-        const result=await prisma.videoJob.updateMany({where:{id:job.id,status:'failed'},data:{status:'direct_preparing',errorMessage:'',errorCode:'',outputUrl:''}});
+    if(job&&(job.status==='failed'&&body.retry===true||job.status==='needs_confirmation'&&body.noTaskConfirmed===true)){
+        const result=await prisma.videoJob.updateMany({where:{id:job.id,status:job.status},data:{status:'direct_preparing',errorMessage:'',errorCode:'',outputUrl:'',plan:{...(job.plan as Prisma.JsonObject),callbackNonce:randomUUID()}}});
         claimed=Boolean(result.count);
         if(claimed)job=await prisma.videoJob.update({where:{id:job.id},data:{clips:{update:{where:{id:job.clips[0].id},data:{status:'preparing',providerTaskId:'',sourceUrl:'',error:''}}}},include:{clips:true}});
     }
     if(!job)return NextResponse.json({error:'Please try again.'},{status:503});
     if(!claimed)return NextResponse.json({job:directVideoJob(job)},{status:202});
-    let submitting=false;
+    let submitting=false,taskId='';
     try{
         const frame=await dramaVideoReference(story,scene);
         await prisma.videoJob.update({where:{id:job.id},data:{status:'direct_submitting'}});submitting=true;
-        const taskId=await createSeedanceTask(prompt,'data:image/png;base64,'+frame.toString('base64'),duration,selectedModel);
-        job=await prisma.videoJob.update({where:{id:job.id},data:{status:'direct_generating',clips:{update:{where:{id:job.clips[0].id},data:{providerTaskId:taskId,status:'generating'}}}},include:{clips:true}});
+        taskId=await createSeedanceTask(prompt,'data:image/png;base64,'+frame.toString('base64'),duration,selectedModel,videoCallbackUrl(job.id,job.revisionHash+'|'+(job.plan as {callbackNonce?:string}).callbackNonce));
+        const current=await prisma.videoJob.findUniqueOrThrow({where:{id:job.id},include:{clips:true}});
+        if(current.status==='ready'||current.status==='failed')return NextResponse.json({job:directVideoJob(current)},{status:202});
+        job=await prisma.videoJob.update({where:{id:job.id,status:'direct_submitting'},data:{status:'direct_generating',clips:{update:{where:{id:job.clips[0].id},data:{providerTaskId:taskId,status:'generating'}}}},include:{clips:true}});
         console.info('drama_video_submitted',{jobId:job.id,model:selectedModel,taskId});
     }catch(error){
+        console.error('drama_video_provider_error',{jobId:job.id,model:selectedModel,phase:submitting?'submission':'reference',providerStatus:error instanceof ArkVideoError?error.status:undefined,providerCode:error instanceof ArkVideoError?error.code:undefined,requestId:error instanceof ArkVideoError?error.requestId:undefined,message:error instanceof Error?error.message.slice(0,500):'Unknown failure',taskId:taskId||undefined});
+        const current=await prisma.videoJob.findUniqueOrThrow({where:{id:job.id},include:{clips:true}});
+        if(current.status==='ready'||current.clips[0]?.providerTaskId)return NextResponse.json({job:directVideoJob(current)},{status:202});
+        if(taskId){
+            job=await prisma.videoJob.update({where:{id:job.id},data:{status:'direct_generating',clips:{update:{where:{id:job.clips[0].id},data:{providerTaskId:taskId,status:'generating'}}}},include:{clips:true}});
+            return NextResponse.json({job:directVideoJob(job)},{status:202});
+        }
         const uncertain=submitting&&(!(error instanceof ArkVideoError)||error.code==='needs_confirmation'||error.status>=500);
         job=await prisma.videoJob.update({where:{id:job.id},data:{status:uncertain?'needs_confirmation':'failed',errorCode:uncertain?'needs_confirmation':'generation_failed',errorMessage:uncertain?'Submission result is unknown. Check the Ark task history before generating another video.':submitting?'The video service rejected this scene. Check the model access or try again.':'The stage picture could not be prepared. Check the saved background and character pictures.'},include:{clips:true}});
         console.error('drama_video_failed',{jobId:job.id,phase:submitting?'submission':'reference',code:job.errorCode});

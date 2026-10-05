@@ -6,7 +6,8 @@ import {toast} from 'sonner';
 import type {Character,DramaActor,DramaProject,DramaScene,Story} from '@/lib/types';
 import {actorContribution,tableauProject,actorX,blankDramaScene,sceneTitle,removeDramaScene,DRAMA_ACTOR_WIDTH,dramaProblems,MAX_DRAMA_SCENES,withDrama} from '@/lib/drama';
 import {type DramaSuggestion,dramaSuggestions} from '@/lib/drama-suggestions';
-import {api,IdeaPackButton,Modal,PortraitCard} from './common';
+import {api,IdeaPackButton,Modal} from './common';
+import CharacterPackCard from './character-pack-card';
 import DramaBubble from './drama-bubble';
 import DramaCoach from './drama-coach';
 import DramaConnector from './drama-connector';
@@ -19,7 +20,7 @@ const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(Math.max(min
 type Support=ReturnType<typeof dramaSuggestions>;
 const EMPTY_SUPPORT:Support={suggestions:[],keywords:[],question:''};
 
-export function DramaEditor({story,characters,onChange,onCreateCharacter,onContinue,onBack,script=false}:{story:Story;characters:Character[];onChange:(s:Story)=>void;onCreateCharacter:()=>void;onContinue:()=>Promise<void>;onBack:()=>Promise<void>;script?:boolean}){
+export function DramaEditor({story,characters,onChange,onCreateCharacter,onDeleteCharacter,onContinue,onBack,script=false}:{story:Story;characters:Character[];onChange:(s:Story)=>void;onCreateCharacter:()=>void;onDeleteCharacter?:(character:Character)=>void;onContinue:()=>Promise<void>;onBack:()=>Promise<void>;script?:boolean}){
     const project=tableauProject(story.canvas.drama!);
     const scene=project.scenes[project.activeScene]||project.scenes[0];
     const [selected,setSelected]=useState(''),[search,setSearch]=useState(''),[castOpen,setCastOpen]=useState(false);
@@ -33,7 +34,7 @@ export function DramaEditor({story,characters,onChange,onCreateCharacter,onConti
     const actor=scene.actors.find(a=>a.characterId===selected);
     const selectionKey=scene.id+'|'+(line?selected:'')+'|'+(line?.kind||'scene');
     const currentSelection=useRef(selectionKey);currentSelection.current=selectionKey;
-    const deck=[...characters,...story.characterSnapshots.filter(c=>!characters.some(x=>x.id===c.id))].filter(c=>`${c.name} ${c.species||''}`.toLowerCase().includes(search.toLowerCase()));
+    const deck=characters.filter(c=>`${c.name} ${c.species||''}`.toLowerCase().includes(search.toLowerCase()));
 
     useLayoutEffect(()=>{const el=stage.current;if(!el)return;const measure=()=>setStageSize({width:el.clientWidth,height:el.clientHeight});const observer=new ResizeObserver(measure);observer.observe(el);measure();return()=>observer.disconnect();},[]);
     useEffect(()=>{suggestionRequest.current?.abort();setSelected('');setSupport(EMPTY_SUPPORT);setTipBusy(false);setTipError('');},[scene.id]);
@@ -91,7 +92,7 @@ export function DramaEditor({story,characters,onChange,onCreateCharacter,onConti
     return <div className="drama-page drama-workbench drama-tableau">
         <div className="drama-workbench-meta"><span><Theater size={20}/>Scene {project.activeScene+1} of {project.scenes.length}</span><label className="drama-title-field">Title<input aria-label="Drama title" value={story.title} onChange={e=>commit({...latest.current,title:e.target.value})} maxLength={120}/></label></div>
         <div className="drama-workspace">
-            <aside className="drama-cast"><header><UsersRound size={22}/><h2>My Cast</h2></header><div className="deck-pack-corner drama-cast-pack"><IdeaPackButton onClick={()=>setCastOpen(true)}/></div><div className="drama-chosen-cast">{scene.actors.map(a=>{const c=story.characterSnapshots.find(c=>c.id===a.characterId);return c?<button key={c.id} onClick={()=>{setSelected(c.id);}} aria-pressed={selected===c.id} aria-label={`Select ${c.name}`}><img src={actorImage(c)} alt=""/><b>{c.name}</b></button>:null;})}</div><button className="outline-button" onClick={onCreateCharacter}><Plus size={18}/>Create a character</button></aside>
+            <aside className="drama-cast"><header><UsersRound size={22}/><h2>My Cast</h2></header><div className="deck-pack-corner drama-cast-pack"><IdeaPackButton onClick={()=>setCastOpen(true)}/></div><div className="drama-chosen-cast">{scene.actors.map(a=>{const c=story.characterSnapshots.find(c=>c.id===a.characterId);return c?<div className="drama-cast-member" key={c.id}><button onClick={()=>{setSelected(c.id);}} aria-pressed={selected===c.id} aria-label={`Select ${c.name}`}><img src={actorImage(c)} alt=""/><b>{c.name}</b></button><button type="button" className="drama-cast-remove" aria-label={`Remove ${c.name} from this scene`} title="Remove from scene" onClick={()=>removeActor(c.id)}><Trash2 size={17}/></button></div>:null;})}</div><button className="outline-button" onClick={onCreateCharacter}><Plus size={18}/>Create a character</button></aside>
             <section className="drama-stage-column">
                 <div className="drama-background-controls"><label>Scene background<textarea aria-label="Scene background description" placeholder="Where does this scene happen?" value={scene.backgroundPrompt} onChange={e=>sceneChange({backgroundPrompt:e.target.value,backgroundImageUrl:''})} maxLength={2000}/></label><button className="purple-button" onClick={()=>void background()} disabled={!scene.backgroundPrompt.trim()||!!generating}><ImagePlus size={19}/>{generating===scene.id?'Making…':'Generate Background'}</button></div>
                 <div className={"drama-stage "+(selected?"has-word-editor":"")} ref={stage} onPointerDown={e=>{if(!(e.target as Element).closest('.drama-actor,.drama-bubble-anchor.is-editing,.drama-stage-add'))setSelected('');}} aria-label={`Stage for ${scene.name}`} style={scene.backgroundImageUrl?{backgroundImage:`linear-gradient(#fff9ec12,#fff9ec12),url(${JSON.stringify(scene.backgroundImageUrl)})`}:undefined}>
@@ -108,7 +109,7 @@ export function DramaEditor({story,characters,onChange,onCreateCharacter,onConti
         </div>
         <div className="drama-page-bottom"><button className="text-button" onClick={()=>void onBack().catch(e=>toast.error(e.message))}>← {script?'Back to scenes':'Back to Writing Map'}</button><button className="purple-button" disabled={!!generating} onClick={()=>void next()}>{script?'Review my drama':'Write the scene'}<ChevronRight size={19}/></button></div>
         {reviewOpen&&<DramaReadiness story={story} onClose={()=>setReviewOpen(false)} onContinue={async()=>{await onContinue();setReviewOpen(false);}}/>}
-        {castOpen&&<Modal title="Your character pack" wide onClose={()=>setCastOpen(false)}><p className="drama-pack-intro">Choose who joins this scene.</p><label className="drama-cast-search"><Search size={18}/><input aria-label="Find a cast character" placeholder="Find a character…" value={search} onChange={e=>setSearch(e.target.value)}/></label><div className="drama-cast-picker drama-pack-library">{deck.map(c=><PortraitCard key={c.id} character={c} selected={scene.actors.some(a=>a.characterId===c.id)} onClick={()=>addActor(c)}/>)}{!deck.length&&<p>{characters.length?'No matching characters.':'Your shared pack is empty. Create a character to begin.'}</p>}</div><div className="drama-pack-actions"><button className="outline-button" onClick={onCreateCharacter}><Plus size={18}/>Create a character</button><button className="purple-button" onClick={()=>setCastOpen(false)}>Back to my scene<ChevronRight size={18}/></button></div></Modal>}
+        {castOpen&&<Modal title="Your character pack" wide onClose={()=>setCastOpen(false)}><p className="drama-pack-intro">Choose who joins this scene.</p><label className="drama-cast-search"><Search size={18}/><input aria-label="Find a cast character" placeholder="Find a character…" value={search} onChange={e=>setSearch(e.target.value)}/></label><div className="drama-cast-picker drama-pack-library">{deck.map(c=><CharacterPackCard key={c.id} character={c} selected={scene.actors.some(a=>a.characterId===c.id)} onClick={()=>addActor(c)} onDelete={onDeleteCharacter?()=>onDeleteCharacter(c):undefined}/>)}{!deck.length&&<p>{characters.length?'No matching characters.':'Your shared pack is empty. Create a character to begin.'}</p>}</div><div className="drama-pack-actions"><button className="outline-button" onClick={onCreateCharacter}><Plus size={18}/>Create a character</button><button className="purple-button" onClick={()=>setCastOpen(false)}>Back to my scene<ChevronRight size={18}/></button></div></Modal>}
         {deleteScene&&<Modal title="Remove this scene?" onClose={()=>setDeleteScene(null)}><p>Remove this scene and its characters’ words? {project.scenes.length===1?"A new blank scene will be ready for you.":"Your other scenes will stay."}</p><button className="danger-button" onClick={()=>{editProject(p=>removeDramaScene(p,deleteScene,crypto.randomUUID()));setDeleteScene(null);}}>Remove scene</button></Modal>}
     </div>;
 }
