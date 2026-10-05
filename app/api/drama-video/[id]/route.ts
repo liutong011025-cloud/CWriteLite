@@ -4,6 +4,7 @@ import {currentUser} from '@/lib/session';
 import {publicVideoJob} from '@/lib/video-job';
 import {directVideoJob,pollDirectVideo} from '@/lib/direct-video-job';
 import {localPreviewEnabled} from '@/lib/local-preview';
+export const preferredRegion='hkg1';
 export async function GET(_request:Request,context:{params:Promise<{id:string}>}){
     const user=await currentUser();if(!user)return NextResponse.json({error:'Please log in.'},{status:401});
     const {id}=await context.params;

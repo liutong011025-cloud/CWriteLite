@@ -9,12 +9,13 @@ const pending=(status?:string)=>['preparing','submitting','generating'].includes
 export default function DramaVideoPanel({storyId}:{storyId:string}){
     const [state,setState]=useState<State>({scenes:[],jobs:[]}),[busy,setBusy]=useState(false),[error,setError]=useState('');
     const submitting=useRef(false),mounted=useRef(true);
+    const [retrying,setRetrying]=useState('');
     useEffect(()=>{
         mounted.current=true;let active=true;
         void api('/api/drama-video?storyId='+encodeURIComponent(storyId)).then((result:State)=>{if(active)setState(result);}).catch(e=>{if(active)setError(e.message);});
         return()=>{active=false;mounted.current=false;};
     },[storyId]);
-    const pendingIds=state.jobs.filter(j=>pending(j.status)).map(j=>j.id).sort().join('|');
+    const pendingIds=state.jobs.filter(j=>pending(j.status)||j.status==='needs_confirmation').map(j=>j.id).sort().join('|');
     useEffect(()=>{
         if(!pendingIds)return;
         let active=true,timer:ReturnType<typeof setTimeout>;
@@ -40,15 +41,24 @@ export default function DramaVideoPanel({storyId}:{storyId:string}){
         if(mounted.current){if(results.some(r=>r.status==='rejected'))setError('Some scenes could not start. Please try the remaining scenes again.');setBusy(false);}
         submitting.current=false;
     }
-    const active=Boolean(pendingIds),remaining=state.scenes.some(s=>{const j=state.jobs.find(j=>j.sceneId===s.id);return !j||j.status==='failed';});
+    async function retryUnsubmitted(sceneId:string){
+        if(submitting.current)return;submitting.current=true;setRetrying(sceneId);setError('');
+        try{
+            const r=await api('/api/drama-video',{storyId,sceneId,noTaskConfirmed:true});
+            if(mounted.current)setState(s=>({...s,jobs:[...s.jobs.filter(j=>j.sceneId!==sceneId),r.job]}));
+        }catch(e){if(mounted.current)setError((e as Error).message);}
+        finally{submitting.current=false;if(mounted.current)setRetrying('');}
+    }
+    const active=state.jobs.some(j=>pending(j.status)),remaining=state.scenes.some(s=>{const j=state.jobs.find(j=>j.sceneId===s.id);return !j||j.status==='failed';});
     const allReady=state.scenes.length>0&&state.scenes.every(s=>state.jobs.some(j=>j.sceneId===s.id&&Boolean(j.outputUrl)));
     return <section className="drama-video-panel"><h3><Clapperboard size={20}/>Drama video</h3>
         {(busy||active)&&<div className="drama-video-wait" role="status"><img src="/Cagentdraw.webp" alt=""/><p>Making your scenes come to life…</p></div>}
         {state.scenes.map(scene=>{const job=state.jobs.find(j=>j.sceneId===scene.id);return job?<div className="drama-video-result" key={scene.id}><h4>{scene.name}</h4>
             {job.outputUrl&&<><video src={job.outputUrl} controls playsInline preload="metadata" aria-label={scene.name+' video'}/><a className="outline-button" target="_blank" rel="noopener noreferrer" href={job.outputUrl}>Open / download video</a></>}
             {pending(job.status)&&<p role="status">Generating…</p>}{job.errorMessage&&<p className="error-text" role="alert">{job.errorMessage}</p>}
+            {job.status==='needs_confirmation'&&<button className="outline-button" disabled={!!retrying||busy||active||state.mock} onClick={()=>void retryUnsubmitted(scene.id)}>{retrying===scene.id?'Submitting…':'I checked Ark: no task. Try again'}</button>}
         </div>:null;})}
         {error&&<p className="error-text" role="alert">{error}</p>}
-        <button className="suggestions-action" disabled={!state.scenes.length||busy||active||state.mock||!state.configured||!remaining} onClick={()=>void start()}>{busy||active?'Generating…':allReady?'Videos ready':'Generate video'}</button>
+        <button className="suggestions-action" disabled={!state.scenes.length||busy||!!retrying||active||state.mock||!state.configured||!remaining} onClick={()=>void start()}>{busy||active||retrying?'Generating…':allReady?'Videos ready':'Generate video'}</button>
     </section>;
 }
