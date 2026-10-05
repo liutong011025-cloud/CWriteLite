@@ -1,7 +1,7 @@
 export type MapMarker = {id:string;x:number;y:number;width:number;height:number;anchorX?:number;anchorY?:number};
 /** Move only the wooden title. anchorX/anchorY stay on the saved pin so the illustration does not move with the label. */
-export function arrangeMapMarkers(markers:MapMarker[],width:number,height:number){
-    const placed:MapMarker[]=[{id:'pin-dock',x:width-126,y:height-145,width:224,height:310}];
+export function arrangeMapMarkers(markers:MapMarker[],width:number,height:number,obstacles:MapMarker[]=[]){
+    const placed:MapMarker[]=[{id:'pin-dock',x:width-126,y:height-145,width:224,height:310},...obstacles];
     const right=Math.max(100,width-120), bottom=Math.max(140,height-150);
     return markers.map(marker=>{
         const candidates:MapMarker[]=[];

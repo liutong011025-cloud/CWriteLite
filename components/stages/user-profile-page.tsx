@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import FarmScene from "@/components/lite/farm-scene"
+import TreeWatering from '@/components/lite/tree-watering'
 import FarmGuide from "@/components/lite/farm-guide"
 import {farmValueMeaning, farmValueLabel} from "@/components/lite/farm-values"
 import {FARM_SAPLING_SLOTS} from "@/lib/farm-slots"
@@ -100,6 +101,7 @@ interface UserProfilePageProps {
   treeGrowthDetails?: Record<number, TreeGrowthDetailRecord[]>
   recentGrowthTreeId?: number | null
   recentGrowthTreeIds?: number[]
+  onGrowthAnimationComplete?: () => void
   farmEntryNonce?: number
   onVisitOthersFarm?: () => void
   onEditStory?: (storyId: string) => void
@@ -396,6 +398,7 @@ export default function UserProfilePage({
   recentGrowthTreeId,
   recentGrowthTreeIds,
   farmEntryNonce = 0,
+  onGrowthAnimationComplete,
   onVisitOthersFarm,
   onEditStory,
   isOtherFarm = false,
@@ -803,14 +806,15 @@ export default function UserProfilePage({
 
       const timer = window.setTimeout(() => {
         setHighlightTreeIds([])
-      }, 4030)
+        onGrowthAnimationComplete?.()
+      }, 5200)
 
       return () => {
         clearTimeout(restart)
         clearTimeout(timer)
       }
     }
-  }, [recentGrowthTreeId, recentGrowthTreeIds, trees, farmEntryNonce, farmViewNonce])
+  }, [recentGrowthTreeId, recentGrowthTreeIds, trees, farmEntryNonce, farmViewNonce, onGrowthAnimationComplete])
 
   const teacherReviews = reviews.filter((r) => r.reviewerRole === "teacher")
   const peerReviews = reviews.filter((r) => r.reviewerRole === "student")
@@ -1446,6 +1450,7 @@ export default function UserProfilePage({
                     onMouseEnter={() => setHoveredTreeId(treeId)}
                     onMouseLeave={() => setHoveredTreeId((prev) => (prev === treeId ? null : prev))}
                   >
+                    {isHighlightedTree && <TreeWatering/>}
                     {isHighlightedTree && (
                       <span className="absolute inset-0 pointer-events-none rounded-full animate-pulse opacity-60" style={{ boxShadow: "inset 0 0 30px 8px rgba(255, 215, 0, 0.4)" }} aria-hidden />
                     )}

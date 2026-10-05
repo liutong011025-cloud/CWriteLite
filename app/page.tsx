@@ -39,6 +39,10 @@ const blankChapter = (i = 0): Chapter => ({ mapImageUrl: i ? '/secondmap.webp' :
 const initialMap: MapState = { activeChapterIndex: 0, chapters: [blankChapter()] };
 export default function Page() {
     const [user, setUser] = useState<User | null>(null), [screen, setScreen] = useState<Screen>('login'), [loading, setLoading] = useState(true), [characters, setCharacters] = useState<Character[]>([]), [stories, setStories] = useState<Story[]>([]), [story, setStory] = useState<Story | null>(null), [editing, setEditing] = useState<Character | undefined>(), [detail, setDetail] = useState<Character | null>(null), [chosen, setChosen] = useState<string[]>([]), [search, setSearch] = useState(''), [profile, setProfile] = useState<any>({}), [mapState, setMapState] = useState<MapState>(initialMap), [saveStatus, setSaveStatus] = useState(''), [publishing, setPublishing] = useState(false), [confirmDelete, setConfirmDelete] = useState<Character | null>(null), [users, setUsers] = useState<any[]>([]), [other, setOther] = useState(''), [vocabUser, setVocabUser] = useState(''), [vocab, setVocab] = useState(''), [pack, setPack] = useState(false), [mapBusy, setMapBusy] = useState(false);
+    const [creatingPin,setCreatingPin]=useState<{x:number;y:number;kind:'story'|'drama'}|null>(null);
+    const creatingStory=useRef(false);
+    const [growthTrees,setGrowthTrees]=useState<number[]>([]);
+    const finishGrowthAnimation=useCallback(()=>setGrowthTrees([]),[]);
     const packPending = useRef(new Set<string>());
     const [packSaving,setPackSaving] = useState('');
     const deck = characterDeck(characters, chosen);
@@ -72,11 +76,11 @@ export default function Page() {
     async function go(to: Screen) { await flush(); setScreen(to); if (['farm', 'stories'].includes(to))
         void refresh(); }
     function event(type: string, payload: unknown) { void api('/api/data', { action: 'event', storyId: story?.id, type, payload }).catch(() => { }); }
-    async function saveMap(next: MapState) { mapRef.current = next; setMapState(next); await api('/api/data', { action: 'saveMap', state: next }); }
+    async function saveMap(next: MapState) { mapRef.current = next; setMapState(next); const result=await api('/api/data', { action: 'saveMap', state: next }); if(result.mapState){mapRef.current=result.mapState;setMapState(result.mapState);} }
     async function newStory(pin?: {
         x: number;
         y: number;
-    }, kind:'story'|'drama'='story') { try { await flush(); const r = await api('/api/data', { action: 'newStory', writingType:kind, pin: pin || chapter.currentPin, chapterIndex: mapState.activeChapterIndex }); latest.current = r.story; setStory(r.story); setChosen([]); setStudioReturn('characters'); setScreen(kind==='drama'?'drama-scenes':'characters'); setSaveStatus('Saved'); setStories(s => [r.story, ...s]); }catch(e){toast.error((e as Error).message);} }
+    }, kind:'story'|'drama'='story') { if(creatingStory.current)return; creatingStory.current=true; setCreatingPin({...pin||chapter.currentPin||{x:50,y:50},kind}); try { await flush(); const r = await api('/api/data', { action: 'newStory', writingType:kind, pin: pin || chapter.currentPin, chapterIndex: mapState.activeChapterIndex }); latest.current = r.story; setStory(r.story); setChosen([]); setStudioReturn('characters'); setScreen(kind==='drama'?'drama-scenes':'characters'); setSaveStatus('Saved'); setStories(s => [r.story, ...s]); }catch(e){toast.error((e as Error).message);}finally{creatingStory.current=false;setCreatingPin(null);} }
     function openStory(s: Story) { latest.current = s; setStory(s); setChosen(s.characterIds); setStudioReturn('characters'); setScreen((isDrama(s) ? (['drama-scenes','drama-write','drama-finish'].includes(s.stage)?s.stage:'drama-scenes') : (s.stage === 'characters' ? 'characters' : ['canvas', 'mountain', 'write', 'finish'].includes(s.stage) ? s.stage : 'write')) as Screen); }
     async function deleteDraft() {
         if(!discardDraft||discardBusy)return;
@@ -143,14 +147,14 @@ export default function Page() {
     async function requestGrowth(storyId: string) { setGrowthBusy(true); try {
         const result = await api('/api/ai', { kind: 'growth', storyId });
         if (result.growthStatus === 'pending') setGrowthRetry(storyId);
-        else { setGrowthRetry(null); await refresh(); }
+        else { setGrowthRetry(null); if(result.grownTreeIds?.length)setGrowthTrees(ids=>[...new Set([...ids,...result.grownTreeIds])]); if(result.profile)setProfile(result.profile); }
     } catch { setGrowthRetry(storyId); }
     finally { setGrowthBusy(false); } }
     async function updateMapArt(s: Story) { setMapBusy(true); try {
         const r = await api('/api/map-update', { storyId: s.id });
         if (r.mapState?.chapters?.length) { mapRef.current = r.mapState; setMapState(r.mapState); }
-        if (r.previewArt) toast.success(r.reused ? 'Your map picture is already in place.' : 'Your writing map has a new illustration.');
-        else toast.info('Story saved. Map illustration could not update; you can try again.');
+        if (r.previewArt) toast.success(r.previewArt.source==='local-preview' ? 'Local preview: example picture shown. No AI image was generated.' : r.reused ? 'Saved picture shown. No new AI request needed.' : 'Your writing map has a new illustration.');
+        else toast.info(r.message || 'Story saved. Map illustration could not update; you can try again.');
     }
     catch {
         toast.info('Story saved. Map illustration can be retried.');
@@ -158,6 +162,22 @@ export default function Page() {
     finally {
         setMapBusy(false);
     } }
+    async function refreshChapterArt() {
+        if(mapBusy)return;
+        const works=stories.filter(s=>s.status==='published'&&s.chapterIndex===mapState.activeChapterIndex);
+        setMapBusy(true);
+        try {
+            let updated=0,examples=0;const issues:string[]=[];
+            for(const work of works){
+                const r=await api('/api/map-update',{storyId:work.id});
+                if(r.mapState?.chapters?.length){mapRef.current=r.mapState;setMapState(r.mapState);}
+                if(r.previewArt){updated++;if(r.previewArt.source==='local-preview')examples++;}
+                else issues.push(r.message||'Some pictures could not be made. Try again.');
+            }
+            if(issues.length)toast.info(issues[0]);
+            else toast.success(examples ? 'Local preview: example pictures shown. No AI requests were sent.' : updated+' saved pictures are shown on your map.');
+        }catch(e){toast.error((e as Error).message);}finally{setMapBusy(false);}
+    }
     async function logout() { await flush(); await fetch('/api/auth', { method: 'DELETE' }); setUser(null); setStory(null); latest.current = null; setScreen('login'); setCharacters([]); setStories([]); setMapState(initialMap); mapRef.current = initialMap; setProfile({}); setSaveStatus(''); }
     const storyFlow = Boolean(story) && ['characters', 'canvas', 'mountain', 'write', 'finish','drama-scenes','drama-write','drama-finish'].includes(screen);
     const stages = story&&isDrama(story)?[['drama-scenes','Create Scenes'],['drama-write','Write Script'],['drama-finish','Review & Finish']]:[['characters', 'Characters'], ['canvas', 'Story Canvas'], ['write', 'Start writing'], ['finish', 'Finish']];
@@ -198,11 +218,10 @@ export default function Page() {
         catch (e) {
             toast.error((e as Error).message);
         } }}>Save word collection</button><a className="outline-button" href="/api/research" download="cwrite-research.json"><Download size={17}/>Export research records</a></section></>}
- {screen === 'map' && <><JourneyMap type="story" mapImageUrl={chapter.mapImageUrl} mapFlags={chapter.mapFlags} pin={resume?.pin || chapter.currentPin} onPinChange={pin => { mapRef.current = { ...mapRef.current, chapters: mapRef.current.chapters.map((c, i) => i === mapRef.current.activeChapterIndex ? { ...c, currentPin: pin } : c) }; void saveMap(mapRef.current); }} chapterIndex={mapState.activeChapterIndex} onPrevChapter={() => void saveMap({ ...mapState, activeChapterIndex: Math.max(0, mapState.activeChapterIndex - 1) })} onNextChapter={() => { const index = mapState.activeChapterIndex + 1; void saveMap({ ...mapState, activeChapterIndex: index, chapters: mapState.chapters[index] ? mapState.chapters : [...mapState.chapters, blankChapter(index)] }); }} canMoveToNextChapter={chapter.mapFlags.length >= 2} storyState={{}} bookReviewState={{}} letterState={{}} onStartJourney={(kind,pin) => void newStory(pin,kind==='drama'?'drama':'story')} drafts={stories.filter(s=>s.status==='draft'&&s.chapterIndex===mapState.activeChapterIndex).map(s=>({id:s.id,title:s.title,pin:s.pin,workType:writingType(s)}))} onResumeDraft={id=>{const s=stories.find(s=>s.id===id);if(s)openStory(s);}} onDeleteDraft={id=>setDiscardDraft(stories.find(s=>s.id===id&&s.status==='draft')||null)} resumeJourney={Boolean(resume)} onContinue={() => resume && openStory(resume)} onNavigate={() => void newStory()} onGoProfile={() => void go('farm')} onEditStory={id => { const s = stories.find(s => s.id === id); if (s) openStory({ ...s, stage: isDrama(s)?'drama-write':'write' }); }}/>{mapBusy && <div className="map-update-status"><img src="/Cagentdraw.webp" alt=""/>Your writing is saved. Cagent is illustrating the map…</div>}{!mapBusy && chapter.mapFlags.length > 0 && <button className="map-refresh-button" onClick={() => { const s = stories.find(s => s.id === chapter.mapFlags.at(-1)?.id); if (s)
-            void updateMapArt(s); }}>✦ Refresh map illustration</button>}</>}
+ {screen === 'map' && <><JourneyMap illustrating={mapBusy} creatingPin={creatingPin} type="story" mapImageUrl={chapter.mapImageUrl} mapFlags={chapter.mapFlags} pin={resume?.pin || chapter.currentPin} onPinChange={pin => { mapRef.current = { ...mapRef.current, chapters: mapRef.current.chapters.map((c, i) => i === mapRef.current.activeChapterIndex ? { ...c, currentPin: pin } : c) }; void saveMap(mapRef.current); }} chapterIndex={mapState.activeChapterIndex} onPrevChapter={() => void saveMap({ ...mapState, activeChapterIndex: Math.max(0, mapState.activeChapterIndex - 1) })} onNextChapter={() => { const index = mapState.activeChapterIndex + 1; void saveMap({ ...mapState, activeChapterIndex: index, chapters: mapState.chapters[index] ? mapState.chapters : [...mapState.chapters, blankChapter(index)] }); }} canMoveToNextChapter={chapter.mapFlags.length >= 2} storyState={{}} bookReviewState={{}} letterState={{}} onStartJourney={(kind,pin) => void newStory(pin,kind==='drama'?'drama':'story')} drafts={stories.filter(s=>s.status==='draft'&&s.chapterIndex===mapState.activeChapterIndex).map(s=>({id:s.id,title:s.title,pin:s.pin,workType:writingType(s)}))} onResumeDraft={id=>{const s=stories.find(s=>s.id===id);if(s)openStory(s);}} onDeleteDraft={id=>setDiscardDraft(stories.find(s=>s.id===id&&s.status==='draft')||null)} resumeJourney={Boolean(resume)} onContinue={() => resume && openStory(resume)} onNavigate={() => void newStory()} onGoProfile={() => void go('farm')} onEditStory={id => { const s = stories.find(s => s.id === id); if (s) openStory({ ...s, stage: isDrama(s)?'drama-write':'write' }); }}/>{!mapBusy && chapter.mapFlags.length > 0 && <button className="map-refresh-button" onClick={() => void refreshChapterArt()}>✦ Refresh map illustration</button>}</>}
  </div></div><div className="shell-save-status" role="status">{storyFlow && saveStatus}<button onClick={() => latest.current && void save(latest.current)} hidden={!saveStatus.startsWith('Not saved')}>Retry</button></div></div></div>}
  {screen === 'visits' && <NavigationPage currentUsername={user.username} onBack={() => void go('farm')} onSelectFarm={name => { setOther(name); setScreen('otherFarm'); }}/>}
- {screen === 'farm' && <UserProfilePage userId={user.username} userRole={user.role} currentUsername={user.username} currentUserRole={user.role} avatarUrl={profile.avatarUrl} avatarEmoji={profile.avatarEmoji} trees={profile.trees || Array.from({ length: 12 }, (_, i) => ({ id: i + 1, stage: 2 }))} treeGrowthDetails={profile.treeGrowthDetails || {}} onEditStory={id => { const s = stories.find(s => s.id === id); if (s) openStory({ ...s, stage: isDrama(s)?'drama-write':'write' }); }} onBack={() => void go('map')} onOpenSettings={() => setScreen('settings')} onVisitOthersFarm={() => setScreen('visits')}/>}
+ {screen === 'farm' && <UserProfilePage userId={user.username} userRole={user.role} currentUsername={user.username} currentUserRole={user.role} avatarUrl={profile.avatarUrl} avatarEmoji={profile.avatarEmoji} trees={profile.trees || Array.from({ length: 12 }, (_, i) => ({ id: i + 1, stage: 2 }))} treeGrowthDetails={profile.treeGrowthDetails || {}} recentGrowthTreeIds={growthTrees} onGrowthAnimationComplete={finishGrowthAnimation} onEditStory={id => { const s = stories.find(s => s.id === id); if (s) openStory({ ...s, stage: isDrama(s)?'drama-write':'write' }); }} onBack={() => void go('map')} onOpenSettings={() => setScreen('settings')} onVisitOthersFarm={() => setScreen('visits')}/>}
  {screen === 'otherFarm' && <UserProfilePage key={other} userId={other} userRole="student" currentUsername={user.username} currentUserRole={user.role} onBack={() => setScreen('visits')} onOpenSettings={() => { }} isOtherFarm/>}
  {screen === 'settings' && <UserSettingsPage userId={user.username} onBack={() => void go('farm')} onProfileUpdated={() => void refresh()}/>}
 

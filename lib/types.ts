@@ -95,5 +95,5 @@ export type MapFlagItem = {
     title: string;
     content?: string;
     workType?: MapWorkType;
-    previewArt?: {imageUrl:string;storyId?:string;anchor?:'bottom-center';version?:string};
+    previewArt?: {imageUrl:string;storyId?:string;anchor?:'bottom-center';version?:string;source?:'fal'|'local-preview';model?:string;requestId?:string};
 };

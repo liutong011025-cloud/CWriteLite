@@ -1,6 +1,11 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),ts=require('typescript');
 require.extensions['.ts']=(module,path)=>module._compile(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,path);
 const {placeDramaBubble}=require('../lib/drama-bubble-layout.ts'),{dramaVideoPlan}=require('../lib/drama-video-plan.ts');
+const {removeDramaScene,sceneTitle}=require('../lib/drama.ts');
+const project={activeScene:1,scenes:[{id:'a',name:'Scene 1'},{id:'b',name:'Scene 2'},{id:'c',name:'Garden'}]};
+const removed=removeDramaScene(project,'a','blank');assert.equal(removed.activeScene,0);assert.equal(removed.scenes[0].id,'b');assert.equal(sceneTitle(0,removed.scenes[0].name),'Scene 1');
+assert.equal(removeDramaScene(project,'c','blank').activeScene,1);
+const last=removeDramaScene({activeScene:0,scenes:[project.scenes[0]]},'a','blank');assert.equal(last.scenes[0].id,'blank');assert.equal(last.scenes[0].actors.length,0);assert.equal(project.scenes.length,3);
 const overlap=(a,b)=>Math.max(0,Math.min(a.left+a.width,b.left+b.width)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.top+a.height,b.top+b.height)-Math.max(a.top,b.top));
 const stage={width:750,height:530},actor={left:410,top:20,width:160,height:220};
 const side=placeDramaBubble(actor,{width:260,height:250},stage,[actor]);

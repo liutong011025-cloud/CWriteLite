@@ -104,7 +104,7 @@ export async function generateFalImage(options: GenerateFalImageOptions) {
             },
             logs: false,
         });
-        return extractFalImageResult(result.data);
+        return {...extractFalImageResult(result.data),requestId:result.requestId,model};
     }
     catch (error: unknown) {
         if (error instanceof FalImageError)

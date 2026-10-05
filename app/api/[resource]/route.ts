@@ -222,8 +222,20 @@ export async function POST(request: Request, context: Context) {
                 return NextResponse.json(result,{status:'status' in result?result.status:200});
             }
             if (b.action === 'saveMap') {
-                await prisma.user.update({ where: { id: user.id }, data: { mapState: json(b.state) } });
-                return NextResponse.json({ success: true });
+                const mapState=await prisma.$transaction(async tx=>{
+                    await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${user.id} FOR UPDATE`;
+                    const owner=await tx.user.findUniqueOrThrow({where:{id:user.id}});
+                    const current=(owner.mapState||{}) as any;
+                    const incoming=b.state as any;
+                    const chapters=Array.from({length:Math.max(current.chapters?.length||0,incoming?.chapters?.length||0)},(_,i)=>{
+                        const saved=current.chapters?.[i],next=incoming?.chapters?.[i];
+                        return {...saved,...next,mapFlags:saved?.mapFlags||[]};
+                    });
+                    const state={...current,...incoming,chapters};
+                    await tx.user.update({where:{id:user.id},data:{mapState:json(state)}});
+                    return state;
+                });
+                return NextResponse.json({ success: true, mapState });
             }
             if (b.action === 'event') {
                 if (b.storyId && !await prisma.story.findFirst({ where: { id: String(b.storyId), userId: user.id } }))

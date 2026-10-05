@@ -1,6 +1,6 @@
 # CWrite Lite：AI API 与 Vercel 配置
 
-核对日期：2026-10-04。这里列的是当前代码实际使用的服务；没有包含密钥值。
+核对日期：2026-10-05。这里列的是当前代码实际使用的服务；没有包含密钥值。
 
 ## 1. 当前部署需要填写的环境变量
 
@@ -16,7 +16,7 @@
 
 `NEXT_PUBLIC_APP_URL` 是 `APP_BASE_URL` 的备用地址。`DEEPSEEK_KEY` 是旧的密钥备用变量，推荐只填 `DEEPSEEK_API_KEY`。密钥不要使用 `NEXT_PUBLIC_` 前缀。
 
-当前文字模型是 `deepseek-chat`，图片模型固定为下面两个 fal 模型。视频已指定为 **Doubao-Seedance-2.5 260628**，完整模型 ID 为 `doubao-seedance-2-5-260628`。动画计划现在会记录该模型及视频任务接口地址；正式视频提交留到部署阶段接入。数据库表需要运行项目的迁移命令 `npm run db:migrate`；环境变量填写完成并不等于数据库表已创建。
+当前文字模型是 `deepseek-chat`，图片模型固定为下面两个 fal 模型。视频已指定为 **Doubao-Seedance-2.5 260628**，完整模型 ID 为 `doubao-seedance-2-5-260628`。动画计划现在会记录该模型及视频任务接口地址；Drama 已接入直接图生视频，按幕生成临时 MP4。数据库表需要运行项目的迁移命令 `npm run db:migrate`；环境变量填写完成并不等于数据库表已创建。
 
 **图片继续使用原来的 fal.ai Nano Banana 2**：描述生成调用 `fal-ai/nano-banana-2`，画稿参考与地图编辑调用 `fal-ai/nano-banana-2/edit`，共用 `FAL_KEY`。Seedance 2.5 负责后续视频生成，图片服务保持上述配置。
 
@@ -27,7 +27,7 @@ ARK_VIDEO_MODEL=doubao-seedance-2-5-260628
 ARK_API_KEY=填写火山方舟控制台的APIKey
 ```
 
-`ARK_VIDEO_MODEL` 已由动画分镜接口读取，写入下载的动画计划。未填写时默认使用上面的指定版本。`ARK_API_KEY` 是后续视频提交的预留密钥，目前网页分镜预览不使用它，也不产生 Seedance 视频生成费用。
+`ARK_API_KEY` 与模型权限就能提交图生视频；无需对象存储或合并 worker。完成页提供可编辑动画提示词与临时视频播放、下载。数据库新增 `spriteUrl`、`VideoJob` 和 `VideoClip` 后，需要运行 `npm run db:migrate`。构建成功不等于这些表已经在生产库里。
 
 ## 2. 当前所有 AI API 名称
 
@@ -36,9 +36,10 @@ ARK_API_KEY=填写火山方舟控制台的APIKey
 | 服务 / 模型 | 外部 API | 当前用途 |
 | --- | --- | --- |
 | DeepSeek / `deepseek-chat` | `POST https://api.deepseek.com/chat/completions` | 所有文字 AI 请求 |
-| fal / `fal-ai/nano-banana-2` | fal SDK 的 `fal.subscribe("fal-ai/nano-banana-2", …)` | 从描述生成角色、物品和背景；输出 WebP，通常 1K |
-| fal / `fal-ai/nano-banana-2/edit` | fal SDK 的 `fal.subscribe("fal-ai/nano-banana-2/edit", …)` | 根据学生画稿生成图片、在原地图上迭代写作元素 |
-| 火山方舟 / `doubao-seedance-2-5-260628` | `POST https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks`；查询 `GET …/tasks/{id}` | 已选定的 Drama 视频服务；当前仅记录目标配置，尚未提交真实视频任务 |
+| fal / `fal-ai/nano-banana-2` | fal SDK 的 `fal.subscribe("fal-ai/nano-banana-2", …)` | 从描述生成角色、物品和背景；输出 WebP |
+| fal / `fal-ai/nano-banana-2/edit` | fal SDK 的 `fal.subscribe("fal-ai/nano-banana-2/edit", …)` | 根据学生画稿生成图片；地图使用裁剪的底图参考生成独立插画 |
+| fal / `fal-ai/imageutils/rembg` | fal SDK 的 `fal.subscribe("fal-ai/imageutils/rembg", …)` | 角色和物品生成后的去背景。失败时保留原图，不把原图当作透明图。共用 `FAL_KEY` |
+| 火山方舟 / `doubao-seedance-2-5-260628` | `POST /contents/generations/tasks`；`GET /contents/generations/tasks/{id}` | 根据画板合成首帧，以可编辑提示词直接提交图生视频；无需 TOS 或 worker，返回临时 MP4 链接 |
 
 ### 网站内部接口
 
@@ -58,39 +59,13 @@ ARK_API_KEY=填写火山方舟控制台的APIKey
 | `POST /api/ai` | `image` | 生成角色、物品或背景 / fal |
 | `POST /api/section-gate` | 无 `kind`，传 `storyId` 与 `section` | Story 五部分检查：角色、画板联系、当前结构和新情节 / DeepSeek + 服务端证据核对 |
 | `POST /api/dify-cagent-guide` | 无 `kind`，传 `userMessage` | My Farm 小熊指导 / **实际调用 DeepSeek，名字保留了旧 Dify 命名**；不需要 Dify 密钥 |
-| `POST /api/map-update` | 无 `kind` | 完成 Story / Drama 后更新写作地图 / fal 图片编辑 |
+| `POST /api/map-update` | 无 `kind`，传 `storyId` | 裁出原地图的小块作为风格参考，调用 `fal-ai/nano-banana-2/edit` 生成独立插画并固定在图钉上；保留底图，同一版本复用缓存。模型名和 fal 请求编号存在 `previewArt` |
+| `POST /api/drama-video` | 无 `kind`，传 `storyId` | 传 `storyId`、`sceneId`、`prompt`、`duration`，直接创建 Seedance 任务；相同画板/提示词/时长复用任务 |
 
 其余 `/api/data`、角色库、登录等接口是保存或读取数据，不调用独立 AI 服务。Story / Drama 共用上述密钥和同一用户的角色库。
 
-## 3. Drama 如何复现为动画
+## 3. Drama 图生视频
 
-当前已实现 `Preview animation`，它是网页分镜预览，没有生成 MP4：
+完成页选择一幕，编辑根据场景与人物话语生成的动作提示词，选择 5/8/10/15 秒后点击 Generate video。服务端合成画板背景与角色作为首帧，保留人物图片、大小、位置和翻转。使用无声、连续动画；不额外添加字幕。视频临时链接可播放与打开下载，无需长期保存。
 
-1. 读取学生已保存的每一幕背景；先展示背景。
-2. 读取角色卡图片、位置、大小和翻转状态；展示原有角色。
-3. DeepSeek 根据现有话语的含义，把“发起话语、回应、思考”安排为合理顺序。
-4. 服务端核对每一幕的行 ID：每句必须出现一次，不能跨幕、漏句、重复或增加角色。非法排序回退为现有顺序。
-5. 分镜按顺序突出角色，显示其原话；Thinks 使用思考气泡，不当成可听见的台词。
-6. 学生可播放、暂停、选择时刻和下载完整动画计划 JSON。原始画板保持同时展示，不被分镜排序改写。
-
-JSON 包含背景、全部角色图片和布局、原始台词、每个镜头的时间与动作提示，以及 `videoTarget`：服务商、指定视频模型和任务提交/查询地址。对应 AI 响应也记录在该用户的研究事件里。`generatedVideo:false` 与 `videoTarget.status:"planned"` 明确表示这是预览计划。
-
-## 4. 部署后接 Seedance 2.5 视频：待接入的明确边界
-
-**当前没有真实视频提交 / 查询接口，也没有视频文件导出。只填写 `ARK_API_KEY` 不会开启视频。** 这是按“本地先不真正生成、部署时再接”的要求保留的后续工作。接入目标已经确定为火山方舟的 `doubao-seedance-2-5-260628`，不再保留两种待选认证方案。
-
-正式视频接入应使用上面的动画计划，按幕或短镜头生成，再合并完整剧本。先将背景与角色合成为参考画面，避免视频模型重新画角色；字幕使用原始台词叠加，避免模型把英文写错。思考只作为画面与字幕呈现，是否加入旁白之后单独决定。最终文件需要持久化存储，不能依赖 Vercel 函数的临时文件。
-
-接口地址：
-
-- 基础地址：`https://ark.cn-beijing.volces.com/api/v3`
-- 提交视频：`POST /contents/generations/tasks`
-- 查询结果：`GET /contents/generations/tasks/{id}`
-- 认证：`Authorization: Bearer <ARK_API_KEY>`
-- 模型：`doubao-seedance-2-5-260628`
-
-你提供的快速调用示例中的 `doubao-seed-2-1-pro-260628` 和 `/responses` 属于文字模型示例，不用于 Drama 视频。视频适配器应按上面的视频任务接口接入。现有 DeepSeek 文字建议和 fal 图片生成不受这次视频模型选择影响。
-
-已核对的官方资料：[Seedance 2.5 模型与示例](https://docs.volcengine.com/docs/ark/seedance-2-5)、[方舟视频生成任务](https://docs.volcengine.com/docs/ark/create-video-generation-task-api?lang=zh)、[方舟任务查询](https://api.volcengine.com/api-docs/view?action=GetContentsGenerationsTask&serviceCode=ark&version=2024-01-01)。
-
-接入时还需补：任务归属验证、异步任务状态持久化、失败重试与费用防重、视频存储、整段合并。不要在一次 Vercel 请求里等待全部视频生成结束。
+任务号写入现有 VideoJob / VideoClip；刷新恢复状态，相同输入防重复提交。当地预览不调用付费视频 API。详细配置和恢复说明见 [VIDEO_DEPLOYMENT.md](VIDEO_DEPLOYMENT.md)。

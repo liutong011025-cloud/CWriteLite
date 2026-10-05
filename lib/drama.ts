@@ -62,6 +62,13 @@ export function sceneTitle(index: number, name: string) {
     if (!custom || custom.toLowerCase() === number.toLowerCase()) return number;
     return `${number} — ${custom}`;
 }
+export function removeDramaScene(project:DramaProject,id:string,replacementId:string):DramaProject {
+    const activeId=project.scenes[project.activeScene]?.id;
+    const scenes=project.scenes.filter(s=>s.id!==id).map((s,index)=>/^scene\s*\d+$/i.test(s.name.trim())?{...s,name:`Scene ${index+1}`}:s);
+    if(!scenes.length)return {...project,scenes:[blankDramaScene(replacementId)],activeScene:0};
+    const retained=scenes.findIndex(s=>s.id===activeId);
+    return {...project,scenes,activeScene:retained>=0?retained:Math.min(project.activeScene,scenes.length-1)};
+}
 export function sceneSettingText(scene: { backgroundPrompt?: string; settingDescription?: string }) {
     return (scene.settingDescription || scene.backgroundPrompt || '').replace(/\b(?:no characters?|no people(?: or animals)?|no animals|no text|no letters|do not include people)[^.]*/gi, '').replace(/\s+/g, ' ').trim();
 }
