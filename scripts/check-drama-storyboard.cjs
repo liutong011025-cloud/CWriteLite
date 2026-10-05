@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),ts=require('typescript');
+require.extensions['.ts']=(module,file)=>module._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,file);
+const {dramaStoryboard,dramaCaptionTrack}=require('../lib/drama-video-prompt.ts');
+const story={characterSnapshots:[{id:'fox',name:'Fox',species:'fox',traits:'brave hero'},{id:'owl',name:'Owl',species:'owl'}]};
+const scene={name:'Garden',backgroundPrompt:'Garden',notes:'Fox hands a leaf to Owl.',actors:[{characterId:'fox',x:20,y:90},{characterId:'owl',x:75,y:80}],lines:[]};
+const empty=dramaStoryboard(story,scene);assert.equal(empty.duration,5);assert.equal(empty.captions.length,0);assert.match(empty.prompt,/reaction close-up/);assert.doesNotMatch(empty.prompt,/brave hero|fixed wide shot|Silent animation/);
+scene.lines=[{id:'1',kind:'dialogue',characterId:'fox',text:'Here is your leaf!'},{id:'2',kind:'thought',characterId:'owl',text:'I wonder where it came from.'},{id:'3',kind:'action',text:'Owl looks under the leaf.'}];
+const plan=dramaStoryboard(story,scene);assert.ok(plan.duration>5&&plan.duration<=30);assert.deepEqual(plan.captions.map(c=>[c.name,c.kind,c.text]),[['Fox','dialogue','Here is your leaf!'],['Owl','thought','I wonder where it came from.']]);
+assert.match(plan.prompt,/Fox says exactly "Here is your leaf!"/);assert.match(plan.prompt,/Owl's inner voice says exactly/);assert.match(plan.prompt,/Their lips remain still/);assert.match(plan.prompt,/Action shot.*Owl looks under the leaf/);assert.match(plan.prompt,/20% from the left/);
+assert.ok(plan.captions.every((c,i)=>c.start>=0&&c.end<=plan.duration&&(!i||c.start>=plan.captions[i-1].end)));
+const vtt=dramaCaptionTrack([{start:.6,end:2,name:'Owl',kind:'thought',text:'<b>leaf</b> & sky\nnext'}]);assert.match(vtt,/00:00:00.600 --> 00:00:02.000/);assert.match(vtt,/Owl thinks: &lt;b&gt;leaf&lt;\/b&gt; &amp; sky next/);
+scene.lines=[{kind:'thought',characterId:'owl',text:'我想去找我的朋友，我们可以一起去河边看一看。'}];assert.ok(dramaStoryboard(story,scene).duration>5);
+scene.lines=[{kind:'dialogue',characterId:'fox',text:'word '.repeat(100)}];assert.throws(()=>dramaStoryboard(story,scene),/Split it into shorter scenes/);
+scene.lines=[{kind:'dialogue',characterId:'fox',text:'word '.repeat(45)}];assert.ok(dramaStoryboard(story,scene).duration>15);assert.throws(()=>dramaStoryboard(story,scene,15),/up to 15 seconds/);
+console.log('Passed: shot direction, speaker / thought attribution, unchanged words, ordered caption timing, multilingual reading time and duration limits.');
