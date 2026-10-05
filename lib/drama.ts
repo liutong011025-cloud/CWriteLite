@@ -2,6 +2,8 @@ import type { Character, DramaLine, DramaProject, DramaScene, Story, StoryCanvas
 
 export const MAX_DRAMA_SCENES = 6;
 export const DRAMA_ACTOR_WIDTH = 26;
+export const DRAMA_MIN_SCALE = .2;
+export const DRAMA_MAX_SCALE = 2.8;
 export const actorX = (x:number,scale:number) => Math.max(DRAMA_ACTOR_WIDTH*scale/2+1,Math.min(99-DRAMA_ACTOR_WIDTH*scale/2,x));
 export const isDrama = (work: Pick<Story, 'canvas'>) => work.canvas?.writingType === 'drama';
 export const writingType = (work: Pick<Story, 'canvas'>) => isDrama(work) ? 'drama' : 'story';
@@ -24,7 +26,7 @@ export function normalizeDrama(input: unknown, cast: Character[]): DramaProject 
         const id = seen.has(sceneId) ? `${sceneId}-${index}` : sceneId;
         seen.add(id);
         const actorIds = new Set<string>();
-        const actors = (Array.isArray(s?.actors) ? s.actors : []).filter(a => ids.has(a?.characterId) && !actorIds.has(a.characterId) && !!actorIds.add(a.characterId)).slice(0, 8).map(a => {const scale=bounded(a.scale,.6,1.6,1);return {characterId:a.characterId, x:actorX(bounded(a.x,8,92,50),scale), y:bounded(a.y,35,96,89),scale,flipped:Boolean(a.flipped)};});
+        const actors = (Array.isArray(s?.actors) ? s.actors : []).filter(a => ids.has(a?.characterId) && !actorIds.has(a.characterId) && !!actorIds.add(a.characterId)).slice(0, 8).map(a => {const scale=bounded(a.scale,DRAMA_MIN_SCALE,DRAMA_MAX_SCALE,1);return {characterId:a.characterId, x:actorX(bounded(a.x,2,98,50),scale), y:bounded(a.y,5,96,89),scale,flipped:Boolean(a.flipped)};});
         const lineIds = new Set<string>();
         const lines = (Array.isArray(s?.lines) ? s.lines : []).slice(0, 80).filter(l => l?.kind === 'action' || actorIds.has(l?.characterId)).map((l, i) => {
             const initialId = safeText(l.id, 100) || `line-${i}`;
