@@ -1344,3 +1344,73 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 }
 .portrait-window { background:#fff6e4; }
 .drama-actor img,.drama-preview-actor>img { background:transparent; }
+.studio-page .character-input-fields { margin:12px 0 24px; }
+.ai-suggestions header .suggestions-action { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:12px 18px; border:2px solid #226c72; border-radius:12px; background:#287d83; color:#fffdf4; font-size:17px; font-weight:800; box-shadow:0 3px 0 #19555c; }
+.ai-suggestions header .suggestions-action:hover { background:#216a71; }
+.ai-suggestions header .suggestions-action:disabled { opacity:.65; cursor:wait; }
+.ai-suggestions header .suggestions-action svg { width:20px; height:20px; }
+.story-paper .title-label>span { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.story-paper .title-label small { font-size:14px; letter-spacing:0; text-transform:none; font-weight:500; }
+.story-paper .title-label input { width:100%; margin-top:10px; padding:14px 16px; border:2px solid #cdb888; border-radius:10px; background:#fffef9; font-size:26px; }
+.story-paper .title-label input:focus { outline:3px solid #bfa4e6; outline-offset:2px; border-color:#8c66ba; }
+
+/* Map artwork stays anchored; compact labels sit below it and avoid all picture bounds. */
+.map-work-illustration { width:164px; height:164px; z-index:2; filter:drop-shadow(0 5px 5px #526c3433); }
+.map-work-illustration>img { position:static; width:100%; height:100%; object-fit:contain; border-radius:24px; }
+.map-art-placeholder { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; border:2px dashed #72916c; border-radius:50%; background:#eef4da99; color:#4d694e; font-size:13px; }
+.map-drawing-surface .saved-story-flag { width:142px; min-width:0; max-width:142px; min-height:0; height:44px; padding:5px 9px; font-size:14px; line-height:1.2; transform:translate(-50%,-100%); z-index:4; }
+.saved-story-flag span { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.map-creating-pin { position:absolute; transform:translate(-50%,-100%); display:flex; flex-direction:column; align-items:center; z-index:30; pointer-events:none; }
+.map-creating-pin img { width:75px; height:80px; object-fit:contain; animation:creating-pin-pulse 1s ease-in-out infinite; }
+.map-creating-pin span { white-space:nowrap; background:#fff9e9; color:#665033; padding:9px 14px; border:1px solid #ba995e; border-radius:10px; box-shadow:0 3px 6px #526c3433; font-size:16px; }
+@keyframes creating-pin-pulse { 50% { transform:translateY(-6px); } }
+.tree-watering { position:absolute; inset:0; pointer-events:none; z-index:10; filter:none; }
+.watering-can { position:absolute; width:125%; left:65%; top:-55%; transform-origin:20% 75%; animation:watering-can-pour 5.2s ease-in-out both; }
+.watering-can svg { width:100%; height:auto; display:block; filter:drop-shadow(0 3px 2px #324c4033); }
+.watering-drops { position:absolute; left:42%; top:10%; width:65%; height:65%; transform:rotate(14deg); }
+.watering-drops i { position:absolute; top:0; width:4px; height:9px; background:#5fc1ed; border:1px solid #d8f8ff; border-radius:60% 60% 80% 80%; opacity:0; animation:watering-drop .65s linear 5; }
+.watering-splash { position:absolute; left:38%; bottom:-5%; color:#88d8fa; font-size:26px; opacity:0; animation:watering-splash 5.2s ease-in-out both; }
+@keyframes watering-can-pour { 0% { opacity:1; transform:translate(20%,-25%) rotate(10deg); } 100% { opacity:0; transform:translate(20%,-25%) rotate(10deg); } 13%,82% { opacity:1; transform:translate(0,0) rotate(-25deg); } 90% { opacity:1; transform:translate(0,0) rotate(5deg); } }
+@keyframes watering-drop { 0% { opacity:0; transform:translateY(0) scale(.7); } 15% { opacity:1; } 85% { opacity:1; } 100% { opacity:0; transform:translateY(45px) scale(.4); } }
+@keyframes watering-splash { 0%,15%,100% { opacity:0; transform:scale(.7); } 25%,75% { opacity:1; transform:scale(1.2); } }
+@media (max-width:768px) { .map-work-illustration { width:120px; height:120px; } .studio-page .character-input-fields { grid-template-columns:1fr 1fr; } .ai-suggestions header .suggestions-action { font-size:16px; } }
+@media (prefers-reduced-motion:reduce) { .watering-can { animation:none; opacity:1; transform:rotate(-25deg); } .watering-drops i { animation:none; opacity:1; } .watering-splash { animation:none; opacity:1; } .map-creating-pin img { animation:none; } }
+@media print { .title-label small { display:none; } .story-paper .title-label input { border:0; padding:0; background:none; } }
+
+.map-drawing-surface .map-update-status { position:absolute; left:50%; top:50%; bottom:auto; transform:translate(-50%,-50%); display:flex; gap:18px; width:min(430px,calc(100% - 32px)); padding:20px 24px; border:2px solid #c8afd8; border-radius:20px; background:#fffdf5f5; box-shadow:0 8px 30px #4d624c33; z-index:45; pointer-events:none; }
+.map-drawing-surface .map-update-status img { width:104px; height:120px; object-fit:contain; flex-shrink:0; }
+.map-update-status b { color:#615080; font-size:22px; }
+.map-update-status p { color:#756582; font-size:16px; line-height:1.5; margin:8px 0; }
+.map-drawing-dots { display:inline-block; color:#a68bce; letter-spacing:6px; animation:creating-pin-pulse 1.2s ease-in-out infinite; }
+@media (max-width:500px) { .map-drawing-surface .map-update-status { gap:12px; padding:16px; } .map-drawing-surface .map-update-status img { width:80px; height:100px; } .map-update-status b { font-size:18px; } }
+@media (prefers-reduced-motion:reduce) { .map-drawing-dots { animation:none; } }
+.drama-resize-handle { position:absolute; top:-19px; width:44px; height:44px; padding:0; display:grid; place-items:center; z-index:12; touch-action:none; background:transparent; border:0; }
+.drama-resize-handle.left { left:-19px; cursor:nwse-resize; }
+.drama-resize-handle.right { right:-19px; cursor:nesw-resize; }
+.drama-resize-handle.bottom { top:auto; bottom:-19px; }
+.drama-resize-handle.bottom.left { cursor:nesw-resize; }
+.drama-resize-handle.bottom.right { cursor:nwse-resize; }
+.drama-resize-handle span { width:16px; height:16px; background:#fff; border:3px solid #307d79; border-radius:4px; box-shadow:0 1px 4px #0003; }
+.drama-resize-handle:focus-visible span { outline:3px solid #6654a6; outline-offset:3px; }
+.drama-tableau .drama-stage,.drama-tableau .drama-stage.has-word-editor { aspect-ratio:16/11; height:auto; min-height:0; }
+.drama-workbench .drama-actor-grip img { max-height:none; }
+.drama-preview-actor { height:auto; }
+.drama-preview-actor>img { height:auto; }
+.drama-scene-preview { min-height:0; }
+.drama-actor-name,.drama-preview-actor>b { position:absolute; top:100%; left:50%; transform:translateX(-50%); }
+.drama-video-panel { display:grid; gap:14px; padding:16px 0; border-bottom:1px solid #dfcfad; }
+.drama-video-panel h3 { display:flex; gap:8px; align-items:center; }
+.drama-video-panel label { display:grid; gap:6px; font-size:16px; }
+.drama-video-panel textarea,.drama-video-panel select { width:100%; padding:10px; border:1px solid #cfbf9b; border-radius:8px; background:#fffdf8; font-size:15px; }
+.drama-video-panel video { width:100%; border-radius:10px; }
+.drama-video-panel .suggestions-action { min-height:48px; padding:12px 18px; border:2px solid #226c72; border-radius:12px; background:#287d83; color:#fffdf4; font-size:18px; font-weight:800; }
+.drama-video-panel .suggestions-action:disabled { opacity:.6; cursor:default; }
+.drama-video-wait { display:flex; align-items:center; gap:10px; }
+.drama-video-wait img { width:70px; }
+.drama-workbench .drama-scene-card { position:relative; display:flex; flex:0 0 242px; border:1px solid #c3a271; border-radius:9px; background:#fffaed; padding-right:43px; }
+.drama-workbench .drama-scene-card.active { border-color:#94622e; box-shadow:0 0 0 2px #b1894b66; }
+.drama-workbench .drama-scenes-strip .drama-scene-select { flex:1 1 auto; width:100%; justify-content:flex-start; border:0; background:transparent; gap:9px; padding:6px; }
+.drama-workbench .drama-scenes-strip .drama-scene-select b { white-space:nowrap; max-width:122px; max-height:none; overflow:hidden; text-overflow:ellipsis; }
+.drama-workbench .drama-scenes-strip .drama-scene-remove { position:absolute; right:0; top:50%; transform:translateY(-50%); width:44px; height:44px; min-height:44px; padding:6px; border:0; background:transparent; color:#9d594a; }
+.drama-workbench .drama-scenes-strip .drama-scene-remove:hover { background:#f3e0d5; }
+.drama-workbench .drama-scenes-strip .drama-add-scene { flex:0 0 155px; white-space:nowrap; }

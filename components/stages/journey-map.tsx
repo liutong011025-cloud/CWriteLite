@@ -15,6 +15,8 @@ export interface PoetryProgress { hasForm: boolean; hasTopic: boolean; hasLines:
 interface JourneyMapProps {
   language?: Language
   type?: JourneyType
+  illustrating?: boolean
+  creatingPin?: {x:number;y:number;kind:'story'|'drama'}|null
   mapImageUrl?: string
   mapFlags?: MapFlagItem[]
   pin?: { x: number; y: number } | null
@@ -42,7 +44,7 @@ interface JourneyMapProps {
   onEditStory?: (id: string) => void
 }
 
-export default function JourneyMap({ mapImageUrl, mapFlags = [], pin, onPinChange, chapterIndex = 0, onPrevChapter, onNextChapter, canMoveToNextChapter, onStartJourney, resumeJourney = false, onContinue, onNavigate, onGoProfile, onEditStory, drafts, onResumeDraft, onDeleteDraft }: JourneyMapProps) {
+export default function JourneyMap({ illustrating, creatingPin, mapImageUrl, mapFlags = [], pin, onPinChange, chapterIndex = 0, onPrevChapter, onNextChapter, canMoveToNextChapter, onStartJourney, resumeJourney = false, onContinue, onNavigate, onGoProfile, onEditStory, drafts, onResumeDraft, onDeleteDraft }: JourneyMapProps) {
   const surface = useRef<HTMLDivElement>(null)
   const artwork = useRef<HTMLImageElement>(null)
   const [placing, setPlacing] = useState<'story'|'drama'|null>(null)
@@ -63,12 +65,14 @@ export default function JourneyMap({ mapImageUrl, mapFlags = [], pin, onPinChang
   const point=(x:number,y:number)=>({x:frame.left+x/100*frame.width,y:frame.top+y/100*frame.height});
   const draftIds=new Set(drafts?.map(d=>d.id));
   const visibleFlags=mapFlags.filter(f=>!draftIds.has(f.id));
-  const labels=[...visibleFlags.map(f=>({id:f.id,...point(f.x,f.y),width:168,height:52})),...(drafts||[]).filter(d=>d.pin).map(d=>({id:d.id,...point(d.pin!.x,d.pin!.y),width:220,height:135}))];
-  const arranged=arrangeMapMarkers(labels,frame.containerWidth,frame.containerHeight);
+  const artSize=frame.containerWidth<768?120:164;
+  const illustrations=visibleFlags.map(f=>({id:'art-'+f.id,...point(f.x,f.y),width:artSize,height:artSize}));
+  const labels=[...visibleFlags.map(f=>({id:f.id,x:point(f.x,f.y).x,y:point(f.x,f.y).y+62,width:142,height:44})),...(drafts||[]).filter(d=>d.pin).map(d=>({id:d.id,...point(d.pin!.x,d.pin!.y),width:220,height:135}))];
+  const arranged=arrangeMapMarkers(labels,frame.containerWidth,frame.containerHeight,illustrations);
   const labelPosition=(id:string,fallback:{x:number;y:number})=>{const label=arranged.find(p=>p.id===id);return label?{left:`${label.x}px`,top:`${label.y}px`}:position(fallback.x,fallback.y);};
   function place(clientX: number, clientY: number, kind: 'story'|'drama') {
     const box = surface.current
-    if (!box) return
+    if (!box || creatingPin) return
     const r = box.getBoundingClientRect()
     const x = (clientX - r.left - frame.left) / frame.width * 100
     const y = (clientY - r.top - frame.top) / frame.height * 100
@@ -85,17 +89,26 @@ export default function JourneyMap({ mapImageUrl, mapFlags = [], pin, onPinChang
         <img ref={artwork} src={imageUrl} alt="Journey Map" onLoad={syncFrame} draggable={false} className="map-artwork" />
         <button className="map-farm-link" onClick={e => { e.stopPropagation(); onGoProfile?.() }} aria-label="Go to My Farm"><img src="/myfarm.webp" alt=""/><span>My Farm</span></button>
         <span className="chapter-label map-chapter-label">Chapter {chapterIndex + 1}</span>
-        <RoofDock contained layout={{ ...DEFAULT_ROOF_LAYOUT, roofWidth: 204, roofRight: 24, roofBottom: 145 }} showCoach={!resumeJourney && !mapFlags.length} onDragPinStart={id=>setPlacing(id==='drama'?'drama':'story')} onDragPinEnd={() => setPlacing(null)} onSelectPin={id=>setPlacing(id==='drama'?'drama':'story')}/>
-        {mapFlags.filter(f=>f.previewArt).map(f=><div key={`art-${f.id}`} className={`map-work-illustration ${f.workType==='drama'?'map-drama-theatre':''}`} style={position(f.x,f.y)} aria-hidden="true"><svg viewBox="0 0 110 90"><ellipse cx="55" cy="77" rx="50" ry="10" fill="#8fb36c"/><path d="M18 38L55 10L94 38V77H18Z" fill="#e4c383" stroke="#8f6940" strokeWidth="2"/><path d="M12 39L55 7L99 39" fill="none" stroke="#b6724b" strokeWidth="7" strokeLinecap="round"/><path d="M30 44H81V77H30Z" fill="#6f4e38"/><path d="M28 44Q50 60 36 76M82 44Q59 60 73 76" fill="none" stroke={f.workType==='drama'?'#ac675f':'#b6b674'} strokeWidth="8"/></svg>{f.previewArt?.imageUrl&&<img src={f.previewArt.imageUrl} alt=""/>}</div>)}
-        <svg className="map-label-leaders" width={frame.containerWidth} height={frame.containerHeight} aria-hidden="true">{arranged.map(label=>{const original=labels.find(p=>p.id===label.id)!;return Math.hypot(original.x-label.x,original.y-label.y)>20?<line key={label.id} x1={original.x} y1={original.y} x2={label.x} y2={label.y}/>:null;})}</svg>
+        <RoofDock contained layout={{ ...DEFAULT_ROOF_LAYOUT, roofWidth: 204, roofRight: 24, roofBottom: 145 }} showCoach={!resumeJourney && !mapFlags.length} onDragPinStart={id=>setPlacing(id==='drama'?'drama':'story')} onDragPinEnd={() => setPlacing(null)} onSelectPin={id=>!creatingPin&&setPlacing(id==='drama'?'drama':'story')}/>
+        {visibleFlags.map(f=><div key={`art-${f.id}`} className="map-work-illustration" style={position(f.x,f.y)}><MapIllustration flag={f}/></div>)}
+        <svg className="map-label-leaders" width={frame.containerWidth} height={frame.containerHeight} aria-hidden="true">{arranged.map(label=>{const flag=visibleFlags.find(f=>f.id===label.id);const original=flag?point(flag.x,flag.y):labels.find(p=>p.id===label.id)!;return Math.hypot(original.x-label.x,original.y-label.y)>20?<line key={label.id} x1={original.x} y1={original.y} x2={label.x} y2={label.y}/>:null;})}</svg>
         {visibleFlags.map(flag => <button key={flag.id} className={`saved-story-flag ${flag.workType==='drama'?'drama-map-flag':''}`} style={labelPosition(flag.id,flag)} onClick={e => { e.stopPropagation(); setSelected(flag) }} aria-label={`${flag.workType==='drama'?'Drama: ':''}${flag.title}`}><span>{flag.title}</span></button>)}
         {drafts ? drafts.filter(d=>d.pin).map(d=><div key={d.id} className="resume-story-pin resume-story-with-dismiss" style={labelPosition(d.id,d.pin!)}>
           <button className="resume-story-main" onClick={e=>{e.stopPropagation();onResumeDraft?.(d.id);}} aria-label={`Continue ${d.workType}: ${d.title}`}>{d.workType==='drama'?<img className="drama-resume-art" src="/dramapin-small.webp" alt=""/>:<img className="story-resume-art" src="/storypin.webp" alt=""/>}<span>Continue {d.workType==='drama'?'drama':'writing'}<ArrowRight size={16}/></span></button>
           {onDeleteDraft&&<button className="resume-draft-close" onClick={e=>{e.stopPropagation();onDeleteDraft(d.id);}} aria-label={`Delete unfinished ${d.workType}: ${d.title}`}><X size={16}/></button>}
         </div>) : pin && resumeJourney && <button className="resume-story-pin" style={position(pin.x, pin.y)} onClick={e => { e.stopPropagation(); onContinue?.() }}><StoryPin compact/><span>Continue writing<ArrowRight size={16}/></span></button>}
-        {placing && <div className="map-placement-message"><MapPin size={19}/>Choose a place for your {placing}<button onClick={e => { e.stopPropagation(); setPlacing(null) }}>Cancel</button></div>}
+        {creatingPin&&<div className="map-creating-pin" style={position(creatingPin.x,creatingPin.y)} role="status"><img src={creatingPin.kind==='drama'?'/dramapin-small.webp':'/storypin.webp'} alt=""/><span>Creating your {creatingPin.kind}…</span></div>}
+        {placing && !creatingPin && <div className="map-placement-message"><MapPin size={19}/>Choose a place for your {placing}<button onClick={e => { e.stopPropagation(); setPlacing(null) }}>Cancel</button></div>}
+      {illustrating&&<section className="map-update-status" role="status" aria-live="polite"><img src="/Cagentdraw.webp" alt="Cagent drawing your map"/><div><b>Drawing your map…</b><p>Your writing is saved. Your new picture is on its way.</p><span className="map-drawing-dots" aria-hidden="true">● ● ●</span></div></section>}
       <div className="map-paper-bottom"><Bear pose="cagent-welcome.webp" responsePose="cagent-planning-v2.webp" hints={["Every pin is a place for a new adventure.","Story tells what happens. Drama brings it to life with dialogue."]} message={resumeJourney ? "Your writing is waiting. Click its pin to continue!" : "Drag a Story or Drama pin onto your map to begin."}/><div className="map-chapter-actions">{chapterIndex > 0 && <button className="outline-button" onClick={onPrevChapter}><ArrowLeft size={18}/>Previous chapter</button>}{canMoveToNextChapter && <button className="purple-button" onClick={onNextChapter}>Next chapter<ArrowRight size={18}/></button>}</div></div>
       </div>
     {selected && <Modal title={selected.title} wide onClose={() => setSelected(null)}><div className="saved-story-reading">{selected.content || "Your writing will appear here after you finish."}</div><button className="purple-button" onClick={() => onEditStory?.(selected.id)}><PencilLine size={18}/>{selected.workType==='drama'?'Edit script':'Continue writing'}</button></Modal>}
   </section>
+}
+
+function MapIllustration({flag}:{flag:MapFlagItem}) {
+  const [failed,setFailed]=useState(false);
+  const imageUrl=flag.previewArt?.imageUrl;
+  useEffect(()=>setFailed(false),[imageUrl]);
+  return imageUrl&&!failed ? <img src={imageUrl} alt={`Illustration for ${flag.title}`} onError={()=>setFailed(true)}/> : <div className="map-art-placeholder"><MapPin size={28}/><span>{failed?'Picture unavailable':'Picture pending'}</span></div>;
 }

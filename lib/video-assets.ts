@@ -21,7 +21,7 @@ export async function videoAsset(url:string,maxBytes=20*1024*1024):Promise<Buffe
     if(parsed.protocol!=='https:'||parsed.username||parsed.password||isIP(parsed.hostname)||!domains.some(host=>parsed.hostname===host||parsed.hostname.endsWith('.'+host)))throw new Error('Asset host is not allowed.');
     const addresses=await lookup(parsed.hostname,{all:true});
     if(!addresses.length||addresses.some(item=>!publicAddress(item.address)))throw new Error('Asset host is not public.');
-    const response=await fetch(url,{redirect:'error',signal:AbortSignal.timeout(60000)});
+    const response=await fetch(url,{redirect:'error',signal:AbortSignal.timeout(15000)});
     if(!response.ok||!response.body)throw new Error('Asset download failed.');
     const chunks:Buffer[]=[];let size=0;
     const reader=response.body.getReader();

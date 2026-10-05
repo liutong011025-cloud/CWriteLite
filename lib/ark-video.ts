@@ -37,20 +37,21 @@ async function arkFetch(path: string, init: RequestInit) {
 /** Create one Seedance task. Callers must save the returned id before any retry. */
 export async function createSeedanceTask(prompt: string, imageUrl?: string, duration = 5, model = process.env.ARK_VIDEO_MODEL?.trim() || SEEDANCE_VIDEO_MODEL) {
     const content: unknown[] = [{ type: 'text', text: prompt }];
-    if (imageUrl?.startsWith('https://')) content.push({ type: 'image_url', image_url: { url: imageUrl }, role: 'first_frame' });
+    if (imageUrl && /^(https:\/\/|data:image\/(png|webp);base64,)/.test(imageUrl)) content.push({ type: 'image_url', image_url: { url: imageUrl }, role: 'first_frame' });
     const response = await arkFetch('/contents/generations/tasks', {
         method: 'POST',
         body: JSON.stringify({
             model,
             content,
             resolution: '720p',
-            ratio: '16:9',
-            duration: Math.max(4, Math.min(30, Math.ceil(duration))),
+            ratio: imageUrl ? 'adaptive' : '16:9',
+            duration: Math.max(4, Math.min(15, Math.ceil(duration))),
+            generate_audio: false,
             watermark: false,
         }),
     });
     const body = await response.json().catch(() => ({})) as ArkTask;
-    if (!response.ok || !body.id) throw new ArkVideoError(body.error?.message || 'The video service did not accept this scene.', response.status, body.error?.code || 'provider_error');
+    if (!response.ok || !body.id) throw new ArkVideoError(body.error?.message || 'The video service did not accept this scene.', response.ok ? 502 : response.status, body.error?.code || 'provider_error');
     return body.id;
 }
 
@@ -58,6 +59,6 @@ export async function readSeedanceTask(taskId: string) {
     const response = await arkFetch('/contents/generations/tasks/' + encodeURIComponent(taskId), { method: 'GET' });
     const body = await response.json().catch(() => ({})) as ArkTask;
     if (!response.ok) throw new ArkVideoError(body.error?.message || 'The video task could not be read.', response.status, 'provider_error');
-    const status = body.status === 'succeeded' ? 'succeeded' : body.status === 'failed' ? 'failed' : 'running';
+    const status = body.status === 'succeeded' ? 'succeeded' : ['failed','expired','cancelled','canceled'].includes(body.status || '') ? 'failed' : 'running';
     return { status, videoUrl: body.content?.video_url || '', error: body.error?.message || '' };
 }

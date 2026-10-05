@@ -155,6 +155,10 @@ export async function POST(request: NextRequest) {
                 await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${user.id} FOR UPDATE`;
                 const current=await tx.user.findUniqueOrThrow({where:{id:user.id}});
                 const profile=growthProfile(current.profile,{id:story.id,title:story.title,content:story.content,workType:writingType(story as unknown as Story)},proposed);
+                result.profile=profile;
+                result.grownTreeIds=profile.trees.filter((tree:any)=>
+                    (profile.treeGrowthDetails[tree.id]||[]).length>((current.profile as any)?.treeGrowthDetails?.[tree.id]||[]).length
+                ).map((tree:any)=>tree.id);
                 await tx.user.update({where:{id:user.id},data:{profile:profile as Prisma.InputJsonValue}});
             });
         }
