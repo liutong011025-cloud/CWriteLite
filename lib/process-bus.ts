@@ -7,7 +7,16 @@ type Message = { kind: 'event'; code: string; payload: Record<string, unknown> |
   { kind: 'result'; path: string; body: unknown; id: string; at: number; result?: unknown; error?: string } |
   { kind: 'context'; context: ProcessContext };
 const listeners = new Set<(message: Message) => void>();
-function publish(message: Message) { for (const fn of listeners) { try { fn(message); } catch { /* Research must never break writing. */ } } }
+function publish(message: Message) {
+  for (const fn of listeners) {
+    try {
+      const copy = message.kind === 'event' && typeof message.payload === 'function'
+        ? { ...message, payload: () => structuredClone((message.payload as () => Record<string, unknown>)()) }
+        : structuredClone(message);
+      fn(copy);
+    } catch { /* Research must never break writing. */ }
+  }
+}
 export function subscribeProcess(fn: (message: Message) => void) { listeners.add(fn); return () => { listeners.delete(fn); }; }
 export function trackProcess(code: string, payload: Record<string, unknown> | (() => Record<string, unknown>) = {}, origin?: ProcessOrigin) { publish({ kind: 'event', code, payload, origin }); }
 export function processContext(context: ProcessContext) { publish({ kind: 'context', context }); }
