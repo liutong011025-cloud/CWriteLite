@@ -5,7 +5,7 @@ import type { Character, Story } from '@/lib/types';
 import { observeProcessRequest } from '@/lib/process-bus';
 export async function api(path: string, body?: unknown) {
     const finish = observeProcessRequest(path, body);
-    try { const response = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}); const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Please try again.'); finish(data); return data; }
+    try { const response = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}); const text = await response.text(); let data: any; try { data = JSON.parse(text); } catch { const requestId = response.headers.get('x-vercel-id'); console.error('API response incomplete', { path, status: response.status, requestId }); throw new Error(`The server returned an incomplete response (HTTP ${response.status}). Please try again.${requestId ? ` Reference: ${requestId}` : ''}`); } if (!response.ok) throw new Error(data?.error || `Request failed (HTTP ${response.status}). Please try again.`); if (!data || typeof data !== 'object') throw new Error('The server returned an invalid response. Please try again.'); finish(data); return data; }
     catch (error) { finish(undefined, (error as Error).message); throw error; }
 }
 export function Logo({ white = false }: { white?: boolean }) { return <div className="lite-logo"><img src="/cwrite-lite-logo.webp" alt="CWrite lite"/></div>; }
