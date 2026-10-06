@@ -1,4 +1,5 @@
 'use client';
+import { processFetch, trackProcess } from '@/lib/process-bus';
 import {useEffect,useState} from 'react';
 import {ChevronRight,Lightbulb} from 'lucide-react';
 import type {Story} from '@/lib/types';
@@ -8,7 +9,7 @@ export default function DramaReadiness({story,onClose,onContinue}:{story:Story;o
     const [busy,setBusy]=useState(true),[moving,setMoving]=useState(false),[message,setMessage]=useState(''),[questions,setQuestions]=useState<string[]>([]),[error,setError]=useState('');
     useEffect(()=>{
         const controller=new AbortController();
-        void fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({kind:'dramaReview',storyId:story.id,canvas:story.canvas})})
+        void processFetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({kind:'dramaReview',storyId:story.id,canvas:story.canvas})})
             .then(async r=>{const data=await r.json();if(!r.ok)throw Error(data.error||'Please try again.');if(!controller.signal.aborted){setMessage(data.message);setQuestions(data.suggestions);}})
             .catch(e=>{if(!controller.signal.aborted)setError(e.message);}).finally(()=>{if(!controller.signal.aborted)setBusy(false);});
         return()=>controller.abort();

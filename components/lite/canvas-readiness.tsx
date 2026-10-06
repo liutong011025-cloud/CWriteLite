@@ -1,4 +1,5 @@
 'use client';
+import { processFetch, trackProcess } from '@/lib/process-bus';
 import {useEffect,useRef,useState} from 'react';
 import {ChevronRight,Lightbulb} from 'lucide-react';
 import type {Story} from '@/lib/types';
@@ -15,7 +16,7 @@ export default function CanvasReadiness({story,onContinue,onEvent}:{story:Story;
         if(busy)return;const controller=new AbortController();request.current=controller;
         const signature=latest.current;setError('');setBusy(true);setOpen(true);
         try{
-            const response=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({kind:'canvasReview',storyId:story.id,canvas:story.canvas})});
+            const response=await processFetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({kind:'canvasReview',storyId:story.id,canvas:story.canvas})});
             const result=await response.json();if(!response.ok)throw new Error(result.error||'Please try again.');
             if(controller.signal.aborted)return;
             if(latest.current!==signature){setError('Your canvas changed. Check it again.');return;}
