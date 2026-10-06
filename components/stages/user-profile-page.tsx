@@ -1,4 +1,5 @@
 "use client"
+import { processFetch, trackProcess } from "@/lib/process-bus"
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
@@ -832,7 +833,7 @@ export default function UserProfilePage({
         setCagentGuideText("Cagent is thinking... ✨")
       }
       try {
-        const res = await fetch("/api/dify-cagent-guide", {
+        const res = await processFetch("/api/dify-cagent-guide", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -889,6 +890,7 @@ export default function UserProfilePage({
   )
 
   const handleReviewClick = (r: ReviewItem) => {
+    trackProcess("SOC_FEEDBACK_READ",{reviewId:r.id,username:userId});
     setSelectedReview(r)
     fetch("/api/reviews/mark-read", {
       method: "PATCH",
@@ -953,7 +955,7 @@ export default function UserProfilePage({
         .join("\n\n") + (reviewDraft.trim() ? `\n\nOverall:\n${reviewDraft.trim()}` : "")
     setReviewSubmitting(true)
     try {
-      const res = await fetch("/api/reviews", {
+      const res = await processFetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1465,7 +1467,7 @@ export default function UserProfilePage({
                 )
               })}
 
-            {!isOtherFarm && FARM_SLOT_TREE_IDS.map((treeId,index)=><button key={`value-label-${treeId}`} data-farm-guide="garden" className="farm-soil-label" onClick={()=>setSelectedTreeId(treeId)} style={{left:`${FARM_SAPLING_SLOTS[index].x}%`,top:`${FARM_SAPLING_SLOTS[index].labelY}%`,fontSize:treeId===2?'clamp(10px,.86vw,12px)':undefined,rotate:`${index%2===0?'-.7deg':'.7deg'}`}} title={`${TREE_DIMENSION_NAMES[treeId]}: ${farmValueMeaning(treeId)}`}>{farmValueLabel(treeId)}</button>)}
+            {!isOtherFarm && FARM_SLOT_TREE_IDS.map((treeId,index)=><button key={`value-label-${treeId}`} data-farm-guide="garden" className="farm-soil-label" data-process-target={String(treeId)} onClick={()=>setSelectedTreeId(treeId)} style={{left:`${FARM_SAPLING_SLOTS[index].x}%`,top:`${FARM_SAPLING_SLOTS[index].labelY}%`,fontSize:treeId===2?'clamp(10px,.86vw,12px)':undefined,rotate:`${index%2===0?'-.7deg':'.7deg'}`}} title={`${TREE_DIMENSION_NAMES[treeId]}: ${farmValueMeaning(treeId)}`}>{farmValueLabel(treeId)}</button>)}
 
             {farmElements.map((element, elementIndex) => {
               const state = farmElementStates[element.id]
@@ -1511,7 +1513,7 @@ export default function UserProfilePage({
                       if (!isOtherFarm) onOpenSettings()
                     } else if (element.id === "theirmap") {
                       setShowOtherWritingMap(true)
-                    } else if (element.id === "farmwrittingboard") setViewMode("writings")
+                    } else if (element.id === "farmwrittingboard") {trackProcess("FARM_WORK_VIEW",{username:userId});setViewMode("writings")}
                     else if (element.id === "vistothersfarm") {
                       if (typeof onVisitOthersFarm === "function") onVisitOthersFarm()
                       else if (isOtherFarm) onBack()
