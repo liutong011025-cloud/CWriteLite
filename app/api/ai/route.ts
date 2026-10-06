@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { currentUser } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { chat, type DeepSeekMessage } from '@/lib/deepseek';
-import { generateFalImage, getFalKey, illustrationPrompt, removeBackground } from '@/lib/fal-images';
+import { FalImageError, generateFalImage, getFalKey, illustrationPrompt, removeBackground } from '@/lib/fal-images';
 import { resolveMapImageUrlForFal } from '@/lib/fal-map';
 import {isDrama,normalizeDrama,writingType} from '@/lib/drama';
 import {STAGES,type Character,type Story,type StoryCanvas} from '@/lib/types';
@@ -17,10 +17,9 @@ import {localPreviewEnabled,localPreviewReply} from '@/lib/local-preview';
 export const maxDuration = 120;
 const parse = (s: string) => JSON.parse(s.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, ''));
 export async function POST(request: NextRequest) {
-    const user = await currentUser();
-    if (!user)
-        return NextResponse.json({ error: 'Please log in.' }, { status: 401 });
     try {
+        const user = await currentUser();
+        if (!user) return NextResponse.json({ error: 'Please log in.' }, { status: 401 });
         const b = await request.json();
         const kind = String(b.kind || 'chat');
         if (!['chat', 'coach', 'image', 'tips', 'characterTips', 'canvas', 'canvasReview', 'growth', 'feedback','dramaTips','dramaReview','dramaVideoPlan'].includes(kind))
@@ -194,7 +193,11 @@ export async function POST(request: NextRequest) {
     }
     catch (error) {
         const message = error instanceof Error ? error.message : 'AI unavailable';
-        console.error('Lite AI request:', message);
+        const code = error instanceof Prisma.PrismaClientKnownRequestError ? error.code : undefined;
+        const providerStatus = error instanceof FalImageError ? error.status : undefined;
+        console.error('Lite AI request:', { code, provider: error instanceof FalImageError ? 'fal' : undefined, providerStatus, message });
+        if (code === 'P2024' || code === 'P2037' || error instanceof Prisma.PrismaClientInitializationError) return NextResponse.json({ error: 'The server is busy. Please try again in a moment.', code: 'DATABASE_UNAVAILABLE' }, { status: 503 });
+        if (providerStatus === 401 || providerStatus === 403) return NextResponse.json({ error: 'The image service denied access. Please contact your teacher or administrator.', code: 'IMAGE_ACCESS_DENIED' }, { status: 502 });
         return NextResponse.json({ error: message.includes('not configured') ? 'AI connection is not configured yet. Your work is saved.' : 'Cagent could not connect. Your writing is safe; please try again.' }, { status: 502 });
     }
 }
