@@ -1,11 +1,11 @@
 import { cookies } from 'next/headers';
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from './prisma';
-export async function currentUser() {
+export async function currentUser(db = prisma) {
     const value = (await cookies()).get('cwritel_session')?.value;
     if (!value)
         return null;
-    const session = await prisma.session.findUnique({ where: { token: createHash('sha256').update(value).digest('hex') }, include: { user: true } });
+    const session = await db.session.findUnique({ where: { token: createHash('sha256').update(value).digest('hex') }, include: { user: true } });
     return session && session.expiresAt > new Date() ? session.user : null;
 }
 export async function signIn(userId: string) {
