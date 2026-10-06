@@ -1,0 +1,692 @@
+[
+  {
+    "category": "planning",
+    "subcategory": "任务启动",
+    "code": "PW_WORK_CREATE",
+    "description": "在地图选择 Story / Drama，实际创建新作品",
+    "screens": "My Writing Map",
+    "rule": "成功创建后记录 1 条",
+    "details": "作品 ID、类型、章节、地图位置、创建结果",
+    "legacy": "旧：任务初始化类；现：newStory"
+  },
+  {
+    "category": "planning",
+    "subcategory": "角色设定",
+    "code": "PW_CHAR_TYPE",
+    "description": "选择物种或输入自定义角色类型",
+    "screens": "Character Studio",
+    "rule": "选项变化 1 条；自定义输入按文本段合并",
+    "details": "角色临时 ID / 正式 ID、类型、前后值",
+    "legacy": "旧：STORY_001–002 / PW_CHAR_PLAN"
+  },
+  {
+    "category": "planning",
+    "subcategory": "角色设定",
+    "code": "PW_CHAR_DETAILS",
+    "description": "首次填写姓名、年龄、外貌、性格、背景、优势或挑战",
+    "screens": "Character Studio",
+    "rule": "按字段合并；2 秒停输或失焦结束一段",
+    "details": "字段、文本前后版本、新增/删除字符数、来源",
+    "legacy": "旧：STORY_003–007；现：update"
+  },
+  {
+    "category": "planning",
+    "subcategory": "角色选择",
+    "code": "PW_CHAR_SELECT",
+    "description": "将已有角色选入或取消选入当前作品",
+    "screens": "Story 角色选择",
+    "rule": "每次有效变化 1 条",
+    "details": "角色 ID、选入/移除、原有/新建、作品 ID",
+    "legacy": "现：toggle；Drama 加演员另记 DR_CAST_ADD"
+  },
+  {
+    "category": "planning",
+    "subcategory": "固定资源使用",
+    "code": "PW_RESOURCE_UPTAKE",
+    "description": "点击初始固定词库，将词语加入角色设定",
+    "screens": "Character Studio",
+    "rule": "每次插入 1 条；不归 AI 求助或 AI 评价",
+    "details": "固定词库/词语 ID、目标字段、前后文本版本",
+    "legacy": "现：初始 tips / TIP_WORDS / addTip；contentSource=fixed_bank"
+  },
+  {
+    "category": "planning",
+    "subcategory": "草图构思",
+    "code": "PW_DRAW_EPISODE",
+    "description": "连续使用画笔绘制角色草图",
+    "screens": "Character Studio",
+    "rule": "同工具/颜色连续操作合并；空闲 5 秒结束；持续 30 秒分段",
+    "details": "episodeId、笔画数、有效绘画时长、颜色、草图版本、结束原因",
+    "legacy": "旧：STORY_008–009 / PW_DRAW_SKETCH"
+  },
+  {
+    "category": "planning",
+    "subcategory": "绘画设置",
+    "code": "PW_DRAW_TOOL",
+    "description": "实际切换画笔/橡皮擦或改变画笔颜色",
+    "screens": "Character Studio",
+    "rule": "结束当前绘画段；每次有效切换 1 条",
+    "details": "旧/新工具、旧/新颜色、草图版本",
+    "legacy": "旧：STORY_010、013；选橡皮擦本身不算擦除"
+  },
+  {
+    "category": "planning",
+    "subcategory": "画布内容",
+    "code": "PW_CANVAS_NODE_ADD",
+    "description": "添加角色、物品、场景、目标或便签节点",
+    "screens": "Story Canvas",
+    "rule": "内容确认并加入画布后 1 条",
+    "details": "节点 ID、类型、角色 ID、标签、图片来源",
+    "legacy": "现：canvas_node_added"
+  },
+  {
+    "category": "planning",
+    "subcategory": "关系构思",
+    "code": "PW_CANVAS_CONNECT",
+    "description": "确认两个节点的关系连接",
+    "screens": "Story Canvas",
+    "rule": "连接确认后 1 条；拖线移动过程不逐点记录",
+    "details": "连接 ID、起点/终点、关系文本、端点位置",
+    "legacy": "现：canvas_connection_created；拖线完成作为过程信息"
+  },
+  {
+    "category": "planning",
+    "subcategory": "布局构思",
+    "code": "PW_CANVAS_MOVE",
+    "description": "拖动节点或用方向键改变节点位置",
+    "screens": "Story Canvas",
+    "rule": "拖动结束 1 条；连续键盘调整合并",
+    "details": "节点 ID、起止坐标、时长、输入方式",
+    "legacy": "现：CanvasView.onChange；待补行为编码"
+  },
+  {
+    "category": "planning",
+    "subcategory": "标签构思",
+    "code": "PW_CANVAS_LABEL",
+    "description": "编辑节点或关系标签",
+    "screens": "Story Canvas",
+    "rule": "按同一对象的文本段合并",
+    "details": "对象 ID、对象类型、文本前后版本、变化量",
+    "legacy": "现：canvas_label_edited（当前每次输入触发）"
+  },
+  {
+    "category": "planning",
+    "subcategory": "场景组织",
+    "code": "DR_SCENE_ADD",
+    "description": "新增 Drama 场景",
+    "screens": "Drama 场景编辑",
+    "rule": "成功新增后 1 条",
+    "details": "场景 ID、序号、场景总数",
+    "legacy": "现：DramaEditor.editProject"
+  },
+  {
+    "category": "planning",
+    "subcategory": "场景设定",
+    "code": "DR_SCENE_SETUP",
+    "description": "填写场景名称、背景描述或舞台说明",
+    "screens": "Drama 场景编辑",
+    "rule": "按字段合并；内容已有基线时标注修改",
+    "details": "场景 ID、字段、文本版本、新增/删除量",
+    "legacy": "现：sceneChange；notes 属舞台说明"
+  },
+  {
+    "category": "planning",
+    "subcategory": "演员选择",
+    "code": "DR_CAST_ADD",
+    "description": "将角色加入 Drama 当前场景",
+    "screens": "Drama 场景编辑",
+    "rule": "演员实际加入后 1 条；重复选择已有演员不新增",
+    "details": "场景 ID、角色 ID、初始位置、角色来源",
+    "legacy": "现：addActor"
+  },
+  {
+    "category": "planning",
+    "subcategory": "舞台布局",
+    "code": "DR_ACTOR_MOVE",
+    "description": "拖动或用方向键移动演员",
+    "screens": "Drama 场景编辑",
+    "rule": "每次拖动结束 1 条；连续按键合并",
+    "details": "场景/角色 ID、起止位置、有效时长",
+    "legacy": "现：actorChange；不记录每次 pointermove"
+  },
+  {
+    "category": "planning",
+    "subcategory": "舞台布局",
+    "code": "DR_ACTOR_RESIZE",
+    "description": "连续调整演员大小",
+    "screens": "Drama 场景编辑",
+    "rule": "一次连续缩放结束后 1 条",
+    "details": "场景/角色 ID、起止比例、输入方式",
+    "legacy": "现：DramaResizeHandles"
+  },
+  {
+    "category": "planning",
+    "subcategory": "舞台布局",
+    "code": "DR_ACTOR_FLIP",
+    "description": "切换演员朝向",
+    "screens": "Drama 场景编辑",
+    "rule": "每次实际改变 1 条",
+    "details": "场景/角色 ID、旧/新朝向",
+    "legacy": "现：flipped"
+  },
+  {
+    "category": "planning",
+    "subcategory": "表达方式",
+    "code": "DR_LINE_MODE",
+    "description": "选择说话或想法气泡",
+    "screens": "Drama 写作",
+    "rule": "有效切换 1 条；重复点击同模式不新增",
+    "details": "场景/角色/台词 ID、dialogue / thought、原模式",
+    "legacy": "现：chooseMode；Lite 当前支持说话与想法"
+  },
+  {
+    "category": "independent_writing",
+    "subcategory": "首次写作",
+    "code": "PROD_TEXT_DRAFT",
+    "description": "在空白 Story 段落或 Drama 台词中输入自己的文字",
+    "screens": "Story / Drama 写作",
+    "rule": "按文本段合并；仅计 student_typed 来源",
+    "details": "段落/场景/台词 ID、前后版本、新增字符与词数",
+    "legacy": "旧：PROD_SECTION_DRAFT、DR 台词输入类"
+  },
+  {
+    "category": "independent_writing",
+    "subcategory": "继续写作",
+    "code": "PROD_TEXT_EXPAND",
+    "description": "在同一写作单位末尾继续追加自己的文字",
+    "screens": "Story / Drama 写作",
+    "rule": "按文本段合并；只追加且未删除/替换",
+    "details": "作品与写作单位、文本版本、增量、有效输入时长",
+    "legacy": "旧：PROD_SECTION_EXPAND；净长度增加不直接判定续写"
+  },
+  {
+    "category": "independent_writing",
+    "subcategory": "粘贴输入",
+    "code": "PROD_TEXT_PASTE",
+    "description": "将文字粘贴进入段落、台词或创作字段",
+    "screens": "写作 / 创作字段",
+    "rule": "每次完成粘贴 1 条；来源标记 paste_unknown",
+    "details": "目标字段、插入位置、替换量、粘贴文本版本",
+    "legacy": "待补；单独筛选，不能证明为学生原创"
+  },
+  {
+    "category": "ai_help_seeking",
+    "subcategory": "角色词汇求助",
+    "code": "RS_CHAR_TIPS_REQUEST",
+    "description": "点击角色词汇 Shuffle 或小熊刷新",
+    "screens": "Character Studio",
+    "rule": "每次学生主动请求 1 条",
+    "details": "requestId、focus 字段、请求上下文、是否刷新",
+    "legacy": "现：characterTips；初始固定词表不是 AI 请求"
+  },
+  {
+    "category": "ai_help_seeking",
+    "subcategory": "图片生成求助",
+    "code": "RS_IMAGE_REQUEST",
+    "description": "点击生成角色、物品或场景图",
+    "screens": "Studio / Story Canvas / Drama",
+    "rule": "每次学生触发 1 条；关联结果，不重复记客户端/服务端",
+    "details": "requestId、对象类型、描述版本、草图版本、mock 标记",
+    "legacy": "旧：PW_AI_VISUALIZE；现：image"
+  },
+  {
+    "category": "ai_help_seeking",
+    "subcategory": "关系构思求助",
+    "code": "RS_CANVAS_IDEAS_REQUEST",
+    "description": "点击 Suggest connections",
+    "screens": "Story Canvas",
+    "rule": "每次主动请求 1 条",
+    "details": "requestId、选中节点、画布版本、是否刷新",
+    "legacy": "现：canvas_suggestions_requested / canvas"
+  },
+  {
+    "category": "ai_help_seeking",
+    "subcategory": "写作词句求助",
+    "code": "RS_WRITE_TIPS_REQUEST",
+    "description": "点击 Get Suggestions 或 Try again",
+    "screens": "Story 写作",
+    "rule": "每次主动请求 1 条；刷新用参数区分",
+    "details": "requestId、段落、上下文、刷新次数、请求类型",
+    "legacy": "现：suggestions_requested、suggestions_shuffled / tips"
+  },
+  {
+    "category": "ai_help_seeking",
+    "subcategory": "Drama 写作求助",
+    "code": "RS_DRAMA_TIPS_REQUEST",
+    "description": "点击获取/刷新 Drama 台词或场景建议",
+    "screens": "Drama 写作",
+    "rule": "每次主动请求 1 条",
+    "details": "requestId、场景/角色/台词 ID、焦点、是否刷新",
+    "legacy": "现：dramaTips / suggest"
+  },
+  {
+    "category": "ai_help_seeking",
+    "subcategory": "对话求助",
+    "code": "RS_CHAT_REQUEST",
+    "description": "将问题发送给 Cagent",
+    "screens": "Drama / 农场 Cagent",
+    "rule": "发送成功受理后 1 条；输入框打字不算已求助",
+    "details": "requestId、问题全文、所在界面、当前创作单位",
+    "legacy": "旧：RS_HELP_SEEK / PW_PLOT_EXPLORE；现：chat"
+  },
+  {
+    "category": "ai_help_seeking",
+    "subcategory": "审阅求助",
+    "code": "RS_REVIEW_REQUEST",
+    "description": "主动触发画布检查或 Drama 成品预览检查",
+    "screens": "Story Canvas / Drama",
+    "rule": "每次主动触发 1 条；强制段落检查另列",
+    "details": "requestId、canvasReview / dramaReview、版本、可选/必需",
+    "legacy": "现：canvasReview、dramaReview"
+  },
+  {
+    "category": "ai_help_seeking",
+    "subcategory": "视频生成求助",
+    "code": "RS_VIDEO_REQUEST",
+    "description": "点击生成/重试 Drama 视频",
+    "screens": "Drama 成品",
+    "rule": "一次点击 1 个父事件；各场景任务作为关联结果",
+    "details": "requestId、作品版本、场景列表、retry、任务 ID",
+    "legacy": "现：DramaVideoPanel.start；配置可用时触发"
+  },
+  {
+    "category": "ai_output_evaluation",
+    "subcategory": "输出展示",
+    "code": "RS_AI_OUTPUT_SHOWN",
+    "description": "AI 回答、词句、关系或审阅反馈实际出现在当前界面",
+    "screens": "所有 AI 面板",
+    "rule": "同一 requestId + 输出版本只记一次展示",
+    "details": "requestId、建议/回答 ID、内容、主动/自动、真实 AI/固定/模拟",
+    "legacy": "现：suggestions_shown（需区分收到与实际展示）"
+  },
+  {
+    "category": "ai_output_evaluation",
+    "subcategory": "主动查看",
+    "code": "RS_AI_PANEL_INSPECT",
+    "description": "主动切换词汇/句式标签或打开已有建议详情",
+    "screens": "AI 面板",
+    "rule": "实际切换/展开 1 条；可见时长关联面板访问",
+    "details": "requestId、面板类型、打开/关闭时间、可见时长",
+    "legacy": "待补；查看不等同于理解"
+  },
+  {
+    "category": "ai_output_evaluation",
+    "subcategory": "采纳建议",
+    "code": "RS_AI_ACCEPT",
+    "description": "点击插入 AI 词汇/句式或采用关系/Drama 建议",
+    "screens": "Studio / Canvas / Story / Drama",
+    "rule": "每次采纳 1 条；插入结果包含在本条，不再算自主写作",
+    "details": "requestId、proposalId、原文、目标、前后版本；初始固定词库另码",
+    "legacy": "现：suggestion_accepted、AI addTip、chooseIdea；旧：RS_SUGGEST_UPTAKE"
+  },
+  {
+    "category": "ai_output_evaluation",
+    "subcategory": "明确拒绝",
+    "code": "RS_AI_REJECT",
+    "description": "点击 Canvas 建议的 Skip",
+    "screens": "Story Canvas",
+    "rule": "每次明确拒绝 1 条",
+    "details": "requestId、proposalId、建议内容、reject 明确点击",
+    "legacy": "现：suggestion_rejected；未点击不推断为拒绝"
+  },
+  {
+    "category": "ai_output_evaluation",
+    "subcategory": "关闭建议",
+    "code": "RS_AI_DISMISS",
+    "description": "点击 I’ll keep writing on my own 或主动关闭建议",
+    "screens": "Story AI 建议 / 反馈窗口",
+    "rule": "每次关闭 1 条；与明确拒绝分开",
+    "details": "requestId、面板、是否已有采纳、关闭方式",
+    "legacy": "现：suggestions_dismissed；关闭不等同于否定内容"
+  },
+  {
+    "category": "revision",
+    "subcategory": "角色设定修改",
+    "code": "REV_CHAR_EDIT",
+    "description": "改动已有角色卡的设定文字",
+    "screens": "Character Studio 编辑已有卡",
+    "rule": "按字段与文本段合并；建立打开时的原始基线",
+    "details": "角色 ID、字段、原值/新值、来源、变化量",
+    "legacy": "现：initial / update；首次设定用 PW_CHAR_DETAILS"
+  },
+  {
+    "category": "revision",
+    "subcategory": "草图修订",
+    "code": "REV_DRAW_EPISODE",
+    "description": "实际使用橡皮擦擦除草图",
+    "screens": "Character Studio",
+    "rule": "与画笔同样按操作段合并；5 秒空闲、30 秒分段",
+    "details": "episodeId、擦除笔画数、有效时长、前后草图版本",
+    "legacy": "旧：STORY_011 / PW_DRAW_REVISE；不逐点记录"
+  },
+  {
+    "category": "revision",
+    "subcategory": "草图撤销",
+    "code": "REV_DRAW_UNDO",
+    "description": "点击 Undo drawing 并实际恢复旧草图",
+    "screens": "Character Studio",
+    "rule": "每次有效撤销 1 条；先结束绘画段",
+    "details": "草图前后版本、撤销目标、可撤销状态",
+    "legacy": "现：undo；无可撤销内容不新增"
+  },
+  {
+    "category": "revision",
+    "subcategory": "草图清空",
+    "code": "REV_DRAW_CLEAR",
+    "description": "点击 Clear drawing 并清空已有草图",
+    "screens": "Character Studio",
+    "rule": "每次有效清空 1 条；先结束绘画段",
+    "details": "前后草图版本、被清空状态、episodeId",
+    "legacy": "旧：STORY_012；现：clear"
+  },
+  {
+    "category": "revision",
+    "subcategory": "文本修改",
+    "code": "REV_TEXT_EDIT",
+    "description": "删除、替换或在已有文字内部插入内容",
+    "screens": "Story / Drama 写作",
+    "rule": "按文本段合并；根据实际差异区分，不只看字数",
+    "details": "文本前后版本、新增量/删除量、位置、字段、inputType",
+    "legacy": "旧：REV_LOCAL_REVISE / REV_SELF_EDIT；等长替换也属于修改"
+  },
+  {
+    "category": "revision",
+    "subcategory": "采纳后修改",
+    "code": "REV_AI_TEXT_EDIT",
+    "description": "学生修改已经插入的 AI 词句或句式",
+    "screens": "Story / Drama / 角色设定",
+    "rule": "按文本段合并；有可追踪来源时使用本码",
+    "details": "原 requestId / proposalId、被修改范围、前后版本",
+    "legacy": "待补；来源不能确定时用 REV_TEXT_EDIT，标 unknown"
+  },
+  {
+    "category": "revision",
+    "subcategory": "文本撤销",
+    "code": "REV_TEXT_UNDO",
+    "description": "点击撤销插入并恢复文字",
+    "screens": "Story 写作",
+    "rule": "每次有效撤销 1 条",
+    "details": "被撤销事件 ID、目标字段、文本前后版本",
+    "legacy": "现：Undo insertion；不能重复计为删除输入"
+  },
+  {
+    "category": "revision",
+    "subcategory": "文本格式",
+    "code": "REV_TEXT_FORMAT",
+    "description": "点击加粗、斜体或列表",
+    "screens": "Story 写作",
+    "rule": "每次有效格式操作 1 条",
+    "details": "格式类型、选择范围、文本前后版本",
+    "legacy": "现：WritingPage.format"
+  },
+  {
+    "category": "revision",
+    "subcategory": "构思删除",
+    "code": "REV_ELEMENT_REMOVE",
+    "description": "删除 Canvas 节点/连接、Drama 演员或台词",
+    "screens": "Story Canvas / Drama",
+    "rule": "每次实际删除 1 条；关联删除对象列入同一结果",
+    "details": "对象类型与 ID、关联边/台词、删除前版本",
+    "legacy": "现：canvas_element_removed、removeActor、removeWords"
+  },
+  {
+    "category": "revision",
+    "subcategory": "场景删除",
+    "code": "REV_SCENE_REMOVE",
+    "description": "确认删除 Drama 场景",
+    "screens": "Drama 场景编辑",
+    "rule": "确认并成功删除后 1 条",
+    "details": "场景 ID、原序号、删除后场景数、确认结果",
+    "legacy": "现：removeDramaScene"
+  },
+  {
+    "category": "revision",
+    "subcategory": "标题修改",
+    "code": "REV_TITLE_EDIT",
+    "description": "填写或修改作品标题",
+    "screens": "Story 成品 / Drama 编辑",
+    "rule": "按文本段合并；首次命名用 isFirstTitle 区分",
+    "details": "作品 ID、标题前后值、首次/改名",
+    "legacy": "现：story.title；不由字数推断内容修改"
+  },
+  {
+    "category": "completion",
+    "subcategory": "角色保存",
+    "code": "PROD_CHARACTER_SAVE",
+    "description": "成功保存角色卡或将旧卡加入自己的库",
+    "screens": "Character Studio / Character Pack",
+    "rule": "保存成功 1 条；点击失败只记结果失败",
+    "details": "角色 ID、创建/更新/复用、creationKey、版本",
+    "legacy": "现：saveCharacter、idea_pack_character_saved"
+  },
+  {
+    "category": "completion",
+    "subcategory": "段落推进",
+    "code": "PROD_SECTION_COMMIT",
+    "description": "点击 Next section / Review my story 触发必需段落检查",
+    "screens": "Story 写作",
+    "rule": "一次尝试 1 个父事件；检查结果与实际推进关联",
+    "details": "当前/目标段落、pass、required_gate、文本版本、检查 ID",
+    "legacy": "旧：PROD_SECTION_COMMIT；现：section_gate_checked/passed、section_check_used"
+  },
+  {
+    "category": "completion",
+    "subcategory": "草稿审阅",
+    "code": "PROD_DRAFT_REVIEW",
+    "description": "从编辑进入完整 Story / Drama 成品预览",
+    "screens": "Story / Drama",
+    "rule": "实际进入 1 条；状态仍可能是 draft",
+    "details": "作品 ID、文本版本、from/to stage、结果",
+    "legacy": "旧：PROD_DRAFT_COMPLETE；现：finish / drama-finish"
+  },
+  {
+    "category": "completion",
+    "subcategory": "正式保存作品",
+    "code": "PROD_WORK_SAVE",
+    "description": "成功执行 Save to My Writing Map",
+    "screens": "Story / Drama 成品",
+    "rule": "保存成功后 1 条；后台插图/树成长另记系统结果",
+    "details": "作品 ID、提交版本、status、保存结果",
+    "legacy": "旧：REV_SUBMIT；现：saveStory status=published"
+  },
+  {
+    "category": "completion",
+    "subcategory": "导出作品",
+    "code": "PROD_WORK_EXPORT",
+    "description": "下载故事/剧本、打印、打开视频或下载字幕",
+    "screens": "Story / Drama 成品",
+    "rule": "每次点击 1 条；action 区分下载/打印/外链",
+    "details": "作品/任务 ID、格式、action、触发结果",
+    "legacy": "旧：NAV_EXPORT；现：download、print、视频外链；外链不证明下载完成"
+  },
+  {
+    "category": "completion",
+    "subcategory": "放弃草稿",
+    "code": "PROD_DRAFT_DELETE",
+    "description": "确认删除未完成的作品",
+    "screens": "My Writing Map",
+    "rule": "确认且删除成功后 1 条",
+    "details": "作品 ID、删除前版本、确认结果",
+    "legacy": "现：deleteStory；不是完成写作"
+  },
+  {
+    "category": "pause_temporal",
+    "subcategory": "前台无输入",
+    "code": "PAUSE_INPUT_GAP",
+    "description": "前台页面连续至少 10 秒没有学生输入或操作",
+    "screens": "所有学生界面",
+    "rule": "恢复操作时或记录停止时结束；一段只记 1 条",
+    "details": "起止、时长、前后事件、页面可见性、暂停原因未知",
+    "legacy": "旧：PAUSE_MESO / MACRO；2–10 秒仅保存间隔字段"
+  },
+  {
+    "category": "pause_temporal",
+    "subcategory": "离开页面",
+    "code": "PAUSE_BACKGROUND",
+    "description": "切到其他标签、最小化或离开当前页面",
+    "screens": "所有学生界面",
+    "rule": "隐藏到返回为 1 段；不与前台停顿重叠",
+    "details": "离开/返回时间、durationMs、结束原因、完整性",
+    "legacy": "待补；不可推断为思考或在其他应用做什么"
+  },
+  {
+    "category": "pause_temporal",
+    "subcategory": "系统等待",
+    "code": "PAUSE_AI_WAIT",
+    "description": "学生界面因 AI/生成任务而实际阻塞操作",
+    "screens": "检查 / 图片 / 视频等待",
+    "rule": "实际阻塞的一段 1 条；origin=system；可继续写作则只记请求延迟",
+    "details": "requestId、阻塞起止、耗时、成功/失败、可操作标记",
+    "legacy": "待补；排除学生行为次数；等待与停顿时间不重复累加"
+  },
+  {
+    "category": "navigation",
+    "subcategory": "登录与退出",
+    "code": "NAV_SESSION",
+    "description": "学生登录或退出平台",
+    "screens": "登录 / 所有界面",
+    "rule": "成功登录/退出 1 条；不记录密码或输入过程",
+    "details": "sessionId、login / logout、结果、时间",
+    "legacy": "待补；一次录制批次中可包含多次登录会话"
+  },
+  {
+    "category": "navigation",
+    "subcategory": "界面切换",
+    "code": "NAV_PAGE",
+    "description": "在 My Farm、Map、Studio、Canvas、Write 等界面切换",
+    "screens": "所有学生界面",
+    "rule": "实际切换 1 条；去重相同 from/to",
+    "details": "from/to、原因、作品 ID、可选/流程必需",
+    "legacy": "旧：NAV_BACKTRACK / NAV_STAGE_ADVANCE；不默认编码为完成"
+  },
+  {
+    "category": "navigation",
+    "subcategory": "草稿恢复",
+    "code": "NAV_DRAFT_RESUME",
+    "description": "打开继续未完成的 Story / Drama",
+    "screens": "Map / Writing Board",
+    "rule": "实际恢复 1 条；与作品建立关联",
+    "details": "作品 ID、恢复阶段、已有文本与画布版本",
+    "legacy": "现：openStory / onResumeDraft"
+  },
+  {
+    "category": "navigation",
+    "subcategory": "帮助浏览",
+    "code": "NAV_GUIDE_VIEW",
+    "description": "打开/关闭灯泡说明、切换引导步骤",
+    "screens": "Farm Guide / PageGuide",
+    "rule": "每次有效打开、关闭、换步 1 条",
+    "details": "界面、步骤 ID、打开/关闭、可见时长",
+    "legacy": "现：FarmGuide / PageGuide；自动首访用 auto_system"
+  },
+  {
+    "category": "navigation",
+    "subcategory": "示例浏览",
+    "code": "NAV_EXAMPLE_VIEW",
+    "description": "打开 Canvas 示例、切换示例、关闭示例",
+    "screens": "Story Canvas",
+    "rule": "有效打开/切换/关闭 1 条",
+    "details": "示例 ID、打开/关闭时间、可见时长",
+    "legacy": "现：CanvasExamples；只记可观察浏览"
+  },
+  {
+    "category": "navigation",
+    "subcategory": "结构参照查看",
+    "code": "NAV_STRUCTURE_VIEW",
+    "description": "查看故事山的五段结构与问题",
+    "screens": "Story Mountain",
+    "rule": "实际打开/关闭 1 条；记录可见时长",
+    "details": "作品 ID、结构参照、可见时长",
+    "legacy": "现：Mountain 仅展示结构，不提供规划文字输入"
+  },
+  {
+    "category": "navigation",
+    "subcategory": "角色库浏览",
+    "code": "NAV_LIBRARY_VIEW",
+    "description": "打开角色卡包、搜索角色、查看卡片详情",
+    "screens": "Story / Drama 角色库",
+    "rule": "搜索按输入段合并；有效打开/查看各 1 条",
+    "details": "搜索词、包/角色 ID、打开/关闭、可见时长",
+    "legacy": "现：idea_pack_opened、View card；选入另记"
+  },
+  {
+    "category": "navigation",
+    "subcategory": "画布查看",
+    "code": "NAV_CANVAS_VIEW",
+    "description": "在写作时展开/收起预览、查看完整画布或调整缩放",
+    "screens": "Story 写作 / Canvas",
+    "rule": "有效状态切换 1 条；连续缩放合并",
+    "details": "preview / full / zoom、旧/新状态、可见时长",
+    "legacy": "现：fullCanvas / canvasCollapsed / zoom；不记滚动每个像素"
+  },
+  {
+    "category": "navigation",
+    "subcategory": "设置调整",
+    "code": "NAV_SETTING_CHANGE",
+    "description": "改变头像、声音或其他个人设置",
+    "screens": "Settings / My Farm",
+    "rule": "每次生效设置 1 条；音量拖动合并",
+    "details": "设置字段、前后值、保存结果；头像用资源 ID",
+    "legacy": "现：UserSettingsPage / Farm 音效；不计背景声音播放次数"
+  },
+  {
+    "category": "farm_social",
+    "subcategory": "成长记录查看",
+    "code": "FARM_TREE_VIEW",
+    "description": "点击树并查看价值成长记录",
+    "screens": "My Farm",
+    "rule": "树详情有效打开/关闭各 1 条",
+    "details": "树 ID、价值类别、关联作品、记录 ID、可见时长",
+    "legacy": "现：treeGrowthDetails；点树不证明认同该价值"
+  },
+  {
+    "category": "farm_social",
+    "subcategory": "自己的作品查看",
+    "code": "FARM_WORK_VIEW",
+    "description": "在 Writing Board 打开自己的已完成作品",
+    "screens": "My Writing Board",
+    "rule": "作品有效打开/关闭各 1 条",
+    "details": "作品 ID、类型、版本、可见时长",
+    "legacy": "现：Writing Board；编辑跳转用 NAV_PAGE"
+  },
+  {
+    "category": "farm_social",
+    "subcategory": "同伴访问",
+    "code": "SOC_FARM_VISIT",
+    "description": "进入/离开其他学生的农场",
+    "screens": "Visit a Friend’s Farm",
+    "rule": "实际进入/离开各 1 条",
+    "details": "被访用户 ID、起止、可见时长",
+    "legacy": "现：visits / otherFarm"
+  },
+  {
+    "category": "farm_social",
+    "subcategory": "同伴作品阅读",
+    "code": "SOC_PEER_WORK_VIEW",
+    "description": "打开另一学生的作品",
+    "screens": "其他学生 Writing Board / Map",
+    "rule": "作品有效打开/关闭各 1 条",
+    "details": "作者与作品 ID、类型、版本、可见时长",
+    "legacy": "现：otherFarm 的作品浏览；不推断阅读理解"
+  },
+  {
+    "category": "farm_social",
+    "subcategory": "反馈查看",
+    "code": "SOC_FEEDBACK_READ",
+    "description": "打开教师或同伴的反馈",
+    "screens": "My Writing Board",
+    "rule": "反馈实际打开 1 条；自动标已读作为关联状态",
+    "details": "反馈 ID、来源 teacher / student、作品 ID、可见时长",
+    "legacy": "现：reviews / mark-read；不是 AI 评价"
+  },
+  {
+    "category": "farm_social",
+    "subcategory": "同伴反馈",
+    "code": "SOC_FEEDBACK_SEND",
+    "description": "提交对同伴作品的评价",
+    "screens": "其他学生 Writing Board",
+    "rule": "成功提交 1 条；输入合并于 payload",
+    "details": "反馈 ID、作品/作者 ID、评价全文、结果",
+    "legacy": "现：POST reviews；失败保留 status=failed"
+  }
+]
