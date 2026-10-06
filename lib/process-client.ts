@@ -7,6 +7,9 @@ import { type ProcessContext, type ProcessRecord } from './process-coding';
 type Queued = ProcessRecord & { ownerId: string };
 type Status = { pending: number; error: string; activeId: string | null; dropped: number };
 let currentStatus: Status = { pending: 0, error: '', activeId: null, dropped: 0 };
+const controlRequests = new Map<string, Promise<any>>();
+const controlNextAt = new Map<string, number>();
+const controlResults = new Map<string, any>();
 const statusListeners = new Set<(s: Status) => void>();
 export function subscribeProcessStatus(fn: (s: Status) => void) { statusListeners.add(fn); fn(currentStatus); return () => { statusListeners.delete(fn); }; }
 function status(patch: Partial<Status>) { currentStatus = { ...currentStatus, ...patch }; for (const fn of statusListeners) { try { fn(currentStatus); } catch {} } }
@@ -28,7 +31,7 @@ const aiCodes: Record<string,string> = { image:'RS_IMAGE_REQUEST', characterTips
 const value = (v: unknown) => v && typeof v === 'object' ? v as Record<string, any> : {};
 
 export function startProcessClient(ownerId: string, initial: ProcessContext) {
-  let disposed=false, uploading=false, checking=false, lastSuccess=0, semanticAt=0, clockOffset=0;
+  let disposed=false, uploading=false, checking=false, lastSuccess=0, nextUploadAt=0, uploadFailures=0, semanticAt=0, clockOffset=0;
   const now = () => Date.now()+clockOffset;
   let sketchBefore: string|undefined;
   const memory = new Map<string,Queued>();
@@ -128,7 +131,7 @@ export function startProcessClient(ownerId: string, initial: ProcessContext) {
     else if(message.path==='/api/drama-video')engine.event('SYS_VIDEO_RESULT',{requestId:message.id,result:r,status:success?'received':'failed',error:message.error},'system');
   });
   async function flush(unload=false) {
-    if(disposed||uploading)return;uploading=true;
+    if(disposed||uploading||(!unload&&Date.now()<nextUploadAt))return;uploading=true;
     try {
       await persistence;
       let db:IDBDatabase|null=null;try{db=await dbPromise;}catch{}
@@ -138,17 +141,30 @@ export function startProcessClient(ownerId: string, initial: ProcessContext) {
       for(const row of rows){const size=new TextEncoder().encode(JSON.stringify(row)).length;if(batch.length&&bytes+size>900000)break;batch.push(row);bytes+=size;}
       const body=JSON.stringify({expectedUserId:ownerId,events:batch});
       if(unload&&new TextEncoder().encode(body).length>60000)return; // Persisted records resume on the next visit.
-      const response=await fetch('/api/process-events',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:unload,signal:AbortSignal.timeout(5000)});
+      const response=await fetch('/api/process-events',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:unload,signal:AbortSignal.timeout(15000)});
       if(!response.ok)throw new Error('Behavior uploads will retry in the background.');
+      uploadFailures=0;nextUploadAt=0;
       const result=await response.json(),remove=[...(result.acknowledgedIds||[]),...(result.rejectedIds||[])];
       if(db)await queueWrite(db,[],remove);for(const id of remove)memory.delete(id);
       status({pending:Math.max(0,rows.length-remove.length),error:currentStatus.dropped?'Some records could not be cached. See delivery status.':''});
-    } catch {status({error:'Behavior uploads will retry in the background. Writing is unaffected.'});} finally{uploading=false;if(disposed)void dbPromise.then(db=>db.close()).catch(()=>{});}
+    } catch {nextUploadAt=Date.now()+Math.min(60000,5000*2**Math.min(uploadFailures++,4));status({error:'Behavior uploads will retry in the background. Writing is unaffected.'});} finally{uploading=false;if(disposed)void dbPromise.then(db=>db.close()).catch(()=>{});}
   }
   async function check() {
     if(disposed||checking)return;checking=true;
     try{
-      const sent=Date.now(),response=await fetch('/api/process-recording'+(engine.recordingId?'?lastRecordingId='+encodeURIComponent(engine.recordingId):''),{cache:'no-store',signal:AbortSignal.timeout(4000)});if(!response.ok)throw new Error();const result=await response.json();if(disposed)return;
+      const sent=Date.now();
+      let pending=controlRequests.get(ownerId);
+      if(!pending&&Date.now()<(controlNextAt.get(ownerId)||0)){const cached=controlResults.get(ownerId);if(!cached)return;pending=Promise.resolve(cached);}
+      if(!pending){
+        controlNextAt.set(ownerId,Date.now()+15000);
+        pending=fetch('/api/process-recording'+(engine.recordingId?'?lastRecordingId='+encodeURIComponent(engine.recordingId):''),{cache:'no-store',signal:AbortSignal.timeout(15000)}).then(async response=>{
+          if(!response.ok)throw new Error();
+          const result=await response.json();controlResults.set(ownerId,result);
+          controlNextAt.set(ownerId,Date.now()+(result.active?5000:15000));return result;
+        }).catch(error=>{controlNextAt.set(ownerId,Date.now()+30000);throw error;}).finally(()=>controlRequests.delete(ownerId));
+        controlRequests.set(ownerId,pending);
+      }
+      const result=await pending;if(disposed)return;
       if(result.userId!==ownerId)return;
       lastSuccess=Date.now();
       // Calibrate once per observer to avoid local clock skew; do not move an ongoing interval's clock.
@@ -156,7 +172,7 @@ export function startProcessClient(ownerId: string, initial: ProcessContext) {
       if(engine.recordingId&&result.ended?.stoppedAt)engine.stop('recording_stopped',new Date(result.ended.stoppedAt).getTime());
       if(result.active) {if(engine.recordingId!==result.active.id){engine.start(result.active.id);engine.event('NAV_SESSION',{action:'recording_joined',serverStartedAt:result.active.startedAt,clientJoinedAt:new Date().toISOString(),controlLatencyMs:Date.now()-sent});}status({activeId:result.active.id});}
       else {engine.stop();status({activeId:null});}
-    }catch{if(lastSuccess&&Date.now()-lastSuccess>30000){engine.stop('control_unavailable');status({activeId:null,error:'Recording control is unavailable. Writing is unaffected.'});}}finally{checking=false;}
+    }catch{if(lastSuccess&&Date.now()-lastSuccess>30000){status({error:'Recording control is temporarily unavailable. Existing recording continues locally and queued records will retry.'});}}finally{checking=false;}
   }
   function visibility(){engine.visibility(document.hidden);if(!document.hidden)void check();else void flush(true);}
   function leave(){engine.visibility(true);engine.flushAll('page_exit');void flush(true);}
@@ -165,7 +181,7 @@ export function startProcessClient(ownerId: string, initial: ProcessContext) {
   // Passive capture observers cannot cancel, delay, or replace the platform's own handlers.
   const safeHandlers=handlers.map(([type,fn])=>{const safe:EventListener=e=>{try{fn(e);}catch{}};document.addEventListener(type,safe,{capture:true,passive:true});return [type,safe] as const;});
   document.addEventListener('visibilitychange',visibility);window.addEventListener('pagehide',leave);
-  const tick=setInterval(()=>{try{engine.tick();}catch{}},500),poll=setInterval(()=>{if(!document.hidden)void check();},2000),upload=setInterval(()=>{void flush();},2500);
+  const tick=setInterval(()=>{try{engine.tick();}catch{}},500),poll=setInterval(()=>{if(!document.hidden)void check();},5000),upload=setInterval(()=>{void flush();},2500);
   void check();void flush();
   return ()=>{engine.stop('observer_unmounted');for(const [type,fn]of safeHandlers)document.removeEventListener(type,fn,true);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',leave);window.removeEventListener('cwrite-process-control',refresh);clearInterval(tick);clearInterval(poll);clearInterval(upload);unsubscribe();void persistence.then(()=>flush()).finally(()=>{disposed=true;if(!uploading)void dbPromise.then(db=>db.close()).catch(()=>{});});};
 }
