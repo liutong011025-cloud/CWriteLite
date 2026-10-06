@@ -1,4 +1,5 @@
 'use client';
+import { processFetch, trackProcess } from '@/lib/process-bus';
 
 import {useEffect,useRef,useState} from 'react';
 import {Send} from 'lucide-react';
@@ -18,7 +19,7 @@ export default function DramaCoach({story,scene,line,script,suggesting=false}:{s
         const controller=new AbortController();
         const timer=setTimeout(()=>{
             setBusy(true);
-            void fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({kind:'coach',storyId:story.id,canvas:latest.current.canvas,sections:latest.current.sections,selectedNode:{sceneId:scene.id,lineId:line?.id}})}).then(async r=>{if(!r.ok)throw new Error();return r.json();}).then(r=>{if(!controller.signal.aborted)setAnswer(r.message);}).catch(()=>{}).finally(()=>{if(!controller.signal.aborted)setBusy(false);});
+            void processFetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({kind:'coach',storyId:story.id,canvas:latest.current.canvas,sections:latest.current.sections,selectedNode:{sceneId:scene.id,lineId:line?.id}})}).then(async r=>{if(!r.ok)throw new Error();return r.json();}).then(r=>{if(!controller.signal.aborted)setAnswer(r.message);}).catch(()=>{}).finally(()=>{if(!controller.signal.aborted)setBusy(false);});
         },1800);
         return()=>{clearTimeout(timer);controller.abort();};
     },[context,story.id,scene.id,scene.backgroundImageUrl,line?.id]);

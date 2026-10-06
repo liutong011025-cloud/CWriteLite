@@ -9,3 +9,9 @@ test-results/
 playwright-report/
 lib/generated/
 .tool-cache/
+.next-process-check/
+.account-import/
+.ppt-build/
+output/
+outputs/
+*.zip

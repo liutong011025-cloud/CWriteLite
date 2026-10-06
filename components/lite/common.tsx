@@ -2,8 +2,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Sparkles, Send, X, Star } from 'lucide-react';
 import type { Character, Story } from '@/lib/types';
-export async function api(path: string, body?: unknown) { const response = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}); const data = await response.json(); if (!response.ok)
-    throw new Error(data.error || 'Please try again.'); return data; }
+import { observeProcessRequest } from '@/lib/process-bus';
+export async function api(path: string, body?: unknown) {
+    const finish = observeProcessRequest(path, body);
+    try { const response = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}); const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Please try again.'); finish(data); return data; }
+    catch (error) { finish(undefined, (error as Error).message); throw error; }
+}
 export function Logo({ white = false }: { white?: boolean }) { return <div className="lite-logo"><img src="/cwrite-lite-logo.webp" alt="CWrite lite"/></div>; }
 export function IdeaPackButton({ onClick }: { onClick: () => void }) {
     return <button className="surprise-pack deck-idea-pack" onClick={onClick} aria-label="Open Character Idea Pack"><div className="pack-seal" aria-hidden="true"/><svg className="pack-tear-wave" viewBox="0 0 100 7" aria-hidden="true"><path d="M0 4 Q5 0 10 4 T20 4 T30 4 T40 4 T50 4 T60 4 T70 4 T80 4 T90 4 T100 4" fill="none" stroke="currentColor" strokeWidth="1"/></svg><img className="pack-small-logo" src="/logosmall.webp" alt="CWrite"/><div className="pack-stars" aria-hidden="true">✦ ? ✦</div><b>Character<br/>Idea Pack</b><span>Open Pack ✦</span></button>;

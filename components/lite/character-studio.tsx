@@ -1,4 +1,5 @@
 'use client';
+import { trackProcess } from '@/lib/process-bus';
 import { useEffect, useRef, useState } from 'react';
 import { Pencil, Eraser, Undo2, Trash2, Shuffle, Plus } from 'lucide-react';
 import type { Character } from '@/lib/types';
@@ -53,8 +54,8 @@ export default function CharacterStudio({ initial, onSaved, onCancel }: {
     function move(e: React.PointerEvent<HTMLCanvasElement>) { if (!drawing.current)
         return; const p = point(e); const ctx = canvas.current!.getContext('2d')!; ctx.lineTo(p.x, p.y); ctx.stroke(); setDrawingReady(true); }
     function undo() { const url = strokes.current.pop(); if (!url)
-        return; const img = new Image(); img.onload = () => { canvas.current!.getContext('2d')!.drawImage(img, 0, 0); }; img.src = url; }
-    function clear() { const c = canvas.current!; strokes.current.push(c.toDataURL()); const ctx = c.getContext('2d')!; ctx.fillStyle = '#fffdf5'; ctx.fillRect(0, 0, c.width, c.height); setDrawingReady(false); }
+        return; trackProcess("REV_DRAW_UNDO",()=>({beforeSketch:canvas.current?.toDataURL('image/jpeg',0.75),targetId:character.id})); const img = new Image(); img.onload = () => { canvas.current!.getContext('2d')!.drawImage(img, 0, 0); }; img.src = url; }
+    function clear() { const c = canvas.current!, before=c.toDataURL(); strokes.current.push(before); trackProcess("REV_DRAW_CLEAR",{beforeSketch:before,targetId:character.id}); const ctx = c.getContext('2d')!; ctx.fillStyle = '#fffdf5'; ctx.fillRect(0, 0, c.width, c.height); setDrawingReady(false); }
     async function generate() { if (generationPending.current || character.imageUrl || savePending.current) return; if (!selectedSpecies.trim()) { setError('Choose a character type first.'); return; } if (!character.name.trim()) {
         setError('Give your character a name first.');
         return;
@@ -74,10 +75,11 @@ export default function CharacterStudio({ initial, onSaved, onCancel }: {
         generationPending.current = false;
         setBusy(false);
     } }
+    const generatedTips=useRef(false);
     async function shuffle() { setTipBusy(true); setError(''); try {
         const requestedFocus = focus;
         const r = await api('/api/ai', { kind: 'characterTips', focus: requestedFocus, character, shuffle: true });
-        if (focusRef.current === requestedFocus) setTips(r.keywords);
+        if (focusRef.current === requestedFocus) { generatedTips.current=true; setTips(r.keywords);trackProcess('RS_AI_OUTPUT_SHOWN',{kind:'characterTips',focus:requestedFocus,keywords:r.keywords,requestId:r.requestId},'system'); }
     }
     catch (e) {
         setError((e as Error).message);
@@ -85,8 +87,8 @@ export default function CharacterStudio({ initial, onSaved, onCancel }: {
     finally {
         setTipBusy(false);
     } }
-    function focusField(next: string) { if (focusRef.current === next) return; focusRef.current = next; setFocus(next); setTips(TIP_WORDS[next] || TIP_WORDS.Appearance); }
-    function addTip(word: string) { const key = TIP_FIELDS[focus] || 'appearance'; update(key, [character[key], word].filter(Boolean).join(', ')); }
+    function focusField(next: string) { if (focusRef.current === next) return; focusRef.current = next; setFocus(next); generatedTips.current=false; setTips(TIP_WORDS[next] || TIP_WORDS.Appearance); }
+    function addTip(word: string) { trackProcess(generatedTips.current?'RS_AI_ACCEPT':'PW_RESOURCE_UPTAKE',{word,field:focus,contentSource:generatedTips.current?'ai_generated':'fixed_tip_bank'}); const key = TIP_FIELDS[focus] || 'appearance'; update(key, [character[key], word].filter(Boolean).join(', ')); }
     async function save() { if (savePending.current || generationPending.current || !character.imageUrl) return; savePending.current = true; creationKey.current ||= crypto.randomUUID(); setSaving(true); setError(''); try {
         const r = await api('/api/data', { action: 'saveCharacter', creationKey: creationKey.current, character: { ...character, sketch: drawingReady ? canvas.current?.toDataURL('image/png') : character.sketch } });
         await onSaved(r.character);
@@ -111,8 +113,8 @@ export default function CharacterStudio({ initial, onSaved, onCancel }: {
         <details><summary>More about my character <small>(optional)</small></summary>{[['background', 'Background / Role', 'Who are they?'], ['strength', 'Strength', 'What are they good at?'], ['challenge', 'Challenge', 'What is difficult for them?']].map(([key, title, placeholder]) => <label key={key}>{title}<input value={character[key as keyof Character] || ''} onFocus={() => focusField(title)} onChange={e => update(key as keyof Character, e.target.value)} placeholder={placeholder}/></label>)}</details>
       </section>
       <div className="studio-grid">
-        <section className="species-picker" aria-label="Choose a character type"><h2>Character type <span>*</span></h2><div>{SPECIES.map(item => <button key={item.name} className={selectedSpecies === item.name ? 'selected' : ''} aria-pressed={selectedSpecies === item.name} aria-label={`Character type: ${item.name}`} onClick={() => update('species', item.name)}><span>{item.icon}</span><b>{item.name}</b></button>)}</div><label>Or imagine one<input aria-label="Custom character type" value={SPECIES.some(item => item.name === selectedSpecies) ? '' : selectedSpecies} onChange={e => update('species', e.target.value)} placeholder="e.g. robot" maxLength={60}/></label></section>
-        <section className="sketch-section"><h2>Your drawing</h2><div className="drawing-tools"><button className={tool === 'pencil' ? 'active' : ''} onClick={() => setTool('pencil')} aria-label="Pencil"><Pencil size={19}/></button><button className={tool === 'eraser' ? 'active' : ''} onClick={() => setTool('eraser')} aria-label="Eraser"><Eraser size={19}/></button><button onClick={undo} aria-label="Undo drawing"><Undo2 size={19}/></button><button onClick={clear} aria-label="Clear drawing"><Trash2 size={19}/></button><input type="color" aria-label="Pencil colour" value={color} onChange={e => setColor(e.target.value)}/></div><div className="sketch-paper"><canvas ref={canvas} width={450} height={550} aria-label="Draw your character" onPointerDown={start} onPointerMove={move} onPointerUp={() => drawing.current = false} onPointerCancel={() => drawing.current = false}/>{!drawingReady && <div className="sketch-hint"><Pencil size={34}/><b>Bring your idea to life</b><span>{selectedSpecies ? `What does your ${selectedSpecies.toLowerCase()} look like?` : 'Choose a species on the left, then draw here.'}</span></div>}</div></section>
+        <section className="species-picker" aria-label="Choose a character type"><h2>Character type <span>*</span></h2><div>{SPECIES.map(item => <button key={item.name} className={selectedSpecies === item.name ? 'selected' : ''} aria-pressed={selectedSpecies === item.name} aria-label={`Character type: ${item.name}`} data-process-code="PW_CHAR_TYPE" onClick={() => update('species', item.name)}><span>{item.icon}</span><b>{item.name}</b></button>)}</div><label>Or imagine one<input aria-label="Custom character type" value={SPECIES.some(item => item.name === selectedSpecies) ? '' : selectedSpecies} onChange={e => update('species', e.target.value)} placeholder="e.g. robot" maxLength={60}/></label></section>
+        <section className="sketch-section"><h2>Your drawing</h2><div className="drawing-tools"><button className={tool === 'pencil' ? 'active' : ''} onClick={() => setTool('pencil')} data-process-code="PW_DRAW_TOOL" aria-label="Pencil"><Pencil size={19}/></button><button className={tool === 'eraser' ? 'active' : ''} onClick={() => setTool('eraser')} data-process-code="PW_DRAW_TOOL" aria-label="Eraser"><Eraser size={19}/></button><button onClick={undo} aria-label="Undo drawing"><Undo2 size={19}/></button><button onClick={clear} aria-label="Clear drawing"><Trash2 size={19}/></button><input type="color" aria-label="Pencil colour" value={color} onChange={e => {trackProcess("PW_DRAW_TOOL",{tool,color:e.target.value});setColor(e.target.value);}}/></div><div className="sketch-paper"><canvas data-process-sketch="true" data-process-tool={tool} data-process-color={color} data-process-target={character.id||"new-character"} ref={canvas} width={450} height={550} aria-label="Draw your character" onPointerDown={start} onPointerMove={move} onPointerUp={() => drawing.current = false} onPointerCancel={() => drawing.current = false}/>{!drawingReady && <div className="sketch-hint"><Pencil size={34}/><b>Bring your idea to life</b><span>{selectedSpecies ? `What does your ${selectedSpecies.toLowerCase()} look like?` : 'Choose a species on the left, then draw here.'}</span></div>}</div></section>
         <section className="portrait-section"><h2>Your portrait</h2><div className="portrait-preview">{character.imageUrl ? <PortraitCard character={{ ...character, name: character.name || 'Your character' }}/> : <div className="empty-portrait"><span>✦</span><p>Your portrait appears here<br/>after you click Generate.</p></div>}</div>{mockPreview && <p className="mock-preview-note">Local preview · image generation is simulated.</p>}</section>
         <section className="character-fields"><div className="tips-box"><header><h3>AI Tips <small>({focus})</small></h3><button className="tiny-button" onClick={shuffle} disabled={tipBusy}><Shuffle size={14}/>{tipBusy ? 'Thinking…' : 'Shuffle'}</button></header><div className="word-chips">{tips.map(t => <button key={t} onClick={() => addTip(t)}>{t}<Plus size={11}/></button>)}</div><Bear variant="drawing" pose="Cagentdraw" responsePose="cagent-planning-v2.webp" busy={tipBusy} onAction={()=>void shuffle()} message={drawingQuestions[focus] || 'What makes your character special?'} hints={["Tap a word you like, then make it your own.","Your drawing and your details help me imagine your character."]}/></div></section>
       </div>
