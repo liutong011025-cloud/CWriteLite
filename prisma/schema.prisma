@@ -83,6 +83,42 @@ model ResearchEvent {
   payload Json
   createdAt DateTime @default(now())
 }
+model ProcessRecording {
+  id String @id
+  startedAt DateTime @default(now()) @db.Timestamptz(3)
+  stoppedAt DateTime? @db.Timestamptz(3)
+  createdBy String
+  codingVersion String
+  parameters Json
+  quality Json @default("{}")
+  events ProcessEvent[]
+}
+model ProcessEvent {
+  eventUid String @id
+  recordingId String
+  recording ProcessRecording @relation(fields:[recordingId],references:[id])
+  userId String
+  username String
+  sessionId String
+  sequence Int
+  eventId String
+  functionalCode String
+  category String
+  subcategory String
+  stage String
+  workId String?
+  workType String
+  origin String
+  clientTs DateTime @db.Timestamptz(3)
+  clientEndTs DateTime? @db.Timestamptz(3)
+  durationMs Int?
+  activeDurationMs Int?
+  payload Json
+  serverTs DateTime @default(now()) @db.Timestamptz(3)
+  @@index([recordingId,clientTs,eventUid],map:"ProcessEvent_recording_time")
+  @@index([userId,clientTs],map:"ProcessEvent_user_time")
+  @@index([sessionId,sequence],map:"ProcessEvent_session_sequence")
+}
 model VideoJob {
   id String @id @default(cuid())
   userId String
