@@ -19,7 +19,7 @@ export function invalidateRecording() { state.recordingCache = undefined; }
 export async function activeRecording(): Promise<Recording | null> {
   if (state.recordingCache && state.recordingCache.until > Date.now()) return state.recordingCache.value;
   if (!state.recordingRead) state.recordingRead = processDb().$queryRaw<Recording[]>`SELECT * FROM "ProcessRecording" WHERE "stoppedAt" IS NULL LIMIT 1`.then(rows => {
-    const value = rows[0] || null; state.recordingCache = { value, until: Date.now() + 1000 }; return value;
+    const value = rows[0] || null; state.recordingCache = { value, until: Date.now() + 3000 }; return value;
   }).finally(() => { state.recordingRead = undefined; });
   return state.recordingRead;
 }

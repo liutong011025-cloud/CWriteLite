@@ -2,6 +2,7 @@
 import { ProcessEngine } from './process-engine';
 import { subscribeProcess } from './process-bus';
 import { compactProcessPayload } from './process-payload';
+import { ProcessDelivery, PROCESS_DELIVERY, type RejectedRow } from './process-delivery';
 import { type ProcessContext, type ProcessRecord } from './process-coding';
 
 type Queued = ProcessRecord & { ownerId: string };
@@ -9,7 +10,7 @@ type Status = { pending: number; error: string; activeId: string | null; dropped
 let currentStatus: Status = { pending: 0, error: '', activeId: null, dropped: 0 };
 const controlRequests = new Map<string, Promise<any>>();
 const controlNextAt = new Map<string, number>();
-const controlResults = new Map<string, any>();
+const controlResults = new Map<string, { result: any; clockOffset: number; receivedAt: number }>();
 const statusListeners = new Set<(s: Status) => void>();
 export function subscribeProcessStatus(fn: (s: Status) => void) { statusListeners.add(fn); fn(currentStatus); return () => { statusListeners.delete(fn); }; }
 function status(patch: Partial<Status>) { currentStatus = { ...currentStatus, ...patch }; for (const fn of statusListeners) { try { fn(currentStatus); } catch {} } }
@@ -17,7 +18,7 @@ function openQueue(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open('cwrite-lite-process-v1', 1);
     req.onupgradeneeded = () => { const store = req.result.createObjectStore('events', { keyPath: 'eventUid' }); store.createIndex('ownerId', 'ownerId'); };
-    req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); req.onblocked = () => reject(new Error('Recording cache is blocked.'));
+    req.onsuccess = () => { req.result.onversionchange=()=>req.result.close(); resolve(req.result); }; req.onerror = () => reject(req.error); req.onblocked = () => reject(new Error('Recording cache is blocked.'));
   });
 }
 function queueWrite(db: IDBDatabase, rows: Queued[], remove: string[] = []) {
@@ -26,12 +27,24 @@ function queueWrite(db: IDBDatabase, rows: Queued[], remove: string[] = []) {
 function queueRead(db: IDBDatabase, owner: string) {
   return new Promise<Queued[]>((resolve, reject) => { const req=db.transaction('events').objectStore('events').index('ownerId').getAll(owner, 50); req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error); });
 }
+function queueCount(db: IDBDatabase, owner: string) {
+  return new Promise<number>((resolve,reject)=>{const req=db.transaction('events').objectStore('events').index('ownerId').count(owner);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+}
+// A separate database avoids blocking upgrades behind students' already open tabs.
+function retainRejected(rows: RejectedRow[]) {
+  return new Promise<void>((resolve,reject)=>{
+    const req=indexedDB.open('cwrite-lite-process-recovery-v1',1);
+    req.onupgradeneeded=()=>{const store=req.result.createObjectStore('events',{keyPath:'eventUid'});store.createIndex('ownerId','ownerId');};
+    req.onerror=()=>reject(req.error);
+    req.onsuccess=()=>{const db=req.result,tx=db.transaction('events','readwrite');for(const row of rows)tx.objectStore('events').put(row);tx.oncomplete=()=>{db.close();resolve();};tx.onerror=tx.onabort=()=>{db.close();reject(tx.error);};};
+  });
+}
 const eventMap: Record<string,string> = { idea_pack_opened:'NAV_LIBRARY_VIEW', idea_pack_character_saved:'PROD_CHARACTER_SAVE', canvas_node_added:'PW_CANVAS_NODE_ADD', canvas_connection_created:'PW_CANVAS_CONNECT', canvas_element_removed:'REV_ELEMENT_REMOVE', suggestion_accepted:'RS_AI_ACCEPT', suggestion_rejected:'RS_AI_REJECT', suggestions_dismissed:'RS_AI_DISMISS', section_changed:'NAV_PAGE', canvas_readiness_skipped:'NAV_UI_ACTION' };
 const aiCodes: Record<string,string> = { image:'RS_IMAGE_REQUEST', characterTips:'RS_CHAR_TIPS_REQUEST', canvas:'RS_CANVAS_IDEAS_REQUEST', tips:'RS_WRITE_TIPS_REQUEST', dramaTips:'RS_DRAMA_TIPS_REQUEST', chat:'RS_CHAT_REQUEST', canvasReview:'RS_REVIEW_REQUEST', dramaReview:'RS_REVIEW_REQUEST', dramaVideoPlan:'RS_REVIEW_REQUEST', coach:'SYS_COACH_REQUEST', growth:'SYS_GROWTH_RESULT' };
 const value = (v: unknown) => v && typeof v === 'object' ? v as Record<string, any> : {};
 
 export function startProcessClient(ownerId: string, initial: ProcessContext) {
-  let disposed=false, uploading=false, checking=false, lastSuccess=0, nextUploadAt=0, uploadFailures=0, semanticAt=0, clockOffset=0;
+  let disposed=false, uploading=false, checking=false, lastSuccess=0, semanticAt=0, clockOffset=0, retained=0;
   const now = () => Date.now()+clockOffset;
   let sketchBefore: string|undefined;
   const memory = new Map<string,Queued>();
@@ -49,8 +62,8 @@ export function startProcessClient(ownerId: string, initial: ProcessContext) {
       if(canvas) { try { const sketchAfter=canvas.toDataURL('image/jpeg',0.75);queued.payload={...queued.payload,sketchBefore,sketchAfter};sketchBefore=sketchAfter; } catch {} }
     }
     queued.payload=compactProcessPayload(queued.payload);
-    memory.set(event.eventUid,queued);status({pending:memory.size});
-    persistence=persistence.then(async()=>{try{const db=await dbPromise;await queueWrite(db,[queued]);memory.delete(event.eventUid);}catch{ /* Keep in memory for a retry; do not interrupt writing. */ }});
+    memory.set(event.eventUid,queued);status({pending:currentStatus.pending+1});
+    persistence=persistence.then(async()=>{try{const db=await dbPromise;await queueWrite(db,[queued]);memory.delete(event.eventUid);status({pending:await queueCount(db,ownerId)+memory.size});}catch{ /* Keep in memory for a retry; do not interrupt writing. */ }});
   }, now);
   engine.context=initial;
   const inputValues=new WeakMap<HTMLInputElement|HTMLTextAreaElement,string>();
@@ -130,24 +143,24 @@ export function startProcessClient(ownerId: string, initial: ProcessContext) {
     else if(message.path==='/api/section-gate')engine.event('SYS_AI_RESULT',{requestId:message.id,kind:'section_gate',constraintType:'required_gate',result:r,status:success?'received':'failed',latencyMs:Date.now()-message.at},'platform_gate');
     else if(message.path==='/api/drama-video')engine.event('SYS_VIDEO_RESULT',{requestId:message.id,result:r,status:success?'received':'failed',error:message.error},'system');
   });
-  async function flush(unload=false) {
-    if(disposed||uploading||(!unload&&Date.now()<nextUploadAt))return;uploading=true;
-    try {
-      await persistence;
-      let db:IDBDatabase|null=null;try{db=await dbPromise;}catch{}
-      const saved=db?await queueRead(db,ownerId):[],rows=[...saved,...memory.values()].filter((r,i,all)=>all.findIndex(s=>s.eventUid===r.eventUid)===i).slice(0,50);
-      if(!rows.length){status({pending:0});return;}
-      const batch:Queued[]=[];let bytes=0;
-      for(const row of rows){const size=new TextEncoder().encode(JSON.stringify(row)).length;if(batch.length&&bytes+size>900000)break;batch.push(row);bytes+=size;}
-      const body=JSON.stringify({expectedUserId:ownerId,events:batch});
-      if(unload&&new TextEncoder().encode(body).length>60000)return; // Persisted records resume on the next visit.
-      const response=await fetch('/api/process-events',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:unload,signal:AbortSignal.timeout(15000)});
-      if(!response.ok)throw new Error('Behavior uploads will retry in the background.');
-      uploadFailures=0;nextUploadAt=0;
-      const result=await response.json(),remove=[...(result.acknowledgedIds||[]),...(result.rejectedIds||[])];
+  async function localDb(){try{return await dbPromise;}catch{return null;}}
+  const delivery=new ProcessDelivery({
+    async read(){await persistence;const db=await localDb(),saved=db?await queueRead(db,ownerId):[];return [...new Map([...saved,...memory.values()].map(row=>[row.eventUid,row])).values()].slice(0,50);},
+    async count(){await persistence;const db=await localDb();return (db?await queueCount(db,ownerId):0)+memory.size;},
+    async settle(accepted,rejected){
+      // Never erase a rejected research record before its recovery copy is durable.
+      if(rejected.length){await retainRejected(rejected);retained+=rejected.length;}
+      const remove=[...accepted,...rejected.map(row=>row.eventUid)],db=await localDb();
       if(db)await queueWrite(db,[],remove);for(const id of remove)memory.delete(id);
-      status({pending:Math.max(0,rows.length-remove.length),error:currentStatus.dropped?'Some records could not be cached. See delivery status.':''});
-    } catch {nextUploadAt=Date.now()+Math.min(60000,5000*2**Math.min(uploadFailures++,4));status({error:'Behavior uploads will retry in the background. Writing is unaffected.'});} finally{uploading=false;if(disposed)void dbPromise.then(db=>db.close()).catch(()=>{});}
+    },
+  },async(batch,exit)=>{
+    const response=await fetch('/api/process-events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expectedUserId:ownerId,events:batch}),keepalive:exit,signal:AbortSignal.timeout(15000)});
+    if(!response.ok)throw Error('Recording upload unavailable.');return response.json();
+  },(pending,error)=>status({pending,error:error||(retained?'Some records need review and are retained in this browser.':currentStatus.dropped?'Some records could not be cached. See delivery status.':'')}));
+  async function flush(mode: 'scheduled'|'exit'|'resume'='scheduled'){
+    if(disposed||uploading)return;uploading=true;
+    try{await delivery.flush(mode);}catch{status({error:'Local recording cache is temporarily unavailable. Records will retry.'});}
+    finally{uploading=false;if(disposed)void dbPromise.then(db=>db.close()).catch(()=>{});}
   }
   async function check() {
     if(disposed||checking)return;checking=true;
@@ -159,29 +172,31 @@ export function startProcessClient(ownerId: string, initial: ProcessContext) {
         controlNextAt.set(ownerId,Date.now()+15000);
         pending=fetch('/api/process-recording'+(engine.recordingId?'?lastRecordingId='+encodeURIComponent(engine.recordingId):''),{cache:'no-store',signal:AbortSignal.timeout(15000)}).then(async response=>{
           if(!response.ok)throw new Error();
-          const result=await response.json();controlResults.set(ownerId,result);
-          controlNextAt.set(ownerId,Date.now()+(result.active?5000:15000));return result;
+          const result=await response.json(),receivedAt=Date.now();
+          const snapshot={result,receivedAt,clockOffset:result.serverNow-(sent+receivedAt)/2};controlResults.set(ownerId,snapshot);
+          controlNextAt.set(ownerId,receivedAt+(result.active?PROCESS_DELIVERY.activePollMs:PROCESS_DELIVERY.inactivePollMs)+Math.floor(Math.random()*PROCESS_DELIVERY.jitterMs));return snapshot;
         }).catch(error=>{controlNextAt.set(ownerId,Date.now()+30000);throw error;}).finally(()=>controlRequests.delete(ownerId));
         controlRequests.set(ownerId,pending);
       }
-      const result=await pending;if(disposed)return;
+      const snapshot=await pending,result=snapshot.result;if(disposed)return;
       if(result.userId!==ownerId)return;
-      lastSuccess=Date.now();
+      lastSuccess=snapshot.receivedAt;
       // Calibrate once per observer to avoid local clock skew; do not move an ongoing interval's clock.
-      if(!engine.recordingId)clockOffset=result.serverNow-(sent+Date.now())/2;
+      if(!engine.recordingId&&Number.isFinite(snapshot.clockOffset))clockOffset=snapshot.clockOffset;
       if(engine.recordingId&&result.ended?.stoppedAt)engine.stop('recording_stopped',new Date(result.ended.stoppedAt).getTime());
-      if(result.active) {if(engine.recordingId!==result.active.id){engine.start(result.active.id);engine.event('NAV_SESSION',{action:'recording_joined',serverStartedAt:result.active.startedAt,clientJoinedAt:new Date().toISOString(),controlLatencyMs:Date.now()-sent});}status({activeId:result.active.id});}
+      if(result.active) {if(engine.recordingId!==result.active.id){engine.start(result.active.id);engine.event('NAV_SESSION',{action:'recording_joined',serverStartedAt:result.active.startedAt,clientJoinedAt:new Date().toISOString(),controlLatencyMs:Date.now()-sent,delivery:PROCESS_DELIVERY});}status({activeId:result.active.id});}
       else {engine.stop();status({activeId:null});}
     }catch{if(lastSuccess&&Date.now()-lastSuccess>30000){status({error:'Recording control is temporarily unavailable. Existing recording continues locally and queued records will retry.'});}}finally{checking=false;}
   }
-  function visibility(){engine.visibility(document.hidden);if(!document.hidden)void check();else void flush(true);}
-  function leave(){engine.visibility(true);engine.flushAll('page_exit');void flush(true);}
-  const refresh=()=>{void check();};window.addEventListener('cwrite-process-control',refresh);
+  function visibility(){engine.visibility(document.hidden);if(!document.hidden){void check();void flush('resume');}else void flush('exit');}
+  function leave(){engine.visibility(true);engine.flushAll('page_exit');void flush('exit');}
+  const refresh=()=>{controlNextAt.delete(ownerId);delivery.ready();void check();void flush('resume');};window.addEventListener('cwrite-process-control',refresh);
+  const online=()=>{delivery.ready();void flush('resume');};window.addEventListener('online',online);
   const handlers:[string,EventListener][]=[['focusin',focus],['input',input],['compositionend',input],['focusout',blur],['pointerdown',pointerDown as EventListener],['pointermove',pointerMove as EventListener],['pointerup',pointerUp as EventListener],['pointercancel',pointerUp as EventListener],['click',click as EventListener],['keydown',keyboard as EventListener]];
   // Passive capture observers cannot cancel, delay, or replace the platform's own handlers.
   const safeHandlers=handlers.map(([type,fn])=>{const safe:EventListener=e=>{try{fn(e);}catch{}};document.addEventListener(type,safe,{capture:true,passive:true});return [type,safe] as const;});
   document.addEventListener('visibilitychange',visibility);window.addEventListener('pagehide',leave);
-  const tick=setInterval(()=>{try{engine.tick();}catch{}},500),poll=setInterval(()=>{if(!document.hidden)void check();},5000),upload=setInterval(()=>{void flush();},2500);
-  void check();void flush();
-  return ()=>{engine.stop('observer_unmounted');for(const [type,fn]of safeHandlers)document.removeEventListener(type,fn,true);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',leave);window.removeEventListener('cwrite-process-control',refresh);clearInterval(tick);clearInterval(poll);clearInterval(upload);unsubscribe();void persistence.then(()=>flush()).finally(()=>{disposed=true;if(!uploading)void dbPromise.then(db=>db.close()).catch(()=>{});});};
+  const tick=setInterval(()=>{try{engine.tick();}catch{}},500),poll=setInterval(()=>{if(!document.hidden)void check();},1000),upload=setInterval(()=>{void flush();},1000);
+  void check();void flush('resume');
+  return ()=>{engine.stop('observer_unmounted');for(const [type,fn]of safeHandlers)document.removeEventListener(type,fn,true);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',leave);window.removeEventListener('cwrite-process-control',refresh);window.removeEventListener('online',online);clearInterval(tick);clearInterval(poll);clearInterval(upload);unsubscribe();void persistence.then(()=>flush('resume')).finally(()=>{disposed=true;if(!uploading)void dbPromise.then(db=>db.close()).catch(()=>{});});};
 }
