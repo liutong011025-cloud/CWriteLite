@@ -13,7 +13,7 @@ for (const part of ['protocol', 'username', 'password', 'port', 'pathname']) ass
 for (const [key, value] of original.searchParams) assert.equal(result.searchParams.get(key), value);
 assert.equal(original.hostname, 'db.prisma.io');
 const recording = new URL(runtimeDatabaseUrl(direct, 'recording'));
-assert.equal(recording.hostname, result.hostname); assert.equal(recording.searchParams.get('connection_limit'), '2'); assert.equal(recording.searchParams.get('pool_timeout'), '3');
+assert.equal(recording.hostname, result.hostname); assert.equal(recording.searchParams.get('connection_limit'), '4'); assert.equal(recording.searchParams.get('pool_timeout'), '5');
 const local = new URL(runtimeDatabaseUrl('postgresql://test@127.0.0.1:54348/postgres?connection_limit=1&pool_timeout=4'));
 assert.equal(local.hostname, '127.0.0.1'); assert.equal(local.searchParams.get('connection_limit'), '1'); assert.equal(local.searchParams.get('pool_timeout'), '4');
 assert.equal(new URL(runtimeDatabaseUrl('postgresql://u:p@db.prisma.io.example.org/db')).hostname, 'db.prisma.io.example.org');

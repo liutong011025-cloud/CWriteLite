@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server';
-import { currentProcessUser } from '@/lib/process-auth';
+import { processUploadContext } from '@/lib/process-auth';
 import { PROCESS_CATALOG, type ProcessRecord } from '@/lib/process-coding';
-import { processDb, Prisma, sameOrigin, type Recording } from '@/lib/process-store';
+import { processDb, Prisma, sameOrigin } from '@/lib/process-store';
 export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return NextResponse.json({ error: 'Invalid origin.' }, { status: 403 });
   try {
-    const user = await currentProcessUser(); if (!user) return NextResponse.json({ error: 'Please log in.' }, { status: 401 });
     if (Number(request.headers.get('content-length') || 0) > 1500000) return NextResponse.json({ error: 'Recording batch is too large.' }, { status: 413 });
     const text = await request.text(); if (text.length > 1500000) return NextResponse.json({ error: 'Recording batch is too large.' }, { status: 413 });
     const body = JSON.parse(text); if (!Array.isArray(body.events) || body.events.length > 50 || body.events.some((e:unknown)=>!e||typeof e!=='object')) return NextResponse.json({ error: 'Invalid recording batch.' }, { status: 400 });
-    if (body.expectedUserId !== user.id) return NextResponse.json({ error: 'Recording owner changed. Retry when the original account logs in.' }, { status: 409 });
     const events = body.events as ProcessRecord[], ids = [...new Set(events.map(e => e.recordingId).filter(id => typeof id === 'string' && id.length <= 80))];
+    const context = await processUploadContext(ids); if (!context) return NextResponse.json({ error: 'Please log in.' }, { status: 401 });
+    const {user}=context;
+    if (body.expectedUserId !== user.id) return NextResponse.json({ error: 'Recording owner changed. Retry when the original account logs in.' }, { status: 409 });
     if (!ids.length) return NextResponse.json({ acknowledgedIds: [], rejectedIds: events.map(e => e.eventUid) });
-    const batches = await processDb().$queryRaw<Recording[]>(Prisma.sql`SELECT * FROM "ProcessRecording" WHERE "id" IN (${Prisma.join(ids)})`);
+    const batches = context.recordings;
     const map = new Map(batches.map(b => [b.id, b]));
     const accepted: string[] = [], rejected: string[] = [], values: Prisma.Sql[] = [], rejectionReasons: Record<string,string> = {};
     for (const event of events) {
