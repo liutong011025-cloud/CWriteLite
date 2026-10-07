@@ -1437,7 +1437,6 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 .drama-support-panel { align-content:start; }
 .drama-scene-description { padding:14px; border:2px solid #decdae; border-radius:15px; background:#fffcf3; box-shadow:0 4px 0 #b8a48025; }
 .drama-scene-description>label { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; font-size:21px; font-weight:850; color:#69718a; }
-.drama-scene-description small { padding:3px 7px; border-radius:6px; background:#f2e7c6; color:#806636; font-size:12px; font-weight:700; }
 .drama-scene-description>p { margin:8px 0; font-size:16px; line-height:1.4; color:#786749; }
 .drama-scene-description textarea { box-sizing:border-box; width:100%; min-height:125px; max-height:300px; padding:10px; resize:vertical; font-size:18px; line-height:1.45; border:1px solid #cdb88c; border-radius:9px; background:#fffefa; }
 .drama-scene-description textarea:focus-visible { outline:3px solid #b79ad0; outline-offset:2px; }

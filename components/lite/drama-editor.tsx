@@ -117,7 +117,7 @@ export function DramaEditor({story,characters,onChange,onCreateCharacter,onDelet
             </section>
             <aside className="drama-support-panel">
                 <section className="drama-scene-description">
-                    <label htmlFor="drama-scene-description">Scene description <small>Required</small></label>
+                    <label htmlFor="drama-scene-description">Scene description</label>
                     <p id="drama-scene-description-help">In your own words, describe where this scene happens and what is happening.</p>
                     <textarea id="drama-scene-description" ref={descriptionInput} aria-label="Scene description" aria-describedby="drama-scene-description-help" aria-invalid={showDescriptionErrors&&!scene.sceneDescription?.trim()} required value={scene.sceneDescription||''} onChange={e=>sceneChange({sceneDescription:e.target.value})} placeholder="Describe your scene…" maxLength={2000}/>
                     {showDescriptionErrors&&!scene.sceneDescription?.trim()&&<p className="error-text">Write a description before continuing.</p>}
