@@ -15,6 +15,9 @@ import {dramaVideoPlan} from '@/lib/drama-video-plan';
 import {arkVideoTarget} from '@/lib/ark-video-config';
 import {growthProfile,explicitValueEvidence,evidenceQualifies} from '@/lib/growth';
 import {localPreviewEnabled,localPreviewReply} from '@/lib/local-preview';
+import { recordObservation } from '@/lib/research-log';
+import { processDb } from '@/lib/process-store';
+import { claimAiRequest } from '@/lib/ai-request-cooldown';
 export const maxDuration = 120;
 const parse = (s: string) => JSON.parse(s.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, ''));
 export async function POST(request: NextRequest) {
@@ -32,10 +35,11 @@ export async function POST(request: NextRequest) {
             if(kind==='dramaVideoPlan'&&story)return NextResponse.json({plan:dramaVideoPlan(story as unknown as Story,{scenes:[]}),mock:true});
             return NextResponse.json(localPreviewReply(kind,b,story as unknown as Story|null));
         }
-        const last = await prisma.researchEvent.findFirst({ where: { userId: user.id, type: 'ai_requested', createdAt: { gt: new Date(Date.now() - 1500) },...(['dramaTips','canvasReview','dramaReview','dramaVideoPlan'].includes(kind)?{payload:{path:['kind'],equals:kind}}:{}) } });
+        if (!claimAiRequest(user.id, kind)) return NextResponse.json({ error: 'Please wait a moment before trying again.' }, { status: 429 });
+        const last = await processDb().researchEvent.findFirst({ where: { userId: user.id, type: 'ai_requested', createdAt: { gt: new Date(Date.now() - 1500) },...(['dramaTips','canvasReview','dramaReview','dramaVideoPlan'].includes(kind)?{payload:{path:['kind'],equals:kind}}:{}) } }).catch(() => { console.warn('optional_ai_request_history_unavailable'); return null; });
         if (last && kind!=='growth')
             return NextResponse.json({ error: 'Please wait a moment before trying again.' }, { status: 429 });
-        const event = await prisma.researchEvent.create({ data: { userId: user.id, storyId: story?.id, type: 'ai_requested', payload: { kind, stage: story?.activeSection ?? null, cursorContext: String(b.cursorContext || '').slice(0, 2000) } } });
+        const event = await recordObservation({ userId: user.id, storyId: story?.id, type: 'ai_requested', payload: { kind, stage: story?.activeSection ?? null, cursorContext: String(b.cursorContext || '').slice(0, 2000) } });
         if (kind === 'image') {
             fal.config({ credentials: getFalKey() || undefined });
             const sketch = String(b.sketch || '');
@@ -46,7 +50,7 @@ export async function POST(request: NextRequest) {
             if (localPreviewEnabled() || process.env.NODE_ENV === 'development' && process.env.CWRITE_LOCAL_MOCK_IMAGES === 'true') {
                 const species = String(b.species || '').toLowerCase();
                 const imageUrl = b.elementType === 'setting' ? '/storybook-forest.webp' : sketch || (species === 'fox' ? '/dramacharacter/Fox Vendor.webp' : species === 'rabbit' ? '/dramacharacter/Rabbit Postman.webp' : '/dramacharacter/Bird Scholar.webp');
-                await prisma.researchEvent.create({ data: { userId: user.id, storyId: story?.id, type: 'image_mocked', payload: { requestId: event.id, species, description: String(b.description || '').slice(0, 3000) } } });
+                await recordObservation({ userId: user.id, storyId: story?.id, type: 'image_mocked', payload: { requestId: event.id, species, description: String(b.description || '').slice(0, 3000) } });
                 return NextResponse.json({ imageUrl, spriteUrl: '', spriteStatus: 'skipped', mock: true, requestId: event.id });
             }
             const imageUrls = sketch ? [await resolveMapImageUrlForFal(request, sketch)].filter(Boolean) as string[] : undefined;
@@ -61,7 +65,7 @@ export async function POST(request: NextRequest) {
                 try { spriteUrl = await removeBackground(result.imageUrl); spriteStatus = 'ready'; }
                 catch (error) { console.error('Background removal failed:', error instanceof Error ? error.message : 'error'); }
             }
-            await prisma.researchEvent.create({ data: { userId: user.id, storyId: story?.id, type: 'image_generated', payload: { requestId: event.id, imageUrl: result.imageUrl, spriteStatus } } });
+            await recordObservation({ userId: user.id, storyId: story?.id, type: 'image_generated', payload: { requestId: event.id, imageUrl: result.imageUrl, spriteStatus } });
             return NextResponse.json({ ...result, spriteUrl, spriteStatus });
         }
         const drama=!!story&&isDrama(story as unknown as Story);
@@ -122,7 +126,7 @@ export async function POST(request: NextRequest) {
             const evidence=explicitValueEvidence(growthText);
             if(!evidence.length)return NextResponse.json({evidence:[],growthStatus:'pending',message:'Your writing is saved. Growth check needs another try.'});
             answer=JSON.stringify({evidence,growthStatus:'succeeded'});
-            await prisma.researchEvent.create({data:{userId:user.id,storyId:story.id,type:'growth_evidence_fallback',payload:{requestId:event.id,evidence}}});
+            await recordObservation({userId:user.id,storyId:story.id,type:'growth_evidence_fallback',payload:{requestId:event.id,evidence}});
         }
         let result: any;
         if (['tips', 'characterTips', 'canvas', 'canvasReview', 'growth','dramaTips','dramaReview','dramaVideoPlan'].includes(kind)) {
@@ -131,7 +135,7 @@ export async function POST(request: NextRequest) {
                 const evidence=explicitValueEvidence(growthText);
                 if(!evidence.length)return NextResponse.json({evidence:[],growthStatus:'pending',message:'Your writing is saved. Growth check needs another try.'});
                 result={evidence,growthStatus:'succeeded'};
-                await prisma.researchEvent.create({data:{userId:user.id,storyId:story.id,type:'growth_evidence_fallback',payload:{requestId:event.id,evidence}}});
+                await recordObservation({userId:user.id,storyId:story.id,type:'growth_evidence_fallback',payload:{requestId:event.id,evidence}});
             }
             if (kind === 'tips' || kind === 'characterTips' || kind==='dramaTips') {
                 result.keywords = (Array.isArray(result.keywords) ? result.keywords : []).filter((x: unknown) => typeof x === 'string' && x.trim().split(/\s+/).length <= 4 && !/[.!?]/.test(x)).slice(0, 10);
@@ -173,7 +177,7 @@ export async function POST(request: NextRequest) {
         }
         else
             result = { message: answer };
-        await prisma.researchEvent.create({ data: { userId: user.id, storyId: story?.id, type: 'suggestions_shown', payload: { requestId: event.id, kind, result } as Prisma.InputJsonValue } });
+        await recordObservation({ userId: user.id, storyId: story?.id, type: 'suggestions_shown', payload: { requestId: event.id, kind, result } as Prisma.InputJsonValue });
         if (kind === 'growth' && story?.status === 'published') {
             const proposed=Array.isArray(result.evidence)?result.evidence.filter((item:any)=>evidenceQualifies(growthText,item)):[];
             result.evidence=proposed;

@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { currentUser, publicUser } from '@/lib/session';
+import { studentData } from '@/lib/student-data';
+import { recordObservation } from '@/lib/research-log';
 import { chat } from '@/lib/deepseek';
 import { approvedSections } from '@/lib/section-gate';
 import type { Story } from '@/lib/types';
@@ -22,15 +24,15 @@ type Context = {
 };
 export async function GET(request: Request, context: Context) {
     try {
+    const { resource } = await context.params;
+    if (resource === 'data') {
+        const data = await studentData();
+        return data ? NextResponse.json(data) : NextResponse.json({ error: 'Please log in.' }, { status: 401 });
+    }
     const user = await currentUser();
     if (!user)
         return NextResponse.json({ error: 'Please log in.' }, { status: 401 });
-    const { resource } = await context.params;
     const url = new URL(request.url);
-    if (resource === 'data') {
-        const [characters, stories] = await Promise.all([prisma.character.findMany({ where: { userId: user.id }, orderBy: { createdAt: 'desc' } }), prisma.story.findMany({ where: { userId: user.id }, orderBy: { updatedAt: 'desc' } })]);
-        return NextResponse.json({ user: publicUser(user), characters, stories, profile: user.profile, mapState: user.mapState, vocabulary: user.vocabulary });
-    }
     if (resource === 'user-profile') {
         const target = url.searchParams.get('user_id');
         const u = target && target !== user.username ? await prisma.user.findUnique({ where: { username: target } }) : user;
@@ -160,7 +162,7 @@ export async function POST(request: Request, context: Context) {
                 const d = b.story;
                 const drama = isDrama(old as unknown as Story);
                 const ids = Array.isArray(d.characterIds) ? d.characterIds.filter((x: unknown) => typeof x === 'string').slice(0, 20) : old.characterIds;
-                const owned = await prisma.character.findMany({ where: { id: { in: ids }, userId: user.id } });
+                const owned = ids.length ? await prisma.character.findMany({ where: { id: { in: ids }, userId: user.id } }) : [];
                 const snapshots = (old.characterSnapshots as unknown as {
                     id: string;
                 }[]);
@@ -171,7 +173,8 @@ export async function POST(request: Request, context: Context) {
                 const sections = drama ? dramaSections(canvas,characterSnapshots) : Array.from({ length: 5 }, (_, i) => String(d.sections?.[i] || '').slice(0, 30000));
                 const data = { title: String(d.title ?? old.title).slice(0, 120), status: d.status === 'published' ? 'published' : 'draft', stage: (drama?['drama-scenes','drama-write','drama-finish']:['characters', 'canvas', 'mountain', 'write', 'finish']).includes(d.stage) ? d.stage : old.stage, characterIds: characterSnapshots.map((c: any) => c.id), characterSnapshots: json(characterSnapshots), canvas: json(canvas), sections: json(sections), activeSection: Math.min(4, Math.max(0, Number(d.activeSection) || 0)), content: sections.filter(Boolean).join('\n\n') };
                 const candidate={title:data.title,sections,canvas,characterSnapshots} as unknown as Story;
-                const approvals=await prisma.researchEvent.findMany({where:{userId:user.id,storyId:old.id,type:'section_gate_passed'},select:{payload:true}});
+                const needsApprovals=!drama && (data.activeSection>old.activeSection || data.status==='published' || data.stage==='finish');
+                const approvals=needsApprovals?await prisma.researchEvent.findMany({where:{userId:user.id,storyId:old.id,type:'section_gate_passed'},select:{payload:true}}):[];
                 const passed=approvedSections(candidate,approvals);
                 if(!drama && data.activeSection>old.activeSection && passed.slice(0,data.activeSection).some(v=>!v))
                     return NextResponse.json({error:'Check each earlier part with Cagent before moving on.'},{status:409});
@@ -248,7 +251,7 @@ export async function POST(request: Request, context: Context) {
                     return NextResponse.json({ error: 'Story not found.' }, { status: 404 });
                 if(String(b.type||'').startsWith('section_gate_'))
                     return NextResponse.json({error:'This event is reserved for story checks.'},{status:400});
-                await prisma.researchEvent.create({ data: { userId: user.id, storyId: b.storyId || null, type: String(b.type || 'event').slice(0, 80), payload: json(b.payload || {}) } });
+                await recordObservation({ userId: user.id, storyId: b.storyId || null, type: String(b.type || 'event').slice(0, 80), payload: json(b.payload || {}) });
                 return NextResponse.json({ success: true });
             }
             if (b.action === 'vocabulary') {

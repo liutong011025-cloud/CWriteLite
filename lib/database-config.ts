@@ -8,7 +8,7 @@ export function runtimeDatabaseUrl(value: string | undefined, pool: 'writing' | 
     url.searchParams.set('connection_limit', '2');
     url.searchParams.set('pool_timeout', '3');
   } else {
-    if (!url.searchParams.has('connection_limit')) url.searchParams.set('connection_limit', '3');
+    if (!url.searchParams.has('connection_limit')) url.searchParams.set('connection_limit', '5');
     if (!url.searchParams.has('pool_timeout')) url.searchParams.set('pool_timeout', '10');
   }
   return url.toString();

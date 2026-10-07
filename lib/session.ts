@@ -1,12 +1,19 @@
 import { cookies } from 'next/headers';
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from './prisma';
-export async function currentUser(db = prisma) {
+import type { User } from '@prisma/client';
+export async function sessionToken() {
     const value = (await cookies()).get('cwritel_session')?.value;
-    if (!value)
-        return null;
-    const session = await db.session.findUnique({ where: { token: createHash('sha256').update(value).digest('hex') }, include: { user: true } });
-    return session && session.expiresAt > new Date() ? session.user : null;
+    return value ? createHash('sha256').update(value).digest('hex') : null;
+}
+export async function currentUser(db = prisma) {
+    const token = await sessionToken();
+    if (!token) return null;
+    // A fresh join checks revocation and expiry without two sequential ORM reads.
+    const users = await db.$queryRaw<User[]>`
+        SELECT u.* FROM "Session" s JOIN "User" u ON u.id=s."userId"
+        WHERE s.token=${token} AND s."expiresAt">(CURRENT_TIMESTAMP AT TIME ZONE 'UTC') LIMIT 1`;
+    return users[0] || null;
 }
 export async function signIn(userId: string) {
     const value = randomBytes(32).toString('hex');

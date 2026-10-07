@@ -20,6 +20,7 @@ assert.equal(new URL(runtimeDatabaseUrl('postgresql://u:p@db.prisma.io.example.o
 assert.equal(new URL(runtimeDatabaseUrl('postgresql://u:p@pooled.db.prisma.io/db')).hostname, 'pooled.db.prisma.io');
 assert.equal(runtimeDatabaseUrl('prisma://accelerate.prisma-data.net/?api_key=placeholder'), 'prisma://accelerate.prisma-data.net/?api_key=placeholder');
 assert.equal(runtimeDatabaseUrl(undefined), undefined);
+assert.equal(new URL(runtimeDatabaseUrl('postgresql://u:p@db.prisma.io/db')).searchParams.get('connection_limit'), '5');
 assert.deepEqual(WRITING_TRANSACTION_OPTIONS, { maxWait: 5000, timeout: 15000 });
 const errorCompiled = ts.transpileModule(fs.readFileSync('lib/database-error.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
 const errorMod = { exports: {} }; new Function('exports', 'module', 'require', errorCompiled)(errorMod.exports, errorMod, require);
