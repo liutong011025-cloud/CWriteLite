@@ -1418,6 +1418,19 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 .drama-workbench .drama-scenes-strip .drama-scene-remove:hover { background:#f3e0d5; }
 .drama-workbench .drama-scenes-strip .drama-add-scene { flex:0 0 155px; white-space:nowrap; }
 
+/* Background creation belongs inside the stage so the scene strip stays closer to it. */
+.drama-workbench .drama-scenes-strip { margin:0 0 10px; overflow:visible; }
+.drama-scene-list { display:flex; flex:1 1 auto; min-width:0; gap:8px; overflow-x:auto; padding:3px; }
+.drama-tableau .drama-stage:has(.drama-background-form) { min-height:310px; }
+.drama-tableau .drama-stage>.drama-background-form { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:20; display:flex; flex-direction:column; flex-wrap:nowrap; align-items:stretch; gap:14px; width:min(430px,calc(100% - 36px)); box-sizing:border-box; max-height:calc(100% - 28px); overflow:auto; margin:0; padding:22px; border:1px solid #d6be92; border-radius:16px; background:#fffdf6f5; box-shadow:0 6px 24px #795f3020; text-align:left; }
+.drama-background-form h3 { display:flex; align-items:center; justify-content:center; gap:10px; padding:0 14px; color:#80663d; font-size:21px; }
+.drama-tableau .drama-background-form>label { flex:none; gap:8px; font-size:18px; }
+.drama-tableau .drama-background-form textarea { width:100%; height:86px; min-height:76px; max-height:130px; box-sizing:border-box; resize:vertical; font-size:18px; }
+.drama-tableau .drama-background-form>.purple-button { width:100%; max-width:none; min-height:48px; justify-content:center; }
+.drama-tableau .drama-background-form>.drama-background-close { position:absolute; top:6px; right:6px; width:34px; min-height:34px; height:34px; padding:6px; border:0; background:transparent; }
+.drama-tableau .drama-stage>.drama-background-edit { position:absolute; top:12px; right:12px; z-index:20; display:flex; align-items:center; gap:7px; margin:0; min-height:44px; padding:10px 14px; border-radius:10px; background:#fffdf6ed; font-size:16px; }
+@media(max-width:500px) { .drama-tableau .drama-stage>.drama-background-form { width:calc(100% - 24px); padding:18px; gap:12px; } .drama-background-form h3 { font-size:19px; } }
+
 .character-pack-card{width:100%;max-width:175px;justify-self:center;display:flex;flex-direction:column;gap:8px}.character-pack-delete{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border:1px solid #d8b8a0;border-radius:9px;background:#fff8ef;color:#9a4e38;font-size:15px}.character-pack-delete:hover{background:#ffe8da}.drama-cast-member{display:flex;gap:4px;min-width:0}.drama-cast-member>button:first-child{flex:1;min-width:0}.drama-tableau .drama-chosen-cast .drama-cast-remove{flex:0 0 36px;justify-content:center;color:#9a4e38;min-height:48px}
 
 /* Tony-only research controls. */
