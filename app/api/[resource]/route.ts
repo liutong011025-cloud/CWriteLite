@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { currentUser, publicUser } from '@/lib/session';
 import { studentData } from '@/lib/student-data';
 import { recordObservation } from '@/lib/research-log';
+import { saveDraft } from '@/lib/story-draft';
 import { chat } from '@/lib/deepseek';
 import { approvedSections } from '@/lib/section-gate';
 import type { Story } from '@/lib/types';
@@ -186,6 +187,10 @@ export async function POST(request: Request, context: Context) {
                     if(problems.length) return NextResponse.json({error:problems[0]},{status:409});
                 }
                 if(drama && data.status==='published' && dramaProblems(candidate).length) return NextResponse.json({error:dramaProblems(candidate)[0]},{status:409});
+                if(data.status==='draft') {
+                    const story=await saveDraft(user.id,old.id,data);
+                    return story?NextResponse.json({story}):NextResponse.json({error:'Story not found.'},{status:404});
+                }
                 const result = await prisma.$transaction(async (tx) => {
                     if (JSON.stringify(old.sections) !== JSON.stringify(sections))
                         await tx.revision.create({ data: { storyId: old.id, sections: json(sections) } });
