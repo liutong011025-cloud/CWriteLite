@@ -20,7 +20,7 @@ The change reduces transport traffic while retaining the existing research codin
 
 `node scripts/verify-process-load.mjs` ran actual HTTP requests against a local production build and the fixed test PostgreSQL instance (localhost:54348). The writing pool was limited to 3 connections and the research pool to 2. A burst of 100 recording uploads plus 100 draft saves completed successfully. The 5,000 original events were stored once despite a second 100-request replay; all 100 draft contents were checked. Expired sessions, anonymous access, non-admin controls / exports, owner mismatch, legitimate late delivery, rejected out-of-window events and a complete 5,001-event CSV export passed. Temporary accounts, sessions, works and the recording were removed afterwards.
 
-The final local run measured recording control p95 119 ms, event upload p95 268 ms and draft saving p95 356 ms. These are local results, not production latency targets.
+The final local run, including the runtime database pool repair, measured recording control p95 125 ms, event upload p95 274 ms and draft saving p95 360 ms. These are local results, not production latency targets.
 
 The optimized Next.js production build and TypeScript check passed. The temporary front-door maintenance page remains in place. No production database schema changes, paid AI calls or production class load test were performed for these checks.
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { databaseUnavailable } from '@/lib/database-error';
 import { fal } from '@fal-ai/client';
 import { Prisma } from '@prisma/client';
 import { currentUser } from '@/lib/session';
@@ -196,7 +197,7 @@ export async function POST(request: NextRequest) {
         const code = error instanceof Prisma.PrismaClientKnownRequestError ? error.code : undefined;
         const providerStatus = error instanceof FalImageError ? error.status : undefined;
         console.error('Lite AI request:', { code, provider: error instanceof FalImageError ? 'fal' : undefined, providerStatus, message });
-        if (code === 'P2024' || code === 'P2037' || error instanceof Prisma.PrismaClientInitializationError) return NextResponse.json({ error: 'The server is busy. Please try again in a moment.', code: 'DATABASE_UNAVAILABLE' }, { status: 503 });
+        if (databaseUnavailable(error)) return NextResponse.json({ error: 'The server is busy. Please try again in a moment.', code: 'DATABASE_UNAVAILABLE' }, { status: 503 });
         if (providerStatus === 401 || providerStatus === 403) return NextResponse.json({ error: 'The image service denied access. Please contact your teacher or administrator.', code: 'IMAGE_ACCESS_DENIED' }, { status: 502 });
         return NextResponse.json({ error: message.includes('not configured') ? 'AI connection is not configured yet. Your work is saved.' : 'Cagent could not connect. Your writing is safe; please try again.' }, { status: 502 });
     }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { databaseUnavailable } from '@/lib/database-error';
 import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
@@ -20,6 +21,7 @@ type Context = {
     }>;
 };
 export async function GET(request: Request, context: Context) {
+    try {
     const user = await currentUser();
     if (!user)
         return NextResponse.json({ error: 'Please log in.' }, { status: 401 });
@@ -62,13 +64,17 @@ export async function GET(request: Request, context: Context) {
         return NextResponse.json({ events: await prisma.researchEvent.findMany({ orderBy: { createdAt: 'asc' }, take: 10000 }), stories: await prisma.story.findMany({ include: { revisions: true } }) });
     }
     return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+    } catch (error) {
+        console.error('Lite data read failed', error instanceof Error ? error.message : 'error');
+        return NextResponse.json({ error: 'Could not load. Please try again.', ...(databaseUnavailable(error) ? { code: 'DATABASE_UNAVAILABLE' } : {}) }, { status: databaseUnavailable(error) ? 503 : 500 });
+    }
 }
 export async function POST(request: Request, context: Context) {
+    try {
     const user = await currentUser();
     if (!user)
         return NextResponse.json({ error: 'Please log in.' }, { status: 401 });
     const { resource } = await context.params;
-    try {
         const b = await request.json();
         if (resource === 'data') {
             if (b.action === 'guideSeen' && b.screen === 'canvas') {
@@ -282,7 +288,7 @@ export async function POST(request: Request, context: Context) {
     }
     catch (error) {
         console.error('Lite data operation failed', error instanceof Error ? error.message : 'error');
-        return NextResponse.json({ error: 'Could not save. Please try again.' }, { status: 500 });
+        return NextResponse.json({ error: 'Could not save. Please try again.', ...(databaseUnavailable(error) ? { code: 'DATABASE_UNAVAILABLE' } : {}) }, { status: databaseUnavailable(error) ? 503 : 500 });
     }
 }
 export async function PATCH(request: Request, context: Context) {

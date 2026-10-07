@@ -1,17 +1,19 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { CODING_VERSION, PROCESS_PARAMETERS } from './process-coding';
+import { runtimeDatabaseUrl } from './database-config';
 
 export type Recording = { id: string; startedAt: Date; stoppedAt: Date | null; createdBy: string; codingVersion: string; parameters: unknown; quality: unknown };
 export type StoredProcessEvent = { eventUid: string; recordingId: string; userId: string; username: string; sessionId: string; sequence: number; eventId: string; functionalCode: string; category: string; subcategory: string; stage: string; workId: string | null; workType: string; origin: string; clientTs: Date; clientEndTs: Date | null; durationMs: number | null; activeDurationMs: number | null; payload: Record<string, unknown>; serverTs: Date };
 const state = globalThis as unknown as { processDb?: PrismaClient; processPoolVersion?: string; recordingCache?: { value: Recording | null; until: number }; recordingRead?: Promise<Recording | null> };
 /** A small separate pool prevents a research upload/export queue from occupying the writing pool. */
 export function processDb() {
-  if (state.processDb && state.processPoolVersion !== 'utc-v1') { void state.processDb.$disconnect().catch(()=>{}); state.processDb=undefined; state.recordingCache=undefined; state.recordingRead=undefined; }
+  if (state.processDb && state.processPoolVersion !== 'pooled-utc-v2') { void state.processDb.$disconnect().catch(()=>{}); state.processDb=undefined; state.recordingCache=undefined; state.recordingRead=undefined; }
   if (!state.processDb) {
-    const url = new URL(process.env.DATABASE_URL!); url.searchParams.set('connection_limit', '2'); url.searchParams.set('pool_timeout', '3');
-    state.processDb = new PrismaClient({ datasources: { db: { url: url.toString() } } });
-    state.processPoolVersion = 'utc-v1';
+    const url = runtimeDatabaseUrl(process.env.DATABASE_URL, 'recording');
+    console.info('database_pool_initialized', { pool: 'recording', pooledPrismaPostgres: url ? new URL(url).hostname === 'pooled.db.prisma.io' : false });
+    state.processDb = new PrismaClient({ ...(url ? { datasources: { db: { url } } } : {}) });
+    state.processPoolVersion = 'pooled-utc-v2';
   }
   return state.processDb;
 }

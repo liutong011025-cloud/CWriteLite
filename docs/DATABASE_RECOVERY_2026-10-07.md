@@ -1,0 +1,11 @@
+# Database runtime repair — 2026-10-07
+
+Production errors showed `Too many connections for role prisma_migration`, application traffic to `db.prisma.io:5432`, and interactive transactions expiring at the previous five-second default. A database plan upgrade does not change the application's direct connection URL.
+
+Application clients now map only the documented Prisma Postgres direct hostname to `pooled.db.prisma.io`. Credentials, database, TLS, schema and existing connection options are preserved. Prisma Migrate still reads the original `DATABASE_URL` directly from the schema; no schema or migration changes are made. Local and other vendors' hosts are not redirected. See [Prisma Postgres pooling](https://www.prisma.io/docs/postgres/database/connection-pooling) and [Prisma ORM v6 connection URLs](https://www.prisma.io/docs/orm/v6/reference/connection-urls).
+
+The writing client is reused per process, defaults to three connections when no explicit limit is supplied, and preserves existing configured limits. The separate recording client remains capped at two. These are per-process client pool limits, not a guarantee of a global connection budget. The provider-side pool handles reuse across serverless instances; its plan limits still apply.
+
+Short, database-only writing transactions receive a bounded 15-second execution deadline and five-second acquisition limit. This prevents a transaction completing slightly after five seconds from being rolled back solely by the previous default. It does not eliminate queueing or improve slow queries. Recording control retains its existing explicit shorter limit. Database unavailability in authentication, data reads/saves and AI requests returns JSON with `DATABASE_UNAVAILABLE` / 503, while provider failures retain their separate handling.
+
+Checks: connection URL preservation, exact hostname matching, separate limits and error classification; optimized Next.js build and TypeScript; a local read-only transaction delayed 5.5 seconds reproducing P2028 with the old timeout and completing with the new default; 100 simultaneous recording uploads and 100 draft saves, all contents verified, replay deduplication and complete 5,001-event export. No paid AI generation or production capacity stress test was performed. The front-door maintenance page remains enabled.

@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
+import { databaseUnavailable } from '@/lib/database-error';
 import { compare, hash } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { currentUser, publicUser, signIn, signOut } from '@/lib/session';
-export async function GET() { const user = await currentUser(); return NextResponse.json({ user: user ? publicUser(user) : null }); }
-export async function DELETE() { await signOut(); return NextResponse.json({ success: true }); }
+function authFailure(error: unknown) {
+    console.error('Auth request failed', error instanceof Error ? error.message : 'error');
+    return NextResponse.json({ error: 'Unable to sign in. Please try again.', ...(databaseUnavailable(error) ? { code: 'DATABASE_UNAVAILABLE' } : {}) }, { status: databaseUnavailable(error) ? 503 : 500 });
+}
+export async function GET() { try { const user = await currentUser(); return NextResponse.json({ user: user ? publicUser(user) : null }); } catch (error) { return authFailure(error); } }
+export async function DELETE() { try { await signOut(); return NextResponse.json({ success: true }); } catch (error) { return authFailure(error); } }
 export async function POST(request: Request) {
     try {
         const body = await request.json();
@@ -26,7 +31,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, user: publicUser(user) });
     }
     catch (error) {
-        console.error('POST /api/auth failed', error);
-        return NextResponse.json({ error: 'Unable to sign in. Please try again.' }, { status: 500 });
+        return authFailure(error);
     }
 }
