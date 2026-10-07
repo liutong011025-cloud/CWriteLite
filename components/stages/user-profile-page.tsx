@@ -619,7 +619,7 @@ export default function UserProfilePage({
   const farmTreeStates = DEFAULT_TREE_LAYOUT
   const forestById = new Map(forest.map((tree) => [tree.id, tree] as const))
 
-  const farmBackgroundSrc = isOtherFarm ? "/farm.webp" : "/farm-halloween-2026.webp"
+  const farmBackgroundSrc = isOtherFarm ? "/farm.webp" : "/farm-halloween-2026-daylight.webp"
   const farmBackgroundAlt = isOtherFarm ? "Other Student Farm Background" : "My Farm Background"
   const treeCount = 12
 
