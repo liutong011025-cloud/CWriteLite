@@ -8,7 +8,7 @@ export const actorX = (x:number,scale:number) => Math.max(DRAMA_ACTOR_WIDTH*scal
 export const isDrama = (work: Pick<Story, 'canvas'>) => work.canvas?.writingType === 'drama';
 export const writingType = (work: Pick<Story, 'canvas'>) => isDrama(work) ? 'drama' : 'story';
 export function blankDramaScene(id: string, index = 0): DramaScene {
-    return {id, name:`Scene ${index + 1}`, backgroundPrompt:'', backgroundImageUrl:'', notes:'', actors:[], lines:[]};
+    return {id, name:`Scene ${index + 1}`, backgroundPrompt:'', backgroundImageUrl:'', sceneDescription:'', notes:'', actors:[], lines:[]};
 }
 const safeText = (s: unknown, length = 2000) => String(s ?? '').slice(0, length);
 const bounded = (n: unknown, min: number, max: number, fallback: number) => Number.isFinite(Number(n)) ? Math.min(max, Math.max(min, Number(n))) : fallback;
@@ -35,7 +35,7 @@ export function normalizeDrama(input: unknown, cast: Character[]): DramaProject 
             return {id:lineId, kind:(['dialogue','thought','action'].includes(l.kind) ? l.kind : 'dialogue') as 'dialogue'|'thought'|'action', characterId:actorIds.has(l.characterId) ? l.characterId : '', text:safeText(l.text, 1500)};
         });
         const archivedLines=(Array.isArray(s?.archivedLines)?s.archivedLines:[]).slice(0,160).filter(l=>l?.kind==='action'||actorIds.has(l?.characterId)).map(l=>({id:safeText(l.id,100),kind:(['dialogue','thought','action'].includes(l.kind)?l.kind:'dialogue') as DramaLine['kind'],characterId:actorIds.has(l.characterId)?l.characterId:'',text:safeText(l.text,1500)}));
-        return {id, name:safeText(s?.name, 80) || `Scene ${index + 1}`, backgroundPrompt:safeText(s?.backgroundPrompt), settingDescription:safeText(s?.settingDescription, 500), backgroundImageUrl:safeImage(s?.backgroundImageUrl), notes:safeText(s?.notes), actors, lines,archivedLines};
+        return {id, name:safeText(s?.name, 80) || `Scene ${index + 1}`, backgroundPrompt:safeText(s?.backgroundPrompt), settingDescription:safeText(s?.settingDescription, 500), backgroundImageUrl:safeImage(s?.backgroundImageUrl), sceneDescription:safeText(s?.sceneDescription), notes:safeText(s?.notes), actors, lines,archivedLines};
     });
     if (!scenes.length) scenes.push(blankDramaScene('scene-1'));
     const project={scenes, activeScene:Math.floor(bounded(source?.activeScene, 0, scenes.length - 1, 0))};
@@ -78,7 +78,7 @@ export function dramaSections(canvas: StoryCanvas, cast: Character[]) {
     return (canvas.drama?.scenes || []).map((s, i) => {
         const actorName = (id: string) => cast.find(c => c.id === id)?.name || 'Stage';
         const setting = sceneSettingText(s);
-        return [sceneTitle(i, s.name), setting, s.notes ? `[Stage directions: ${s.notes}]` : '', ...s.lines.filter(l => l.text.trim()).map(l => l.kind === 'action' ? `[${l.text}]` : `${actorName(l.characterId)} ${l.kind === 'thought' ? 'thinks' : 'says'}: ${l.text}`)].filter(Boolean).join('\n');
+        return [sceneTitle(i, s.name), setting, s.sceneDescription?.trim() ? `Scene description: ${s.sceneDescription.trim()}` : '', s.notes ? `[Stage directions: ${s.notes}]` : '', ...s.lines.filter(l => l.text.trim()).map(l => l.kind === 'action' ? `[${l.text}]` : `${actorName(l.characterId)} ${l.kind === 'thought' ? 'thinks' : 'says'}: ${l.text}`)].filter(Boolean).join('\n');
     });
 }
 export function withDrama(work: Story, drama: DramaProject): Story {
@@ -93,6 +93,7 @@ export function dramaProblems(work: Pick<Story, 'canvas'|'characterSnapshots'|'t
     if (script && !work.title.trim()) problems.push('Give your drama a title.');
     scenes.forEach((s, i) => {
         const prefix = `Scene ${i + 1}: `;
+        if (!s.sceneDescription?.trim()) problems.push(prefix + 'write a scene description in your own words.');
         if (!s.backgroundImageUrl || !s.backgroundPrompt.trim()) problems.push(prefix + 'describe and generate a background.');
         if (!s.actors.length) problems.push(prefix + 'place at least one character on stage.');
         if (!script) return;

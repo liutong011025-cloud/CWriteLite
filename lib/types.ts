@@ -50,6 +50,7 @@ export type DramaScene = {
     name: string;
     backgroundPrompt: string;
     settingDescription?: string;
+    sceneDescription?: string;
     backgroundImageUrl: string;
     notes: string;
     actors: DramaActor[];

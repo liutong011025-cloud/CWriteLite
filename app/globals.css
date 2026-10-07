@@ -1433,5 +1433,17 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 
 .character-pack-card{width:100%;max-width:175px;justify-self:center;display:flex;flex-direction:column;gap:8px}.character-pack-delete{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border:1px solid #d8b8a0;border-radius:9px;background:#fff8ef;color:#9a4e38;font-size:15px}.character-pack-delete:hover{background:#ffe8da}.drama-cast-member{display:flex;gap:4px;min-width:0}.drama-cast-member>button:first-child{flex:1;min-width:0}.drama-tableau .drama-chosen-cast .drama-cast-remove{flex:0 0 36px;justify-content:center;color:#9a4e38;min-height:48px}
 
+/* Student-written scene descriptions sit beside the stage. */
+.drama-support-panel { align-content:start; }
+.drama-scene-description { padding:14px; border:2px solid #decdae; border-radius:15px; background:#fffcf3; box-shadow:0 4px 0 #b8a48025; }
+.drama-scene-description>label { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; font-size:21px; font-weight:850; color:#69718a; }
+.drama-scene-description small { padding:3px 7px; border-radius:6px; background:#f2e7c6; color:#806636; font-size:12px; font-weight:700; }
+.drama-scene-description>p { margin:8px 0; font-size:16px; line-height:1.4; color:#786749; }
+.drama-scene-description textarea { box-sizing:border-box; width:100%; min-height:125px; max-height:300px; padding:10px; resize:vertical; font-size:18px; line-height:1.45; border:1px solid #cdb88c; border-radius:9px; background:#fffefa; }
+.drama-scene-description textarea:focus-visible { outline:3px solid #b79ad0; outline-offset:2px; }
+.drama-scene-description textarea[aria-invalid=true] { border-color:#b85940; }
+.drama-scene-description>.error-text { color:#a44730; }
+.drama-script-description { white-space:pre-wrap; overflow-wrap:anywhere; }
+
 /* Tony-only research controls. */
 .process-controls{position:fixed;right:18px;bottom:90px;z-index:70}.process-open{display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid #d9c7ad;border-radius:12px;background:#fff9ed;color:#3a5065;box-shadow:0 3px 12px #45341c18;font-size:14px}.process-controls .modal-backdrop{z-index:180}.process-panel{display:grid;gap:14px;padding-top:12px}.process-panel p[role=status]{font-weight:700}.process-panel select{padding:10px;border:1px solid #decba8;border-radius:8px;background:#fffefa;width:100%}.process-panel input{box-sizing:border-box}.process-check{flex-direction:row;align-items:center;font-size:14px}.process-check input{width:18px}.process-export-buttons{display:flex;gap:12px;flex-wrap:wrap}.process-export-buttons a[aria-disabled=true]{pointer-events:none;opacity:.4}

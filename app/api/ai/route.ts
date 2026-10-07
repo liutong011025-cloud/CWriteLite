@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { chat, type DeepSeekMessage } from '@/lib/deepseek';
 import { FalImageError, generateFalImage, getFalKey, illustrationPrompt, removeBackground } from '@/lib/fal-images';
 import { resolveMapImageUrlForFal } from '@/lib/fal-map';
-import {isDrama,normalizeDrama,writingType} from '@/lib/drama';
+import {dramaSections,isDrama,normalizeDrama,writingType} from '@/lib/drama';
 import {STAGES,type Character,type Story,type StoryCanvas} from '@/lib/types';
 import {dramaSuggestions,dramaSupportCharacters} from '@/lib/drama-suggestions';
 import {dramaReviewScenes} from '@/lib/drama-review';
@@ -78,10 +78,11 @@ export async function POST(request: NextRequest) {
             const extraIds=[...new Set(scenes.flatMap(s=>Array.isArray(s.actors)?s.actors.slice(0,8).map(a=>a.characterId):[]))].filter(id=>typeof id==='string'&&!contextCharacters.some(c=>c.id===id));
             if(extraIds.length){const extras=await prisma.character.findMany({where:{userId:user.id,id:{in:extraIds}}});contextCharacters=[...contextCharacters,...extras as unknown as Character[]];}
             const project=normalizeDrama(contextCanvas?.drama,contextCharacters);
-            contextCanvas={...contextCanvas,drama:{...project,scenes:project.scenes.map(({archivedLines,...visible})=>visible)}};
+            // The new scene description is student writing, separate from AI support.
+            contextCanvas={...contextCanvas,drama:{...project,scenes:project.scenes.map(({archivedLines,sceneDescription,...visible})=>visible)}};
         }
         const currentSection=Math.max(0,Math.min(4,Number(b.section??story?.activeSection??0)||0));
-        const requestedSections=Array.isArray(b.sections)?b.sections:story?.sections||[];
+        const requestedSections=drama?dramaSections(contextCanvas,contextCharacters):Array.isArray(b.sections)?b.sections:story?.sections||[];
         const context = { writingType:drama?'drama':'story',title: story?.title, section:currentSection,currentStage:drama?undefined:STAGES[currentSection],currentDraft:drama?undefined:requestedSections[currentSection],sections:['canvasReview','dramaTips'].includes(kind)?[]:!drama&&['coach','tips'].includes(kind)?requestedSections.slice(0,currentSection+1):requestedSections, characters: kind==='dramaTips'?dramaSupportCharacters(contextCharacters):contextCharacters, canvas: kind==='dramaTips'?{writingType:'drama',drama:contextCanvas.drama}:contextCanvas, selectedNode: b.selectedNode, requestedContribution:kind==='dramaTips'?{characterId:String(b.selectedNode?.characterId||''),kind:String(b.focus||'scene')}:undefined, cursorContext: b.cursorContext, character: kind==='dramaTips'?undefined:b.character, vocabulary: user.vocabulary };
         if(kind==='dramaTips'){
             const chosen=contextCanvas.drama?.scenes.find(scene=>scene.id===b.selectedNode?.sceneId)||contextCanvas.drama?.scenes[contextCanvas.drama.activeScene];

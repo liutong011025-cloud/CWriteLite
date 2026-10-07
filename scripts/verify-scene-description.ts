@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import {blankDramaScene,dramaProblems,normalizeDrama,removeDramaScene,withDrama} from '../lib/drama';
+import type {Character,Story} from '../lib/types';
+
+const cast:Character[]=[{id:'actor-1',name:'Luna',age:'10',appearance:'',traits:'kind',background:'',strength:'',challenge:'',imageUrl:'/bear.webp',sketch:''}];
+const scene={...blankDramaScene('scene-1'),backgroundPrompt:'A snowy forest',backgroundImageUrl:'/firstmap.webp',actors:[{characterId:cast[0].id,x:50,y:90,scale:1,flipped:false}],lines:[{id:'line-1',kind:'dialogue' as const,characterId:cast[0].id,text:'Let us find the path.'}],notes:'Luna looks up.'};
+const work:Story={id:'fixture',title:'The forest',status:'draft',stage:'drama-scenes',level:1,characterIds:cast.map(c=>c.id),characterSnapshots:cast,canvas:{nodes:[],edges:[],writingType:'drama',drama:{mode:'tableau',scenes:[scene],activeScene:0}},sections:[],activeSection:0,content:'',pin:null,chapterIndex:0,updatedAt:'2026-10-08T00:00:00Z'};
+assert.match(dramaProblems(work,false)[0],/write a scene description/);
+assert.match(dramaProblems(work,true)[0],/write a scene description/);
+const complete=withDrama(work,{...work.canvas.drama!,scenes:[{...scene,sceneDescription:'It is evening. Luna is looking for a safe way home.'}]});
+assert.deepEqual(dramaProblems(complete,false),[]);
+assert.deepEqual(dramaProblems(complete,true),[]);
+assert.match(complete.content,/Scene description: It is evening/);
+const restored=normalizeDrama(JSON.parse(JSON.stringify(complete.canvas.drama)),cast);
+assert.equal(restored.scenes[0].sceneDescription,complete.canvas.drama!.scenes[0].sceneDescription);
+assert.equal(restored.scenes[0].backgroundPrompt,scene.backgroundPrompt);
+assert.equal(restored.scenes[0].notes,scene.notes);
+assert.deepEqual(restored.scenes[0].lines,scene.lines);
+const second=withDrama(complete,{...restored,scenes:[restored.scenes[0],{...scene,id:'scene-2',name:'Scene 2',sceneDescription:'   '}],activeScene:1});
+assert.match(dramaProblems(second,false)[0],/^Scene 2: write a scene description/);
+assert.equal(normalizeDrama({scenes:[{...scene,sceneDescription:'x'.repeat(2500)}]},cast).scenes[0].sceneDescription!.length,2000);
+assert.equal(normalizeDrama({scenes:[scene]},cast).scenes[0].sceneDescription,'');
+assert.equal(removeDramaScene(restored,'scene-1','replacement').scenes[0].sceneDescription,'');
+console.log('Scene descriptions: required per scene, legacy drafts retained, bounded text, saved JSON round-trip, script export, and existing background/notes/dialogue all verified.');
