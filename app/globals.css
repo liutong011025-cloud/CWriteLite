@@ -1464,5 +1464,38 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 @media(min-width:761px) and (max-width:1000px) { .drama-tableau .drama-support-panel .drama-review-action { grid-column:2; } }
 .drama-script-description { white-space:pre-wrap; overflow-wrap:anywhere; }
 
+/* Cagent rests on the stage frame without making the scene strip taller. */
+.drama-workbench .drama-scenes-header { box-sizing:border-box; height:84px; min-height:84px; align-items:center; gap:14px; }
+.drama-scenes-header .drama-scene-navigation { display:flex; align-items:center; flex:0 0 clamp(150px,30%,280px); min-width:0; gap:5px; }
+.drama-scenes-header .drama-scene-list { flex:1; }
+.drama-workbench .drama-scenes-header .drama-scene-card { flex:0 0 100%; box-sizing:border-box; min-width:0; height:60px; padding-right:36px; }
+.drama-workbench .drama-scenes-header .drama-scene-select b { flex:1; min-width:0; max-width:none; text-align:left; }
+.drama-workbench .drama-scenes-header .drama-scene-select img { width:42px; height:44px; }
+.drama-workbench .drama-scenes-header .drama-scene-remove { width:36px; }
+.drama-workbench .drama-scenes-header .drama-add-scene { flex:0 0 44px; width:44px; height:44px; min-height:44px; padding:6px; border:1px solid #c3a271; border-radius:50%; background:#f9edcf; }
+.drama-workbench .drama-scenes-header .drama-add-scene:hover:not(:disabled) { background:#efdfb9; }
+.drama-workbench .drama-scenes-header .drama-add-scene:focus-visible { outline:3px solid #a78bc4; outline-offset:3px; }
+.drama-workbench .drama-scene-coach { flex:1; min-width:0; height:66px; margin:0; padding:0; border:0; background:none; box-shadow:none; }
+.drama-scene-coach .writing-coach-shelf { width:100%; height:100%; align-items:center; gap:10px; }
+.drama-workbench .drama-scene-coach .writing-coach-message { box-sizing:border-box; width:auto; max-height:66px; margin:0; padding:8px 12px; border:2px solid #ae96d2; border-radius:12px; background:#f2ecfa; font-size:16px; line-height:1.4; font-weight:700; overflow:auto; overscroll-behavior:contain; }
+.drama-scene-coach .writing-coach-message:before { display:none; }
+.drama-workbench .drama-scene-coach .writing-canvas-bear { flex:0 0 92px; width:92px; align-self:flex-end; transform:translateY(12px); }
+.drama-workbench .drama-scene-coach .writing-canvas-bear .bear-guide { display:block; margin:0; padding:0; min-height:0; }
+.drama-workbench .drama-scene-coach .cagent-figure { display:block; }
+.drama-workbench .drama-scene-coach .cagent-avatar,.drama-workbench .drama-scene-coach .cagent-avatar img.cagent-main-pose { width:92px; height:92px; }
+@media(max-width:600px) {
+  .drama-workbench .drama-scenes-header { gap:8px; padding:7px 5px; }
+  .drama-scenes-header .drama-scene-navigation { flex-basis:122px; gap:2px; }
+  .drama-workbench .drama-scenes-header .drama-scene-card { padding-right:28px; }
+  .drama-workbench .drama-scenes-header .drama-scene-select img { display:none; }
+  .drama-workbench .drama-scenes-header .drama-scene-select b { font-size:14px; }
+  .drama-workbench .drama-scenes-header .drama-scene-remove { width:28px; padding:4px; }
+  .drama-workbench .drama-scenes-header .drama-add-scene { flex-basis:36px; width:36px; height:36px; min-height:36px; }
+  .drama-scene-coach .writing-coach-shelf { gap:5px; }
+  .drama-workbench .drama-scene-coach .writing-coach-message { padding:7px; font-size:14px; }
+  .drama-workbench .drama-scene-coach .writing-canvas-bear { flex-basis:62px; width:62px; transform:translateY(12px); }
+  .drama-workbench .drama-scene-coach .cagent-avatar,.drama-workbench .drama-scene-coach .cagent-avatar img.cagent-main-pose { width:62px; height:62px; }
+}
+
 /* Tony-only research controls. */
 .process-controls{position:fixed;right:18px;bottom:90px;z-index:70}.process-open{display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid #d9c7ad;border-radius:12px;background:#fff9ed;color:#3a5065;box-shadow:0 3px 12px #45341c18;font-size:14px}.process-controls .modal-backdrop{z-index:180}.process-panel{display:grid;gap:14px;padding-top:12px}.process-panel p[role=status]{font-weight:700}.process-panel select{padding:10px;border:1px solid #decba8;border-radius:8px;background:#fffefa;width:100%}.process-panel input{box-sizing:border-box}.process-check{flex-direction:row;align-items:center;font-size:14px}.process-check input{width:18px}.process-export-buttons{display:flex;gap:12px;flex-wrap:wrap}.process-export-buttons a[aria-disabled=true]{pointer-events:none;opacity:.4}
