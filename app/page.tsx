@@ -13,6 +13,7 @@ import { editableStory } from '@/lib/story-plan';
 import { api, Logo, IdeaPackButton, PortraitCard, WoodTitle, Bear, Modal } from '@/components/lite/common';
 import CharacterStudio from '@/components/lite/character-studio';
 import PageGuide from '@/components/lite/page-guide';
+import PageTransition from '@/components/lite/page-transition';
 import DeckCoach from '@/components/lite/deck-coach';
 import { characterDeck, packCardKey } from '@/lib/character-library';
 import StoryCanvasPage, { CanvasView } from '@/components/lite/story-canvas';
@@ -44,6 +45,9 @@ export default function Page() {
     const [user, setUser] = useState<User | null>(null), [screen, setScreen] = useState<Screen>('login'), [loading, setLoading] = useState(true), [characters, setCharacters] = useState<Character[]>([]), [stories, setStories] = useState<Story[]>([]), [story, setStory] = useState<Story | null>(null), [editing, setEditing] = useState<Character | undefined>(), [detail, setDetail] = useState<Character | null>(null), [chosen, setChosen] = useState<string[]>([]), [search, setSearch] = useState(''), [profile, setProfile] = useState<any>({}), [mapState, setMapState] = useState<MapState>(initialMap), [saveStatus, setSaveStatus] = useState(''), [publishing, setPublishing] = useState(false), [confirmDelete, setConfirmDelete] = useState<Character | null>(null), [users, setUsers] = useState<any[]>([]), [other, setOther] = useState(''), [vocabUser, setVocabUser] = useState(''), [vocab, setVocab] = useState(''), [pack, setPack] = useState(false), [mapBusy, setMapBusy] = useState(false);
     const [creatingPin,setCreatingPin]=useState<{x:number;y:number;kind:'story'|'drama'}|null>(null);
     const creatingStory=useRef(false);
+    const [pageTransition,setPageTransition]=useState('');
+    const changingPage=useRef<Promise<void>|null>(null);
+    const saving=useRef(false), queuedSaves=useRef(new Map<string,Story>());
     const [characterDeleteBusy,setCharacterDeleteBusy]=useState(false);
     const deletingCharacter=useRef(false);
     const [growthTrees,setGrowthTrees]=useState<number[]>([]);
@@ -87,7 +91,34 @@ export default function Page() {
         await refresh();
         setScreen('farm');
     } }).catch(() => toast.error('Could not connect. Please refresh.')).finally(() => setLoading(false)); }, [refresh]);
-    function save(s: Story) { setSaveStatus('Saving…'); const operation = queue.current.catch(() => { }).then(async () => { const data = await api('/api/data', { action: 'saveStory', story: s }); setStories(items => [data.story, ...items.filter(x => x.id !== s.id)]); setSaveStatus('Saved'); }); queue.current = operation; void operation.catch(e => { setSaveStatus('Not saved — retry'); toast.error(e.message); }); return operation; }
+    function save(s: Story) {
+        setSaveStatus('Saving…');
+        // While a request runs, keep the newest draft instead of queuing every older snapshot.
+        queuedSaves.current.set(s.id,s);
+        if(saving.current)return queue.current;
+        saving.current=true;
+        const operation=(async()=>{
+            try {
+                while(queuedSaves.current.size){
+                    const [id,next]=queuedSaves.current.entries().next().value!;
+                    queuedSaves.current.delete(id);
+                    try {
+                        const data=await api('/api/data',{action:'saveStory',story:next});
+                        setStories(items=>[data.story,...items.filter(x=>x.id!==id)]);
+                    } catch(error) {
+                        if(!queuedSaves.current.has(id))queuedSaves.current.set(id,next);
+                        throw error;
+                    }
+                }
+                setSaveStatus('Saved');
+            } catch(error) {
+                setSaveStatus('Not saved — retry');toast.error((error as Error).message);
+                throw error;
+            } finally { saving.current=false; }
+        })();
+        queue.current=operation;void operation.catch(()=>{});
+        return operation;
+    }
     function update(s: Story) { s = editableStory(latest.current,s); latest.current = s; setStory(s); if (pending.current)
         clearTimeout(pending.current); pending.current = setTimeout(() => { void save(s); pending.current = null; }, 800); }
     async function flush() { if (pending.current) {
@@ -101,8 +132,24 @@ export default function Page() {
         e.returnValue = '';
     } }; window.addEventListener('beforeunload', listener); return () => window.removeEventListener('beforeunload', listener); }, [saveStatus]);
     useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [screen]);
-    async function go(to: Screen) { try { await flush(); setScreen(to); if (['farm', 'stories'].includes(to))
-        void refresh().catch(() => { }); } catch { /* The save status already offers Retry; keep the current draft open. */ } }
+    function changePage(message:string,action:()=>Promise<void>) {
+        if(changingPage.current)return changingPage.current;
+        const focused=document.activeElement instanceof HTMLElement?document.activeElement:null;
+        setPageTransition(message);
+        const operation=Promise.resolve().then(action).finally(()=>{
+            changingPage.current=null;setPageTransition('');
+            requestAnimationFrame(()=>{if(focused?.isConnected)focused.focus();});
+        });
+        changingPage.current=operation;
+        return operation;
+    }
+    async function go(to: Screen) {
+        if(to===screen)return;
+        try { await changePage('Saving and opening your page…',async()=>{
+            await flush();setScreen(to);
+            if(['farm','stories'].includes(to))void refresh().catch(()=>{});
+        }); } catch { /* The save status already offers Retry; keep the current draft open. */ }
+    }
     function event(type: string, payload: unknown) { void api('/api/data', { action: 'event', storyId: story?.id, type, payload }).catch(() => { }); }
     async function saveMap(next: MapState) { mapRef.current = next; setMapState(next); const result=await api('/api/data', { action: 'saveMap', state: next }); if(result.mapState){mapRef.current=result.mapState;setMapState(result.mapState);} }
     async function deleteCharacter(){
@@ -121,7 +168,7 @@ export default function Page() {
     async function newStory(pin?: {
         x: number;
         y: number;
-    }, kind:'story'|'drama'='story') { if(creatingStory.current)return; creatingStory.current=true; setCreatingPin({...pin||chapter.currentPin||{x:50,y:50},kind}); try { await flush(); const r = await api('/api/data', { action: 'newStory', writingType:kind, pin: pin || chapter.currentPin, chapterIndex: mapState.activeChapterIndex }); latest.current = r.story; setStory(r.story); setChosen([]); setStudioReturn('characters'); setScreen(kind==='drama'?'drama-scenes':'characters'); setSaveStatus('Saved'); setStories(s => [r.story, ...s]); }catch(e){toast.error((e as Error).message);}finally{creatingStory.current=false;setCreatingPin(null);} }
+    }, kind:'story'|'drama'='story') { if(creatingStory.current||changingPage.current)return; creatingStory.current=true; setCreatingPin({...pin||chapter.currentPin||{x:50,y:50},kind}); try { await changePage(`Starting your ${kind}…`,async()=>{await flush(); const r = await api('/api/data', { action: 'newStory', writingType:kind, pin: pin || chapter.currentPin, chapterIndex: mapState.activeChapterIndex }); latest.current = r.story; setStory(r.story); setChosen([]); setStudioReturn('characters'); setScreen(kind==='drama'?'drama-scenes':'characters'); setSaveStatus('Saved'); setStories(s => [r.story, ...s]);}); }catch(e){toast.error((e as Error).message);}finally{creatingStory.current=false;setCreatingPin(null);} }
     function openStory(s: Story) { s={...s,characterIds:Array.isArray(s.characterIds)?s.characterIds:[]}; latest.current = s; setStory(s); setChosen(s.characterIds); setStudioReturn('characters'); setScreen((isDrama(s) ? (s.stage==='drama-finish'?'drama-finish':'drama-scenes') : (s.stage === 'characters' ? 'characters' : ['canvas', 'mountain', 'write', 'finish'].includes(s.stage) ? s.stage : 'write')) as Screen); }
     async function deleteDraft() {
         if(!discardDraft||discardBusy)return;
@@ -139,11 +186,11 @@ export default function Page() {
         }finally{setDiscardBusy(false);}
     }
     async function toStage(stage: Screen, propagateError = false) { if (!latest.current)
-        return; try { const s = { ...latest.current, stage }; update(s); await flush(); setScreen(stage); } catch (error) { if(propagateError)throw error; /* Keep editing when the save could not finish. */ } }
+        return; try { await changePage('Saving and opening your page…',async()=>{const s = { ...latest.current!, stage }; update(s); await flush(); setScreen(stage);}); } catch (error) { if(propagateError)throw error; /* Keep editing when the save could not finish. */ } }
     function toggle(id: string) { const card=characters.find(c=>c.id===id); const aliases=card?characters.filter(c=>packCardKey(c)===packCardKey(card)).map(c=>c.id):[id]; const remaining=chosen.filter(x=>!aliases.includes(x)); const ids = chosen.includes(id) ? remaining : [...remaining, id]; setChosen(ids); if (story && story.status !== 'published') {
         update({ ...story, characterIds: ids, characterSnapshots: ids.map(x => story.characterSnapshots.find(c => c.id === x) || characters.find(c => c.id === x)!).filter(Boolean) });
     } }
-    async function startCanvas() { try {
+    async function startCanvas() { try { await changePage('Saving and opening your Story Canvas…',async()=>{
         let s = story;
         if (!s || s.status === 'published') {
             const r = await api('/api/data', { action: 'newStory', pin: chapter.currentPin, chapterIndex: mapState.activeChapterIndex });
@@ -161,14 +208,15 @@ export default function Page() {
         update(next);
         await flush();
         setScreen('canvas');
+    });
     }
     catch (e) {
         toast.error((e as Error).message);
     } }
     async function savedCharacter(c: Character) { setCharacters(cs => [c, ...cs.filter(x => x.id !== c.id)]); setDetail(c); setScreen('detail'); setEditing(undefined); toast.success(`${c.name} is saved in your character deck.`); }
     const resume = stories.find(s => s.status === 'draft' && s.chapterIndex === mapState.activeChapterIndex);
-    async function publish() { if (!story)
-        return; setPublishing(true); try {
+    async function publish() { if (!story||changingPage.current)
+        return; setPublishing(true); try { await changePage('Saving your finished writing…',async()=>{
         await flush();
         const result=await api('/api/data',{action:'saveStory',story:{...latest.current,status:'published',stage:isDrama(story)?'drama-finish':'finish'}});
         const s=result.story as Story;
@@ -178,6 +226,7 @@ export default function Page() {
         toast.success(`Your ${writingType(s)} is saved on your map.`);
         void requestGrowth(s.id);
         void updateMapArt(s);
+    });
     }
     catch (e) {
         toast.error((e as Error).message);
@@ -221,7 +270,7 @@ export default function Page() {
             else toast.success(examples ? 'Local preview: example pictures shown. No AI requests were sent.' : updated+' saved pictures are shown on your map.');
         }catch(e){toast.error((e as Error).message);}finally{setMapBusy(false);}
     }
-    async function logout() { await flush(); await fetch('/api/auth', { method: 'DELETE' }); setUser(null); setStory(null); latest.current = null; setScreen('login'); setCharacters([]); setStories([]); setMapState(initialMap); mapRef.current = initialMap; setProfile({}); setSaveStatus(''); }
+    async function logout() { try { await changePage('Saving and signing out…',async()=>{await flush(); const response=await fetch('/api/auth',{method:'DELETE'}); if(!response.ok)throw new Error('Could not sign out yet. Please try again.'); setUser(null); setStory(null); latest.current = null; setScreen('login'); setCharacters([]); setStories([]); setMapState(initialMap); mapRef.current = initialMap; setProfile({}); setSaveStatus('');}); }catch(error){toast.error((error as Error).message);} }
     const storyFlow = Boolean(story) && ['characters', 'canvas', 'mountain', 'write', 'finish','drama-scenes','drama-write','drama-finish'].includes(screen);
     const stages = story&&isDrama(story)?[['drama-scenes','Create My Drama'],['drama-finish','Review & Finish']]:[['characters', 'Characters'], ['canvas', 'Story Canvas'], ['write', 'Start writing'], ['finish', 'Finish']];
     if (loading)
@@ -230,7 +279,7 @@ export default function Page() {
         return <main data-stage="login"><LoginPage onLogin={async (u) => { await refresh(); setScreen('farm'); }}/></main>;
     const legacy = ['farm', 'settings', 'otherFarm', 'visits'].includes(screen);
     const screenTitles: Partial<Record<Screen, string>> = { map: 'My Writing Map', characters: 'Start a New Story', studio: 'Create a New Character', detail: 'My Character Card', canvas: 'Story Canvas', mountain: 'Your Story Mountain', write: 'Time to Write Your Story', finish: 'My Finished Story', stories: 'My Writing Board', pack: 'Character Card Pack', visits: 'Visit a Friend’s Farm', teacher: 'Teacher’s Word Collection','drama-scenes':'Set the scene','drama-write':'Write your scene','drama-finish':'My Finished Drama' };
-    return <main data-stage={screen} className={legacy ? 'legacy-stage' : 'lite-stage'}>
+    return <><main data-stage={screen} className={legacy ? 'legacy-stage' : 'lite-stage'} aria-busy={Boolean(pageTransition)} inert={Boolean(pageTransition)}>
       <ProcessRecorder userId={user.id} context={{stage:screen,workId:story?.id,workType:story?writingType(story):'platform',sectionIndex:story?.activeSection,sceneId:story?.canvas.drama?.scenes[story.canvas.drama.activeScene]?.id,characterId:screen==='studio'?editing?.id:undefined}}/>
       {screen === 'farm' && user.username === 'Tony' && <ProcessControls/>}
  {legacy ? null : <div className="storybook-app"><div className="story-shell"><header className="story-header"><div className="header-left"><button className="header-brand" onClick={() => void go('farm')} aria-label="CWrite Lite home"><Logo white /></button><div className="header-title"><WoodTitle>{screenTitles[screen]}</WoodTitle><PageGuide key={`${user.id}-${screen}`} screen={screen} userId={user.id} firstVisit={screen==='canvas'&&!profile.guideSeen?.canvas} onSeen={()=>{setProfile((p:any)=>({...p,guideSeen:{...p.guideSeen,canvas:true}}));void api('/api/data',{action:'guideSeen',screen:'canvas'}).catch(()=>{});}}/></div></div><nav className="progress-nav" aria-label="Story progress">{storyFlow && stages.map(([id, label], i) => <span key={id}><button className={screen === id ? 'active' : ''} disabled={i > Math.max(0, stages.findIndex(([stageId]) => stageId === (story?.stage === 'mountain' ? 'write' : story?.stage === 'drama-write' ? 'drama-scenes' : story?.stage)))} onClick={() => void go(id as Screen)}>{screen === id && <span>✦</span>}{label}</button>{i < stages.length - 1 && <ChevronRight size={14}/>}</span>)}</nav><div className="header-user"><span>{user.username}</span><button className="icon-button" onClick={logout} aria-label="Log out"><LogOut size={16}/></button></div></header><div className="story-shell-body"><div className="story-content"><ScreenBoundary key={screen+"-"+story?.id}>
@@ -273,5 +322,5 @@ export default function Page() {
  {growthRetry&&<div className="growth-retry" role="status"><span>Your writing is saved. Growth check needs another try.</span><button className="outline-button" disabled={growthBusy} onClick={()=>void requestGrowth(growthRetry)}>{growthBusy?'Checking…':'Retry'}</button></div>}
  {discardDraft&&<DiscardDraft work={discardDraft} busy={discardBusy} onClose={()=>setDiscardDraft(null)} onConfirm={()=>void deleteDraft()}/> }
  {confirmDelete && <Modal title={`Delete ${confirmDelete.name}?`} onClose={()=>{if(!characterDeleteBusy)setConfirmDelete(null);}}><p>This removes the card from your character pack. Saved stories and drama scenes keep their own copy.</p><div className="draft-delete-actions"><button className="outline-button" disabled={characterDeleteBusy} onClick={()=>setConfirmDelete(null)}>Keep character</button><button className="danger-button" disabled={characterDeleteBusy} onClick={()=>void deleteCharacter()}>{characterDeleteBusy?'Deleting…':'Delete this character'}</button></div></Modal>}
- </main>;
+ </main>{pageTransition&&<PageTransition message={pageTransition}/>}</>;
 }

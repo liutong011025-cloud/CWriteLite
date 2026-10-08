@@ -566,7 +566,9 @@ export default function UserProfilePage({
     try {
       if (!hoverAudioRef.current) return
       hoverAudioRef.current.currentTime = 0
-      void hoverAudioRef.current.play()
+      void hoverAudioRef.current.play().catch(() => {
+        // Leaving the farm can stop this short sound before playback starts.
+      })
     } catch {
       // ignore
     }

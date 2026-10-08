@@ -27,6 +27,7 @@ export function DramaEditor({story,characters,onChange,onCreateCharacter,onDelet
     const [backgroundEditing,setBackgroundEditing]=useState(false);
     const [showDescriptionErrors,setShowDescriptionErrors]=useState(false);
     const descriptionInput=useRef<HTMLTextAreaElement>(null);
+    const sceneList=useRef<HTMLDivElement>(null);
     const [generating,setGenerating]=useState<string|null>(null),[support,setSupport]=useState<Support>(EMPTY_SUPPORT),[tipBusy,setTipBusy]=useState(false),[tipError,setTipError]=useState('');
     const [insertion,setInsertion]=useState(0),[deleteScene,setDeleteScene]=useState<string|null>(null),[stageSize,setStageSize]=useState({width:600,height:400});
     const stage=useRef<HTMLDivElement>(null),latest=useRef(story),actorNodes=useRef(new Map<string,HTMLDivElement>()),suggestionRequest=useRef<AbortController|null>(null);
@@ -40,6 +41,13 @@ export function DramaEditor({story,characters,onChange,onCreateCharacter,onDelet
     const selectionKey=scene.id+'|'+(line?selected:'')+'|'+(line?.kind||'scene');
     const currentSelection=useRef(selectionKey);currentSelection.current=selectionKey;
     const deck=characters.filter(c=>`${c.name} ${c.species||''}`.toLowerCase().includes(search.toLowerCase()));
+
+    useEffect(()=>{
+        const list=sceneList.current,active=list?.querySelector<HTMLElement>('.drama-scene-card.active');
+        if(!list||!active)return;
+        if(active.offsetLeft<list.scrollLeft)list.scrollLeft=active.offsetLeft;
+        else if(active.offsetLeft+active.offsetWidth>list.scrollLeft+list.clientWidth)list.scrollLeft=active.offsetLeft+active.offsetWidth-list.clientWidth;
+    },[project.activeScene,project.scenes.length]);
 
     useLayoutEffect(()=>{const el=stage.current;if(!el)return;const measure=()=>setStageSize({width:el.clientWidth,height:el.clientHeight});const observer=new ResizeObserver(measure);observer.observe(el);measure();return()=>observer.disconnect();},[]);
     useEffect(()=>{suggestionRequest.current?.abort();setSelected('');setSupport(EMPTY_SUPPORT);setTipBusy(false);setTipError('');setBackgroundEditing(false);},[scene.id]);
@@ -116,7 +124,13 @@ export function DramaEditor({story,characters,onChange,onCreateCharacter,onDelet
             <aside className="drama-cast"><header><UsersRound size={22}/><h2>My Cast</h2></header><div className="deck-pack-corner drama-cast-pack"><IdeaPackButton onClick={()=>setCastOpen(true)}/></div><div className="drama-chosen-cast">{scene.actors.map(a=>{const c=story.characterSnapshots.find(c=>c.id===a.characterId);return c?<div className="drama-cast-member" key={c.id}><button onClick={()=>{setSelected(c.id);}} aria-pressed={selected===c.id} aria-label={`Select ${c.name}`}><img src={actorImage(c)} alt=""/><b>{c.name}</b></button><button type="button" className="drama-cast-remove" aria-label={`Remove ${c.name} from this scene`} title="Remove from scene" onClick={()=>removeActor(c.id)}><Trash2 size={17}/></button></div>:null;})}</div><button className="outline-button" onClick={onCreateCharacter}><Plus size={18}/>Create a character</button></aside>
             <section className="drama-stage-column">
                 <div className="drama-scenes-strip drama-scenes-header">
-                    <nav className="drama-scene-navigation" aria-label="Drama scenes" style={{'--drama-scene-count':Math.min(project.scenes.length,2)} as React.CSSProperties}><div className="drama-scene-list">{project.scenes.map((s,i)=><div className={"drama-scene-card "+(i===project.activeScene?"active":"")} key={s.id}><button className="drama-scene-select" data-process-code="NAV_PAGE" data-process-target={s.id} aria-label={`Open scene ${i+1}`} aria-pressed={i===project.activeScene} title={sceneTitle(i,s.name)} onClick={()=>editProject(p=>({...p,activeScene:i}))}>{s.backgroundImageUrl?<img src={s.backgroundImageUrl} alt=""/>:<Theater size={24}/>}<b>{sceneTitle(i,s.name)}</b></button><button type="button" className="drama-scene-remove" aria-label={`Delete scene ${i+1}`} title="Delete scene" disabled={generating===s.id} onClick={()=>setDeleteScene(s.id)}><Trash2 size={17}/></button></div>)}</div><button type="button" className="drama-add-scene" aria-label="Add another scene" title="Add another scene" data-process-code="DR_SCENE_ADD" disabled={project.scenes.length>=MAX_DRAMA_SCENES} onClick={()=>editProject(p=>({...p,scenes:[...p.scenes,blankDramaScene(crypto.randomUUID(),p.scenes.length)],activeScene:p.scenes.length}))}><Plus size={24} aria-hidden="true"/></button></nav>
+                    <nav className="drama-scene-navigation" aria-label="Drama scenes" style={{'--drama-other-scene-count':Math.min(project.scenes.length-1,3)} as React.CSSProperties}>
+                        <div className="drama-scene-list" ref={sceneList}>{project.scenes.map((s,i)=><div className={"drama-scene-card "+(i===project.activeScene?"active":"is-thumbnail")} key={s.id}>
+                            <button className="drama-scene-select" data-process-code="NAV_PAGE" data-process-target={s.id} aria-label={`Open scene ${i+1}`} aria-pressed={i===project.activeScene} title={sceneTitle(i,s.name)} onClick={()=>editProject(p=>({...p,activeScene:i}))}>{s.backgroundImageUrl?<img src={s.backgroundImageUrl} alt=""/>:<Theater size={24}/>} {i===project.activeScene&&<b>{sceneTitle(i,s.name)}</b>}</button>
+                            {i===project.activeScene&&<button type="button" className="drama-scene-remove" aria-label={`Delete scene ${i+1}`} title="Delete scene" disabled={generating===s.id} onClick={()=>setDeleteScene(s.id)}><Trash2 size={17}/></button>}
+                        </div>)}</div>
+                        <button type="button" className="drama-add-scene" aria-label="Add another scene" title="Add another scene" data-process-code="DR_SCENE_ADD" disabled={project.scenes.length>=MAX_DRAMA_SCENES} onClick={()=>editProject(p=>({...p,scenes:[...p.scenes,blankDramaScene(crypto.randomUUID(),p.scenes.length)],activeScene:p.scenes.length}))}><Plus size={24} aria-hidden="true"/></button>
+                    </nav>
                     <DramaCoach story={withDrama(story,project)} scene={scene} line={line} suggesting={tipBusy}/>
                 </div>
                 <div className={"drama-stage "+(selected?"has-word-editor":"")} ref={stage} onPointerDown={e=>{if(!(e.target as Element).closest('.drama-actor,.drama-bubble-anchor.is-editing,.drama-stage-add,.drama-background-controls'))setSelected('');}} aria-label={`Stage for ${scene.name}`} style={scene.backgroundImageUrl?{backgroundImage:`linear-gradient(#fff9ec12,#fff9ec12),url(${JSON.stringify(scene.backgroundImageUrl)})`}:undefined}>
@@ -133,7 +147,6 @@ export function DramaEditor({story,characters,onChange,onCreateCharacter,onDelet
                     {scene.backgroundImageUrl&&!backgroundEditing&&!scene.actors.length&&<button className="drama-stage-add" onClick={()=>setCastOpen(true)}><UsersRound size={28}/>Open My Cast to choose a character ←</button>}
                 </div>
                 <div className="drama-stage-tools">{actor?<><b>{story.characterSnapshots.find(c=>c.id===selected)?.name}</b><span>Drag a picture corner to resize</span><button className="outline-button" onClick={()=>actorChange(selected,{flipped:!actor.flipped})}><FlipHorizontal size={17}/>Flip</button><button className="icon-button" aria-label="Remove selected character from scene" onClick={()=>removeActor(selected)}><Trash2 size={19}/></button></>:<span>Drag to move · click to write</span>}<button className="text-button" onClick={()=>setSelected('')}>Done</button></div>
-                <details className="drama-scene-details"><summary>Scene details</summary><div><label>Scene name<input aria-label="Scene name" value={scene.name} onChange={e=>sceneChange({name:e.target.value})} maxLength={80}/></label><label>Stage directions <small>(optional)</small><textarea aria-label="Stage directions" value={scene.notes} onChange={e=>sceneChange({notes:e.target.value})} placeholder="What is happening in this picture?" maxLength={2000}/></label>{project.scenes.length>1&&<button className="text-button" onClick={()=>setDeleteScene(scene.id)}>Remove this scene</button>}</div></details>
             </section>
             <aside className="drama-support-panel">
                 <section className="drama-scene-description">
