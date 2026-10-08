@@ -27,6 +27,7 @@ export async function studentData() {
                 FROM "Character" c WHERE c."userId"=u.id),'[]'::jsonb),
             'stories',COALESCE((
                 SELECT jsonb_agg(to_jsonb(w) || jsonb_build_object(
+                    'characterIds',COALESCE(to_jsonb(w."characterIds"),'[]'::jsonb),
                     'createdAt',to_char(w."createdAt",'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
                     'updatedAt',to_char(w."updatedAt",'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'))
                     ORDER BY w."updatedAt" DESC)

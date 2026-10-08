@@ -153,7 +153,7 @@ export async function POST(request: Request, context: Context) {
             if (b.action === 'newStory') {
                 const drama = b.writingType === 'drama';
                 const pin = b.pin && Number.isFinite(b.pin.x) && Number.isFinite(b.pin.y) ? {x:Math.max(0,Math.min(100,b.pin.x)),y:Math.max(0,Math.min(100,b.pin.y))} : null;
-                const story = await prisma.story.create({ data: { userId: user.id, title:drama?'Untitled drama':'Untitled adventure', stage:drama?'drama-scenes':'characters', canvas:json(drama?{nodes:[],edges:[],writingType:'drama',drama:{mode:'tableau',scenes:[blankDramaScene(crypto.randomUUID())],activeScene:0}}:{nodes:[],edges:[],writingType:'story'}), pin: pin ? json(pin) : undefined, chapterIndex: Math.max(0, Number(b.chapterIndex) || 0) } });
+                const story = await prisma.story.create({ data: { userId: user.id, characterIds:[], title:drama?'Untitled drama':'Untitled adventure', stage:drama?'drama-scenes':'characters', canvas:json(drama?{nodes:[],edges:[],writingType:'drama',drama:{mode:'tableau',scenes:[blankDramaScene(crypto.randomUUID())],activeScene:0}}:{nodes:[],edges:[],writingType:'story'}), pin: pin ? json(pin) : undefined, chapterIndex: Math.max(0, Number(b.chapterIndex) || 0) } });
                 return NextResponse.json({ story });
             }
             if (b.action === 'saveStory') {
