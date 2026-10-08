@@ -1,6 +1,7 @@
 import { prisma } from './prisma';
 import { sessionToken } from './session';
 import type { Prisma } from '@prisma/client';
+import { retryDatabaseRead } from './retry-database-read';
 
 type StudentData = {
     user: { id: string; username: string; role: string };
@@ -15,7 +16,7 @@ type StudentData = {
 export async function studentData() {
     const token = await sessionToken();
     if (!token) return null;
-    const rows = await prisma.$queryRaw<{ data: StudentData }[]>`
+    const rows = await retryDatabaseRead(() => prisma.$queryRaw<{ data: StudentData }[]>`
         SELECT jsonb_build_object(
             'user',jsonb_build_object('id',u.id,'username',u.username,'role',u.role),
             'profile',u.profile,'mapState',u."mapState",'vocabulary',u.vocabulary,
@@ -34,6 +35,6 @@ export async function studentData() {
                 FROM "Story" w WHERE w."userId"=u.id),'[]'::jsonb)
         ) AS data
         FROM "Session" s JOIN "User" u ON u.id=s."userId"
-        WHERE s.token=${token} AND s."expiresAt">(CURRENT_TIMESTAMP AT TIME ZONE 'UTC') LIMIT 1`;
+        WHERE s.token=${token} AND s."expiresAt">(CURRENT_TIMESTAMP AT TIME ZONE 'UTC') LIMIT 1`);
     return rows[0]?.data || null;
 }
