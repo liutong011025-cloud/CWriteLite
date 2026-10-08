@@ -257,7 +257,7 @@ const DEFAULT_TREE_LAYOUT: FarmElementState[] = [
 
 // 视觉上将两排树位对调：上排显示 7-12，下排显示 1-6
 const FARM_SLOT_TREE_IDS = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
-const FARM_BGM_SRC = "/farm-halloween-music-2026.mp3"
+const FARM_BGM_SRC = "/farm-halloween-goblin-2026.mp3"
 const FARM_HOVER_SOUND_SRC = "/soundreality-finger-snap-179180.mp3"
 
 function FarmMuteButton({
@@ -268,26 +268,36 @@ function FarmMuteButton({
   onToggle: () => void
 }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className="farm-mute-button fixed left-5 top-5 z-50 rounded-full bg-white/90 p-3 shadow-lg backdrop-blur-sm transition hover:scale-105 hover:bg-white"
-      style={{
-        border: "2px solid #b89759",
-        boxShadow: "0 3px 0 #85613755, 0 5px 15px rgba(0,0,0,0.12)",
-      }}
-      aria-label={isMuted ? "Turn sound on" : "Turn sound off"}
-      title={isMuted ? "Turn sound on" : "Turn sound off"}
-    >
-      <img
-        src={isMuted ? "/speakeroff.webp" : "/speaker on.webp"}
-        alt={isMuted ? "Sound off" : "Sound on"}
-        width={32}
-        height={32}
-        className="pointer-events-none select-none"
-        draggable={false}
-      />
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="farm-mute-button fixed left-5 top-5 z-50 rounded-full bg-white/90 p-3 shadow-lg backdrop-blur-sm transition hover:scale-105 hover:bg-white"
+        style={{
+          border: "2px solid #b89759",
+          boxShadow: "0 3px 0 #85613755, 0 5px 15px rgba(0,0,0,0.12)",
+        }}
+        aria-label={isMuted ? "Turn sound on" : "Turn sound off"}
+        title={isMuted ? "Turn sound on" : "Turn sound off"}
+      >
+        <img
+          src={isMuted ? "/speakeroff.webp" : "/speaker on.webp"}
+          alt={isMuted ? "Sound off" : "Sound on"}
+          width={32}
+          height={32}
+          className="pointer-events-none select-none"
+          draggable={false}
+        />
+      </button>
+      <a
+        href="/farm-music-credits.html"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed left-5 top-24 z-50 rounded-md bg-white/90 px-2 py-1 text-xs text-stone-700 shadow-sm hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-500"
+      >
+        Music credits
+      </a>
+    </>
   )
 }
 
