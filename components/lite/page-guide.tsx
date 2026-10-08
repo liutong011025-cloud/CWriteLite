@@ -52,7 +52,9 @@ const guides: Record<string, readonly GuideStep[]> = {
     {target:'.drama-cast-pack',title:'Open your character pack',text:'Click the purple pack to see all the characters you have created. The cards open in a small window on this page. Choose a card, then return to your scene. Story and Drama share this library.'},
     {target:'.drama-stage',title:'Arrange the stage',text:'Drag a character to move them. Click them to change their size or flip which way they face. Use the arrow keys if you prefer.'},
     {target:'.drama-scenes-strip',title:'One place, or several?',text:'Add scene creates another place in your drama. Click a scene picture to come back to it. Each scene keeps its own characters and lines.'},
-    {target:'.drama-page-bottom',title:'Ready to write?',text:'Each scene needs a background and a character. Then click Write the scene to work on their voices.'},
+    {target:'.drama-stage',title:'Says or Thinks',text:'Click a character on stage to write their speech or private thought in a bubble. Give each character their own words.'},
+    {target:'.drama-scene-description',title:'Describe your scene',text:'In your own words, describe the place and what is happening. This is part of your final script.'},
+    {target:'.drama-review-button',title:'Review My Drama',text:'Finish your scenes, character words and scene descriptions. Click this button below Cagent to read your complete script.'},
   ],
   'drama-write': [
     {target:'.drama-stage',title:'Write on your stage',text:'Choose a character on the stage. Write in the bubble above their picture: Says is spoken dialogue; Thinks is private. Every character’s words appear together.'},
@@ -60,7 +62,7 @@ const guides: Record<string, readonly GuideStep[]> = {
     {target:'.drama-language',title:'Ideas for your own scene',text:'Click Get suggestions when you want help. AI reads your background, cast and current lines. If you chose Says or Thinks, the suggestions match that character and choice. Click a sentence frame to insert it above that character, then fill its blanks. Without a choice, get ideas for the whole scene.'},
     {target:'.drama-coach',title:'Think with Cagent',text:'The bear reads your current scene. Click Get suggestions above for scene ideas, or type your own question below.'},
     {target:'.drama-stage-tools',title:'Arrange your characters',text:'Move, resize or flip your selected character. Speech and thoughts stay visible together; there is no playback or line order.'},
-    {target:'.drama-page-bottom',title:'Read the whole drama',text:'Give each character one speech or thought, and fill any blanks. Read the scene together, then review your drama.'},
+    {target:'.drama-review-button',title:'Review My Drama',text:'Give each character one speech or thought, finish the scene descriptions and fill any blanks. Click here to read your complete script.'},
   ],
   'drama-finish': [
     {target:'.drama-script-paper',title:'Your complete script',text:'Read each scene, the dialogue, thoughts and directions together. Make sure your characters sound like themselves.'},

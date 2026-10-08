@@ -12,7 +12,6 @@ import CharacterPackCard from './character-pack-card';
 import DramaBubble from './drama-bubble';
 import DramaCoach from './drama-coach';
 import DramaConnector from './drama-connector';
-import DramaReadiness from './drama-readiness';
 import DramaResizeHandles from './drama-resize-handles';
 import {actorImage} from '@/lib/sprite';
 import {placeDramaBubble,dramaBubbleSize,type Rect} from '@/lib/drama-bubble-layout';
@@ -21,7 +20,7 @@ const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(Math.max(min
 type Support=ReturnType<typeof dramaSuggestions>;
 const EMPTY_SUPPORT:Support={suggestions:[],keywords:[],question:''};
 
-export function DramaEditor({story,characters,onChange,onCreateCharacter,onDeleteCharacter,onContinue,onBack,script=false}:{story:Story;characters:Character[];onChange:(s:Story)=>void;onCreateCharacter:()=>void;onDeleteCharacter?:(character:Character)=>void;onContinue:()=>Promise<void>;onBack:()=>Promise<void>;script?:boolean}){
+export function DramaEditor({story,characters,onChange,onCreateCharacter,onDeleteCharacter,onContinue,onBack}:{story:Story;characters:Character[];onChange:(s:Story)=>void;onCreateCharacter:()=>void;onDeleteCharacter?:(character:Character)=>void;onContinue:()=>Promise<void>;onBack:()=>Promise<void>}){
     const project=tableauProject(story.canvas.drama!);
     const scene=project.scenes[project.activeScene]||project.scenes[0];
     const [selected,setSelected]=useState(''),[search,setSearch]=useState(''),[castOpen,setCastOpen]=useState(false);
@@ -31,7 +30,9 @@ export function DramaEditor({story,characters,onChange,onCreateCharacter,onDelet
     const [generating,setGenerating]=useState<string|null>(null),[support,setSupport]=useState<Support>(EMPTY_SUPPORT),[tipBusy,setTipBusy]=useState(false),[tipError,setTipError]=useState('');
     const [insertion,setInsertion]=useState(0),[deleteScene,setDeleteScene]=useState<string|null>(null),[stageSize,setStageSize]=useState({width:600,height:400});
     const stage=useRef<HTMLDivElement>(null),latest=useRef(story),actorNodes=useRef(new Map<string,HTMLDivElement>()),suggestionRequest=useRef<AbortController|null>(null);
-    const bubbleNodes=useRef(new Map<string,HTMLDivElement>()),[measureVersion,setMeasureVersion]=useState(0),[reviewOpen,setReviewOpen]=useState(false);
+    const bubbleNodes=useRef(new Map<string,HTMLDivElement>()),[measureVersion,setMeasureVersion]=useState(0);
+    const [reviewBusy,setReviewBusy]=useState(false),[reviewNotice,setReviewNotice]=useState('');
+    const reviewing=useRef(false);
     const drag=useRef<{id:string;pointerId:number;x:number;y:number;actor:DramaActor}|null>(null);
     latest.current=story;
     const line=scene.lines.find(l=>l.characterId===selected);
@@ -50,7 +51,7 @@ export function DramaEditor({story,characters,onChange,onCreateCharacter,onDelet
     function commit(next:Story){latest.current=next;onChange(next);}
     function editProject(fn:(p:DramaProject)=>DramaProject){commit(withDrama(latest.current,fn(tableauProject(latest.current.canvas.drama!))));}
     function editScene(id:string,fn:(s:DramaScene)=>DramaScene){editProject(p=>({...p,scenes:p.scenes.map(s=>s.id===id?fn(s):s)}));}
-    function sceneChange(patch:Partial<DramaScene>){editScene(scene.id,s=>({...s,...patch}));}
+    function sceneChange(patch:Partial<DramaScene>){setReviewNotice('');editScene(scene.id,s=>({...s,...patch}));}
     function addActor(c:Character){
         if(!scene.backgroundImageUrl){toast.info('Make your scene background first, then choose a character.');return;}
         const work=latest.current,current=work.canvas.drama!.scenes.find(s=>s.id===scene.id)!;
@@ -91,7 +92,23 @@ export function DramaEditor({story,characters,onChange,onCreateCharacter,onDelet
         finally{if(!controller.signal.aborted)setTipBusy(false);}
     }
     function chooseIdea(idea:DramaSuggestion){if(idea.kind==='action'||!scene.actors.some(a=>a.characterId===idea.characterId)||line&&(idea.characterId!==selected||idea.kind!==line.kind))return;const previous=scene.lines.find(l=>l.characterId===idea.characterId)?.text.trim();trackProcess('RS_AI_ACCEPT',{sceneId:scene.id,targetId:idea.characterId,afterText:idea.frame,contentSource:'ai_generated'});chooseMode(idea.kind,idea.characterId,previous?previous+'\n'+idea.frame:idea.frame);setSelected(idea.characterId);setInsertion(i=>i+1);}
-    async function next(){const candidate=withDrama(latest.current,tableauProject(latest.current.canvas.drama!));const problems=dramaProblems(candidate,script);if(problems.length){setShowDescriptionErrors(true);const missing=candidate.canvas.drama!.scenes.findIndex(s=>!s.sceneDescription?.trim());if(missing>=0&&problems[0]===`Scene ${missing+1}: write a scene description in your own words.`){editProject(p=>({...p,activeScene:missing}));requestAnimationFrame(()=>descriptionInput.current?.focus());}toast.info(problems[0]);return;}commit(candidate);if(script){setReviewOpen(true);return;}try{await onContinue();}catch(e){toast.error((e as Error).message);}}
+    async function next(){
+        if(reviewing.current||generating)return;
+        const candidate=withDrama(latest.current,tableauProject(latest.current.canvas.drama!));
+        const missing=candidate.canvas.drama!.scenes.findIndex(s=>!s.sceneDescription?.trim());
+        if(missing>=0){
+            setShowDescriptionErrors(true);setReviewNotice('Write a scene description, then review your drama.');
+            editProject(p=>({...p,activeScene:missing}));
+            requestAnimationFrame(()=>{descriptionInput.current?.scrollIntoView({behavior:'smooth',block:'center'});descriptionInput.current?.focus({preventScroll:true});});
+            return;
+        }
+        const problems=dramaProblems(candidate,true);
+        if(problems.length){setReviewNotice(problems[0]);return;}
+        reviewing.current=true;setReviewBusy(true);setReviewNotice('');commit(candidate);
+        try{await onContinue();}
+        catch{setReviewNotice('Your scene could not be saved yet. Your writing is still here. Please try Review My Drama again.');}
+        finally{reviewing.current=false;setReviewBusy(false);}
+    }
 
     return <div className="drama-page drama-workbench drama-tableau">
         <div className="drama-workbench-meta"><span><Theater size={20}/>Scene {project.activeScene+1} of {project.scenes.length}</span><label className="drama-title-field">Title<input aria-label="Drama title" value={story.title} onChange={e=>commit({...latest.current,title:e.target.value})} maxLength={120}/></label></div>
@@ -119,13 +136,12 @@ export function DramaEditor({story,characters,onChange,onCreateCharacter,onDelet
                 <section className="drama-scene-description">
                     <label htmlFor="drama-scene-description">Scene description</label>
                     <p id="drama-scene-description-help">In your own words, describe where this scene happens and what is happening.</p>
-                    <textarea id="drama-scene-description" ref={descriptionInput} aria-label="Scene description" aria-describedby="drama-scene-description-help" aria-invalid={showDescriptionErrors&&!scene.sceneDescription?.trim()} required value={scene.sceneDescription||''} onChange={e=>sceneChange({sceneDescription:e.target.value})} placeholder="Describe your scene…" maxLength={2000}/>
-                    {showDescriptionErrors&&!scene.sceneDescription?.trim()&&<p className="error-text">Write a description before continuing.</p>}
+                    <textarea id="drama-scene-description" ref={descriptionInput} aria-label="Scene description" aria-describedby={'drama-scene-description-help'+(showDescriptionErrors&&!scene.sceneDescription?.trim()?' drama-description-reminder':'')} aria-invalid={showDescriptionErrors&&!scene.sceneDescription?.trim()} required value={scene.sceneDescription||''} onChange={e=>sceneChange({sceneDescription:e.target.value})} placeholder="Describe your scene…" maxLength={2000}/>
+                    {showDescriptionErrors&&!scene.sceneDescription?.trim()&&<div className="drama-description-reminder" id="drama-description-reminder" role="alert"><img src="/cagent-director-v2.webp" alt="Cagent points to Scene description"/><svg viewBox="0 0 80 55" aria-hidden="true"><path d="M5 48 Q65 48 65 8 M56 18 L65 8 L74 18"/></svg><p>Before you review, tell us what happens in this scene. Write your Scene Description here!</p></div>}
                 </section>
-                <section className="drama-language"><header><h2><Sparkles size={21}/>AI Suggestions</h2></header><button className="purple-button drama-suggest-button" disabled={tipBusy||!scene.backgroundImageUrl||!scene.actors.length} onClick={()=>void suggest()}><Sparkles size={19}/>{tipBusy?'Thinking…':support.suggestions.length?'New suggestions':'Get suggestions'}</button><p className="drama-suggestion-focus">{line?(story.characterSnapshots.find(c=>c.id===selected)?.name+' · '+(line.kind==='thought'?'Thinks':'Says')):'Ideas for this scene'}</p><div className="drama-suggestion-results">{tipError&&<p role="alert" className="error-text">{tipError}</p>}{support.suggestions.map((idea,i)=>{const c=story.characterSnapshots.find(c=>c.id===idea.characterId);return <article className="drama-ai-idea" key={`${idea.characterId}-${i}`}><b>{c?.name} · {idea.kind==='thought'?'thinks':idea.kind==='action'?'acts':'speaks'}</b><p>{idea.prompt}</p>{idea.frame&&<button className="drama-frame drama-insert-frame" aria-label={"Use sentence frame: "+idea.frame} onClick={()=>chooseIdea(idea)}>{idea.frame}<ChevronRight size={18}/></button>}<div className="drama-word-bank">{idea.keywords.map(word=><span key={word}>{word}</span>)}</div></article>;})}{support.question&&<p className="drama-suggestion-question">{support.question}</p>}</div></section><DramaCoach story={withDrama(story,project)} scene={scene} line={line} script={script} suggesting={tipBusy}/></aside>
+                <section className="drama-language"><header><h2><Sparkles size={21}/>AI Suggestions</h2></header><button className="purple-button drama-suggest-button" disabled={tipBusy||!scene.backgroundImageUrl||!scene.actors.length} onClick={()=>void suggest()}><Sparkles size={19}/>{tipBusy?'Thinking…':support.suggestions.length?'New suggestions':'Get suggestions'}</button><p className="drama-suggestion-focus">{line?(story.characterSnapshots.find(c=>c.id===selected)?.name+' · '+(line.kind==='thought'?'Thinks':'Says')):'Ideas for this scene'}</p><div className="drama-suggestion-results">{tipError&&<p role="alert" className="error-text">{tipError}</p>}{support.suggestions.map((idea,i)=>{const c=story.characterSnapshots.find(c=>c.id===idea.characterId);return <article className="drama-ai-idea" key={`${idea.characterId}-${i}`}><b>{c?.name} · {idea.kind==='thought'?'thinks':idea.kind==='action'?'acts':'speaks'}</b><p>{idea.prompt}</p>{idea.frame&&<button className="drama-frame drama-insert-frame" aria-label={"Use sentence frame: "+idea.frame} onClick={()=>chooseIdea(idea)}>{idea.frame}<ChevronRight size={18}/></button>}<div className="drama-word-bank">{idea.keywords.map(word=><span key={word}>{word}</span>)}</div></article>;})}{support.question&&<p className="drama-suggestion-question">{support.question}</p>}</div></section><DramaCoach story={withDrama(story,project)} scene={scene} line={line} script suggesting={tipBusy}/><div className="drama-review-action"><button type="button" className="purple-button drama-review-button" disabled={!!generating||reviewBusy} aria-busy={reviewBusy} onClick={()=>void next()}><Theater size={24}/>{reviewBusy?'Saving your scene…':'Review My Drama'}<ChevronRight size={23}/></button>{reviewNotice&&<p role="status" className="drama-review-notice">{reviewNotice}</p>}</div></aside>
         </div>
-        <div className="drama-page-bottom"><button className="text-button" onClick={()=>void onBack().catch(e=>toast.error(e.message))}>← {script?'Back to scenes':'Back to Writing Map'}</button><button className="purple-button" disabled={!!generating} onClick={()=>void next()}>{script?'Review my drama':'Write the scene'}<ChevronRight size={19}/></button></div>
-        {reviewOpen&&<DramaReadiness story={story} onClose={()=>setReviewOpen(false)} onContinue={async()=>{await onContinue();setReviewOpen(false);}}/>}
+        <div className="drama-page-bottom"><button className="text-button" disabled={reviewBusy} onClick={()=>void onBack().catch(e=>toast.error(e.message))}>← Back to Writing Map</button></div>
         {castOpen&&<Modal title="Your character pack" wide onClose={()=>setCastOpen(false)}><p className="drama-pack-intro">Choose who joins this scene.</p><label className="drama-cast-search"><Search size={18}/><input aria-label="Find a cast character" placeholder="Find a character…" value={search} onChange={e=>setSearch(e.target.value)}/></label><div className="drama-cast-picker drama-pack-library">{deck.map(c=><CharacterPackCard key={c.id} character={c} selected={scene.actors.some(a=>a.characterId===c.id)} onClick={()=>addActor(c)} onDelete={onDeleteCharacter?()=>onDeleteCharacter(c):undefined}/>)}{!deck.length&&<p>{characters.length?'No matching characters.':'Your shared pack is empty. Create a character to begin.'}</p>}</div><div className="drama-pack-actions"><button className="outline-button" onClick={onCreateCharacter}><Plus size={18}/>Create a character</button><button className="purple-button" onClick={()=>setCastOpen(false)}>Back to my scene<ChevronRight size={18}/></button></div></Modal>}
         {deleteScene&&<Modal title="Remove this scene?" onClose={()=>setDeleteScene(null)}><p>Remove this scene and its characters’ words? {project.scenes.length===1?"A new blank scene will be ready for you.":"Your other scenes will stay."}</p><button className="danger-button" onClick={()=>{trackProcess('REV_SCENE_REMOVE',{sceneId:deleteScene});editProject(p=>removeDramaScene(p,deleteScene,crypto.randomUUID()));setDeleteScene(null);}}>Remove scene</button></Modal>}
     </div>;

@@ -1452,6 +1452,16 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 .drama-scene-description textarea:focus-visible { outline:3px solid #b79ad0; outline-offset:2px; }
 .drama-scene-description textarea[aria-invalid=true] { border-color:#b85940; }
 .drama-scene-description>.error-text { color:#a44730; }
+.drama-review-button { width:100%; min-height:62px; justify-content:center; gap:10px; padding:15px 12px; font-size:22px; font-weight:850; border:2px solid #725b94; box-shadow:0 5px 0 #67507d; }
+.drama-review-button:focus-visible { outline:3px solid #ad8acb; outline-offset:5px; }
+.drama-review-notice { margin:12px 0 0; padding:12px; border:1px solid #d7bf87; border-radius:10px; background:#fff4d8; color:#795638; font-size:17px; line-height:1.45; }
+.drama-description-reminder { position:relative; display:flex; align-items:center; gap:10px; margin-top:10px; padding:10px 8px 0 0; border-top:2px dashed #af8dc8; animation:drama-reminder-arrive .35s ease-out; }
+.drama-description-reminder img { width:82px; height:102px; object-fit:contain; flex:none; }
+.drama-description-reminder p { margin:0; color:#765094; font-size:16px; font-weight:750; line-height:1.45; }
+.drama-description-reminder svg { position:absolute; right:2px; top:-42px; width:65px; height:48px; fill:none; stroke:#8c66b2; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:6 5; pointer-events:none; }
+@keyframes drama-reminder-arrive { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+@media(prefers-reduced-motion:reduce) { .drama-description-reminder { animation:none; } }
+@media(min-width:761px) and (max-width:1000px) { .drama-tableau .drama-support-panel .drama-review-action { grid-column:2; } }
 .drama-script-description { white-space:pre-wrap; overflow-wrap:anywhere; }
 
 /* Tony-only research controls. */
