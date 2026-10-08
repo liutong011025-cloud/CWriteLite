@@ -1,8 +1,9 @@
 'use client';
+import HalloweenBats from './halloween-bats';
 const birds=[{name:'hen',x:110,y:660,w:98,h:106},{name:'chick',x:238,y:650,w:62,h:59},{name:'white-hen',x:420,y:710,w:108,h:103},{name:'duck',x:630,y:740,w:88,h:65}];
 const place=(p:{x:number;y:number;w:number;h:number})=>({left:`${p.x/19.2}%`,top:`${p.y/8.32}%`,width:`${p.w/19.2}%`,height:`${p.h/8.32}%`});
 // No static birds, bear or canopies remain underneath the moving layers.
-export default function FarmScene({leftInset=0}:{leftInset?:number}){
+export default function FarmScene({leftInset=0,halloween=false}:{leftInset?:number;halloween?:boolean}){
 // Keep the foreground flock inside the visible picture when object-cover crops its sides.
 const birdShift=Math.max(0,leftInset+18-110);
 return <div className="farm-motion" aria-hidden="true">
@@ -22,4 +23,5 @@ return <div className="farm-motion" aria-hidden="true">
 </svg>
 <svg className="farm-direction-post" viewBox="0 0 1920 832" preserveAspectRatio="none"><ellipse cx="1412" cy="428" rx="27" ry="5" fill="#587647" opacity=".3"/><path d="M1400 176 Q1412 171 1424 176 L1420 426 L1402 425Z" fill="#ba8d5b" stroke="#775331" strokeWidth="3"/><path d="M1408 182 L1408 417 M1418 182 L1416 417" fill="none" stroke="#e1b982" strokeWidth="1.8"/></svg>
 <svg className="farm-rice" viewBox="0 0 1920 832" preserveAspectRatio="none">{[[211,771],[221,776],[218,780],[241,706],[233,711],[237,718],[540,814],[548,810]].map(([x,y],i)=><ellipse key={i} cx={x+birdShift} cy={y} rx="2.5" ry="1.2" transform={`rotate(${i*27} ${x+birdShift} ${y})`}/>)}</svg>
+{halloween&&<HalloweenBats/>}
 </div>}

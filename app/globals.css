@@ -594,6 +594,16 @@ label input:focus,label textarea:focus,input:focus-visible,textarea:focus-visibl
 .farm-direction-post { position:absolute; inset:0; width:100%; height:100%; }
 .farm-rice { position:absolute; inset:0; width:100%; height:100%; fill:#eed7a3; opacity:.8; }
 .farm-tree-breeze { transform-origin:50% 87%; animation:farm-breeze 5s ease-in-out infinite; }
+.farm-halloween-bats { position:absolute; inset:0; pointer-events:none; }
+.farm-halloween-bat { position:absolute; pointer-events:none; transform-origin:center; animation:farm-bat-drift var(--bat-flight) var(--bat-delay) ease-in-out infinite; }
+.farm-halloween-bat-art { width:100%; height:100%; overflow:visible; }
+.farm-halloween-bat-wing { transform-box:view-box; animation-duration:var(--bat-flap); animation-delay:var(--bat-delay); animation-timing-function:ease-in-out; animation-iteration-count:infinite; }
+.farm-halloween-bat-wing-left { transform-origin:45.83% 59.72%; animation-name:farm-bat-flap-left; }
+.farm-halloween-bat-wing-right { transform-origin:54.17% 59.72%; animation-name:farm-bat-flap-right; }
+@keyframes farm-bat-drift { 0%,100% { transform:translate(-7%,8%) rotate(-3deg); } 50% { transform:translate(9%,-12%) rotate(4deg); } }
+@keyframes farm-bat-flap-left { 0%,100% { transform:rotate(-8deg) scaleY(1); } 50% { transform:rotate(13deg) scaleY(.62); } }
+@keyframes farm-bat-flap-right { 0%,100% { transform:rotate(8deg) scaleY(1); } 50% { transform:rotate(-13deg) scaleY(.62); } }
+@media(prefers-reduced-motion:reduce) { .farm-halloween-bat,.farm-halloween-bat-wing { animation:none!important; } }
 @keyframes farm-swing { 0%,100% { transform:rotate(-3.8deg); } 50% { transform:rotate(3.8deg); } }
 @keyframes farm-swing-mark { 0%,100% { transform:translate(-50%,-50%) translateX(16%) rotate(-12.6deg); } 50% { transform:translate(-50%,-50%) translateX(-16%) rotate(-9.4deg); } }
 @keyframes farm-peck { 0%,23%,100% { transform:rotate(0) translateY(0); } 8%,17% { transform:rotate(10deg) translateY(3px); } 12%,21% { transform:rotate(0) translateY(0); } }
