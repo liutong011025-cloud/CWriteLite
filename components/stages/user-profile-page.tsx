@@ -257,7 +257,7 @@ const DEFAULT_TREE_LAYOUT: FarmElementState[] = [
 
 // 视觉上将两排树位对调：上排显示 7-12，下排显示 1-6
 const FARM_SLOT_TREE_IDS = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
-const FARM_BGM_SRC = "/yoshiyuki_tatsuya-pixel-hearts-foreverwav-427383.mp3"
+const FARM_BGM_SRC = "/farm-halloween-music-2026.mp3"
 const FARM_HOVER_SOUND_SRC = "/soundreality-finger-snap-179180.mp3"
 
 function FarmMuteButton({

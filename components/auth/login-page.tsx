@@ -56,7 +56,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   useEffect(() => {
     const warmAudioCache = () => {
       const audioSources = [
-        "/yoshiyuki_tatsuya-pixel-hearts-foreverwav-427383.mp3",
+        "/farm-halloween-music-2026.mp3",
         "/soundreality-finger-snap-179180.mp3",
       ]
 
