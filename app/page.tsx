@@ -47,6 +47,7 @@ export default function Page() {
     const [characterDeleteBusy,setCharacterDeleteBusy]=useState(false);
     const deletingCharacter=useRef(false);
     const [growthTrees,setGrowthTrees]=useState<number[]>([]);
+    const profileGrowthRevision=useRef(0);
     const finishGrowthAnimation=useCallback(()=>setGrowthTrees([]),[]);
     const packPending = useRef(new Set<string>());
     const [packSaving,setPackSaving] = useState('');
@@ -76,7 +77,9 @@ export default function Page() {
     },[screen,mapBusy,chapter.mapFlags]);
     const [studioReturn,setStudioReturn]=useState<'characters'|'drama-scenes'|'drama-write'>('characters');
     const [discardDraft,setDiscardDraft]=useState<Story|null>(null),[discardBusy,setDiscardBusy]=useState(false),[growthRetry,setGrowthRetry]=useState<string|null>(null),[growthBusy,setGrowthBusy]=useState(false);
-    const refresh = useCallback(async () => { const data = await api('/api/data'); setUser(data.user); setCharacters(data.characters); setStories(data.stories); setProfile(data.profile || {}); if (data.mapState?.chapters?.length) {
+    const refresh = useCallback(async () => { const growthRevision=profileGrowthRevision.current; const data = await api('/api/data'); setUser(data.user); setCharacters(data.characters); setStories(data.stories);
+    // A farm read started before growth must not replace the newly grown trees.
+    if(growthRevision===profileGrowthRevision.current)setProfile(data.profile || {}); if (data.mapState?.chapters?.length) {
         setMapState(data.mapState);
         mapRef.current = data.mapState;
     } return data; }, []);
@@ -185,7 +188,7 @@ export default function Page() {
     async function requestGrowth(storyId: string) { setGrowthBusy(true); try {
         const result = await api('/api/ai', { kind: 'growth', storyId });
         if (result.growthStatus === 'pending') setGrowthRetry(storyId);
-        else { setGrowthRetry(null); if(result.grownTreeIds?.length)setGrowthTrees(ids=>[...new Set([...ids,...result.grownTreeIds])]); if(result.profile)setProfile(result.profile); }
+        else { setGrowthRetry(null); if(result.grownTreeIds?.length)setGrowthTrees(ids=>[...new Set([...ids,...result.grownTreeIds])]); if(result.profile){profileGrowthRevision.current++;setProfile(result.profile);} }
     } catch { setGrowthRetry(storyId); }
     finally { setGrowthBusy(false); } }
     async function updateMapArt(s: Story) { setMapBusy(true); try {
