@@ -1465,6 +1465,15 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 .drama-script-description { white-space:pre-wrap; overflow-wrap:anywhere; }
 
 /* Cagent rests on the stage frame without making the scene strip taller. */
+.object-text-hint { margin:0; color:#746b5b; font-size:15px; line-height:1.5; }
+.object-description input { box-sizing:border-box; width:100%; min-width:0; }
+.object-text-add { width:100%; }
+.object-picture-option { border-top:1px solid #e6d7bd; padding-top:12px; }
+.object-picture-option summary { display:flex; align-items:center; gap:8px; padding:7px 0; color:#796484; cursor:pointer; font-size:15px; font-weight:700; }
+.object-picture-option summary::before { content:''; width:6px; height:6px; margin-right:4px; border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform:rotate(-45deg); }
+.object-picture-option[open] summary::before { transform:rotate(45deg); }
+.object-picture-option summary:focus-visible { outline:2px solid #a78bc4; outline-offset:3px; border-radius:5px; }
+.object-picture-option .element-image-section { display:flex; flex-direction:column; gap:10px; padding-top:8px; }
 .page-transition-backdrop { position:fixed; inset:0; z-index:250; display:grid; place-items:center; padding:20px; background:#fffaf038; cursor:wait; }
 .page-transition-status { display:grid; justify-items:center; gap:12px; max-width:380px; padding:24px 30px; border:2px solid #d9c7ad; border-radius:18px; background:#fffaf3; color:#66517a; box-shadow:0 6px 25px #55442a26; text-align:center; }
 .page-transition-status svg { animation:page-transition-spin 1s linear infinite; }
