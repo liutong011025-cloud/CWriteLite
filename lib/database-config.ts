@@ -5,8 +5,8 @@ export function runtimeDatabaseUrl(value: string | undefined, pool: 'writing' | 
   if (!['postgres:', 'postgresql:'].includes(url.protocol)) return value;
   if (url.hostname === 'db.prisma.io') url.hostname = 'pooled.db.prisma.io';
   if (pool === 'recording') {
-    url.searchParams.set('connection_limit', '4');
-    url.searchParams.set('pool_timeout', '5');
+    url.searchParams.set('connection_limit', '6');
+    url.searchParams.set('pool_timeout', '10');
   } else {
     if (!url.searchParams.has('connection_limit')) url.searchParams.set('connection_limit', '5');
     if (!url.searchParams.has('pool_timeout')) url.searchParams.set('pool_timeout', '10');

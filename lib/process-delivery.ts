@@ -2,9 +2,9 @@ import type { ProcessRecord } from './process-coding';
 
 // Transport settings are separate from the research coding / aggregation parameters.
 export const PROCESS_DELIVERY = {
-  version: 'batched-v2', activePollMs: 15000, inactivePollMs: 30000,
-  uploadMs: 15000, jitterMs: 3000, maxEvents: 50, maxBytes: 900000,
-  keepaliveBytes: 60000, backlogMs: 2000,
+  version: 'batched-v3', activePollMs: 30000, inactivePollMs: 30000,
+  uploadMs: 30000, jitterMs: 6000, maxEvents: 50, maxBytes: 900000,
+  keepaliveBytes: 60000, backlogMs: 5000,
 };
 export type DeliveryRow = ProcessRecord & { ownerId: string };
 export type RejectedRow = DeliveryRow & { rejectedReason: string; rejectedAt: number };

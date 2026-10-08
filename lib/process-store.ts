@@ -8,12 +8,12 @@ export type StoredProcessEvent = { eventUid: string; recordingId: string; userId
 const state = globalThis as unknown as { processDb?: PrismaClient; processPoolVersion?: string; recordingCache?: { value: Recording | null; until: number }; recordingRead?: Promise<Recording | null> };
 /** A small separate pool prevents a research upload/export queue from occupying the writing pool. */
 export function processDb() {
-  if (state.processDb && state.processPoolVersion !== 'pooled-utc-v3') { void state.processDb.$disconnect().catch(()=>{}); state.processDb=undefined; state.recordingCache=undefined; state.recordingRead=undefined; }
+  if (state.processDb && state.processPoolVersion !== 'pooled-utc-v4') { void state.processDb.$disconnect().catch(()=>{}); state.processDb=undefined; state.recordingCache=undefined; state.recordingRead=undefined; }
   if (!state.processDb) {
     const url = runtimeDatabaseUrl(process.env.DATABASE_URL, 'recording');
     console.info('database_pool_initialized', { pool: 'recording', pooledPrismaPostgres: url ? new URL(url).hostname === 'pooled.db.prisma.io' : false });
     state.processDb = new PrismaClient({ ...(url ? { datasources: { db: { url } } } : {}) });
-    state.processPoolVersion = 'pooled-utc-v3';
+    state.processPoolVersion = 'pooled-utc-v4';
   }
   return state.processDb;
 }
