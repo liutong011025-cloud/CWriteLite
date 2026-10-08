@@ -51,7 +51,7 @@ const guides: Record<string, readonly GuideStep[]> = {
     {target:'.drama-background-controls',title:'First, make a place',text:'Describe where your scene happens. Make background turns your idea into the picture on your stage.'},
     {target:'.drama-cast-pack',title:'Open your character pack',text:'Click the purple pack to see all the characters you have created. The cards open in a small window on this page. Choose a card, then return to your scene. Story and Drama share this library.'},
     {target:'.drama-stage',title:'Arrange the stage',text:'Drag a character to move them. Click them to change their size or flip which way they face. Use the arrow keys if you prefer.'},
-    {target:'.drama-scene-navigation',title:'One place, or several?',text:'Click the arrow beside your scene cards to add another scene. Click a scene picture to come back to it. Each scene keeps its own characters and lines.'},
+    {target:'.drama-scene-navigation',title:'One place, or several?',text:'Click the + beside your scene cards to add another scene. Click a scene picture to come back to it. Each scene keeps its own characters and lines.'},
     {target:'.drama-stage',title:'Says or Thinks',text:'Click a character on stage to write their speech or private thought in a bubble. Give each character their own words.'},
     {target:'.drama-scene-description',title:'Describe your scene',text:'In your own words, describe the place and what is happening. This is part of your final script.'},
     {target:'.drama-scene-coach',title:'Think with Cagent',text:'The bear above your stage reads your scene and offers a question to help you think. Keep writing in your own words; you do not need to reply to Cagent.'},
