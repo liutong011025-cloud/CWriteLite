@@ -1466,7 +1466,7 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 
 /* Cagent rests on the stage frame without making the scene strip taller. */
 .drama-workbench .drama-scenes-header { box-sizing:border-box; height:84px; min-height:84px; align-items:center; gap:14px; }
-.drama-scenes-header .drama-scene-navigation { display:flex; align-items:center; flex:0 0 clamp(150px,30%,280px); min-width:0; gap:5px; }
+.drama-scenes-header .drama-scene-navigation { display:flex; align-items:center; flex:0 0 clamp(220px,30%,280px); min-width:0; gap:5px; }
 .drama-scenes-header .drama-scene-list { flex:1; }
 .drama-workbench .drama-scenes-header .drama-scene-card { flex:0 0 100%; box-sizing:border-box; min-width:0; height:60px; padding-right:36px; }
 .drama-workbench .drama-scenes-header .drama-scene-select b { flex:1; min-width:0; max-width:none; text-align:left; font-size:14px; }
