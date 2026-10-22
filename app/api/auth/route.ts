@@ -3,6 +3,7 @@ import { databaseUnavailable } from '@/lib/database-error';
 import { compare, hash } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { currentUser, publicUser, signIn, signOut } from '@/lib/session';
+import { REGISTRATION_ENABLED, REGISTRATION_DISABLED_MESSAGE } from '@/lib/auth-config';
 function authFailure(error: unknown) {
     console.error('Auth request failed', error instanceof Error ? error.message : 'error');
     return NextResponse.json({ error: 'Unable to sign in. Please try again.', ...(databaseUnavailable(error) ? { code: 'DATABASE_UNAVAILABLE' } : {}) }, { status: databaseUnavailable(error) ? 503 : 500 });
@@ -12,6 +13,8 @@ export async function DELETE() { try { await signOut(); return NextResponse.json
 export async function POST(request: Request) {
     try {
         const body = await request.json();
+        if (body.action === 'register' && !REGISTRATION_ENABLED)
+            return NextResponse.json({ error: REGISTRATION_DISABLED_MESSAGE, code: 'REGISTRATION_DISABLED' }, { status: 403 });
         const username = String(body.username || body.name || '').trim();
         const password = String(body.password || '');
         if (!username || username.length > 40 || password.length < 6 || password.length > 128)

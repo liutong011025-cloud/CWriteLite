@@ -13,14 +13,80 @@ export default function Footer() {
     return null
   }
 
-  // Login / 教师工作台：与沉浸式页面一致，隐藏底部 EdUHK 横条
-  if (stage === "login" || stage === "dashboard") {
+  // Keep the teacher workspace immersive; the login page has a project information footer.
+  if (stage === "dashboard" || stage === null) {
     return null
+  }
+
+  const isPortal = stage === "login"
+
+  const logos = (
+    <div className="footer-logos">
+      <Image
+        src="/EdUHK_Signature_RGBWhite@4x-1-1024x336.webp"
+        alt="The Education University of Hong Kong logo"
+        width={280}
+        height={92}
+        className="footer-eduhk"
+        priority={false}
+      />
+      <Image
+        src="/MIT_Logo2-1024x290.webp"
+        alt="MIT logo"
+        width={210}
+        height={60}
+        className="footer-mit"
+        priority={false}
+      />
+    </div>
+  )
+
+  const notice = (
+    <details className="footer-notice">
+      <summary>AI notice</summary>
+      <p>
+        <strong>Disclaimer:</strong>
+        {" "}This website uses AI to help you learn and create. Sometimes AI may make mistakes or give incorrect information.
+        Please think carefully, check important information, and ask a teacher or parent if you are unsure.
+        <br />
+        By using this website, you understand that AI is not always perfect.
+      </p>
+    </details>
+  )
+
+  if (isPortal) {
+    return (
+      <footer className="site-footer portal-footer" aria-label="Project information">
+        <div className="portal-footer-content">
+          {logos}
+          <div className="portal-footer-copy">
+            <div className="portal-footer-heading">
+              <p className="portal-project-name">Strategic Plan Start-up Project @EdUHK</p>
+              <p className="portal-project-intro">Draw, connect, and write your own stories.</p>
+            </div>
+            <div className="portal-footer-details">
+              <address className="portal-contact">
+                <span>Contact PI</span>
+                <a href="mailto:yyin@eduhk.hk">
+                  <strong>Nicole Yang</strong>
+                  <span>yyin@eduhk.hk</span>
+                </a>
+              </address>
+              <p className="portal-copyright">
+                Copyright © 2026 The Education University of Hong Kong. All Rights Reserved.
+              </p>
+              {notice}
+            </div>
+          </div>
+        </div>
+      </footer>
+    )
   }
 
   return (
     <footer
       className="site-footer"
+      aria-label="Project information"
     >
       <Image
         src="/footer.webp"
@@ -31,24 +97,7 @@ export default function Footer() {
         priority={false}
       />
       <div className="footer-content">
-        <div className="footer-logos">
-          <Image
-            src="/EdUHK_Signature_RGBWhite@4x-1-1024x336.webp"
-            alt="The Education University of Hong Kong logo"
-            width={280}
-            height={92}
-            className="footer-eduhk"
-            priority={false}
-          />
-          <Image
-            src="/MIT_Logo2-1024x290.webp"
-            alt="MIT logo"
-            width={210}
-            height={60}
-            className="footer-mit"
-            priority={false}
-          />
-        </div>
+        {logos}
 
         <div className="footer-credit">
           <p>
@@ -58,16 +107,7 @@ export default function Footer() {
             Copyright © 2026 The Education University of Hong Kong. All Rights Reserved.
           </p>
         </div>
-        <details className="footer-notice">
-          <summary>AI notice</summary>
-          <p>
-            <strong>Disclaimer:</strong>
-            {" "}This website uses AI to help you learn and create. Sometimes AI may make mistakes or give incorrect information.
-            Please think carefully, check important information, and ask a teacher or parent if you are unsure.
-            <br />
-            By using this website, you understand that AI is not always perfect.
-          </p>
-        </details>
+        {notice}
       </div>
     </footer>
   )

@@ -1,5 +1,14 @@
 # CWrite Lite — local verification
 
+## Public entrance and registration pause — 2026-10-22
+
+- The desktop footer is 76px high, with a gradual navy fade at both edges. The farm illustration continues behind it. The larger EdUHK (136px wide) and MIT (108px wide) logos sit on fully opaque navy, slightly inset from the transition. Two text rows spread the project, PI, introduction, copyright and AI notice across the remaining width. The 400px login panel uses a matching navy tint.
+- The illustrated login entrance includes EdUHK and MIT logos, the existing project credit and introduction, copyright, the complete expandable AI notice, and Contact PI Nicole Yang with a `mailto:yyin@eduhk.hk` link. Existing authenticated pages retain the compact footer.
+- Browser checks passed at 1440 × 900, 1153 × 649, 1024 × 768, 820 × 1180, 761 × 900, 390 × 844 and 320 × 760, with no horizontal overflow or gap between the scene and footer. Logo bounds remain inside the opaque navy region. The footer is 76px on desktop, 104px on tablet and 189px on phone layouts; the smallest phone scrolls vertically. PI links and AI notices remain accessible, with no browser page errors. Visual evidence is retained locally.
+- The interface shows the temporary registration pause. Student and teacher registration requests both return `403 REGISTRATION_DISABLED` before database operations. Existing-account login, the farm transition, the compact authenticated footer, and the return to the public footer after logout were verified in a clean browser session with no page errors.
+- Six focused authentication and request-retry tests passed. TypeScript checking passed for application source and tests, excluding generated output artifacts; the unfiltered workspace check still encounters the existing `outputs/research-direction-20261021/cwrite-ai-regulation.canvas.tsx` dependency on `cursor/canvas`.
+- Authentication checks used the separate local test database.
+
 ## Current original farm + beginner tour — 2026-10-03
 
 - The user-rejected panel-based home was removed from rendering. The original composition now uses the refined 1920 × 832 backdrop, original illustrated image controls and existing transparent animation layers. Corrected own-farm image/target alignment by avoiding duplicate CSS translation; the other-farm behavior remains unchanged.

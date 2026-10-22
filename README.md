@@ -17,7 +17,7 @@ The local portrait preview uses the student's drawing or an existing illustratio
 
 ## Features
 
-- Original login scenery without role selection; a shared white/gold logo with a tilted yellow cursive “lite”. Login stays available on app entry.
+- Original login scenery without role selection; a shared white/gold logo with a tilted yellow cursive “lite”. The public entrance includes project credits, institution logos, copyright, an AI notice and PI contact information.
 - Original farm, trees, writing board, settings, visits and feedback; Story and Drama map pins.
 - Per-account drawing, AI portraits, editable saved character cards, card reuse and optional idea packs.
 - Story canvas with draggable cards, actual pointer-drawn connections, wrapping labels, illustrated settings under an ivory veil and clickable glowing AI relationship previews.
@@ -26,7 +26,7 @@ The local portrait preview uses the student's drawing or an existing illustratio
 - Automatic draft saves and revisions, story snapshots of character details, map flags, map art updates, evidence-linked farm growth, download/print.
 - Drama scenes share the character library with Story. Students place characters and write one speech or thought per actor, with contextual AI suggestions, optional completion review and a complete final tableau.
 - Drama animation preview uses existing student words and an AI-checked presentation order. The selected future video model is `doubao-seedance-2-5-260628`; real video submission and export are not connected yet.
-- Teacher vocabulary collection and authenticated research export. Registering always creates a student account; promote a trusted teacher in the database to use the teacher panel. There is no login role selector.
+- Teacher vocabulary collection and authenticated research export. Public self-registration is temporarily paused in both the interface and API; existing accounts can still log in. The shared switch is in `lib/auth-config.ts`. Promote a trusted teacher in the database to use the teacher panel. There is no login role selector.
 
 ## GitHub / Vercel preparation
 

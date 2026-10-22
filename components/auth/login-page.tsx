@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import SpotlightCard from "@/components/ui/spotlight-card"
+import { REGISTRATION_ENABLED, REGISTRATION_DISABLED_MESSAGE } from "@/lib/auth-config"
 
 interface LoginUser {
   username: string
@@ -20,15 +21,12 @@ interface LoginPageProps {
 }
 
 // 新用户注册开关（学生 + 教师）
-const REGISTRATION_ENABLED = true
 const TEACHER_REGISTRATION_ENABLED = true
-const REGISTRATION_DISABLED_MESSAGE = "New user registration: Function is not available."
 const LOGIN_BACKGROUND_SRC = "/Background1.webp"
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const [mode, setMode] = useState<"login" | "register">("login")
-  const [entryStep, setEntryStep] = useState<"role" | "auth">("auth")
-  const [selectedRole, setSelectedRole] = useState<"teacher" | "student" | null>("student")
+  const [selectedRole] = useState<"teacher" | "student" | null>("student")
   const [username, setUsername] = useState("")
   const [registerName, setRegisterName] = useState("")
   const [registerEmail, setRegisterEmail] = useState("")
@@ -192,7 +190,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden login-page"
+      className="login-page"
       data-login-page
     >
       <style>{`
@@ -201,19 +199,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           50% { transform: translateY(-12px); }
         }
       `}</style>
-
-      {/* 背景居中铺满，无雾化 / 无遮罩 */}
-      <div className="absolute inset-0 overflow-hidden bg-[#7ec8e8]">
-        <img
-          src={LOGIN_BACKGROUND_SRC}
-          alt=""
-          className={`absolute inset-0 h-full w-full object-cover object-center select-none transition-opacity duration-500 ${
-            bgReady ? "opacity-100" : "opacity-0"
-          }`}
-          draggable={false}
-          onLoad={() => setBgReady(true)}
-        />
-      </div>
 
       {!bgReady && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#8ec8ea]">
@@ -233,65 +218,68 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
       {bgReady && (
       <div
-        className="relative z-10 w-full max-w-[384px] origin-center md:w-[384px] md:max-w-none md:translate-x-[min(24vw,350px)] md:-translate-y-[14.72px] lg:scale-110"
+        className="login-auth-wrap"
       >
-        <SpotlightCard className="px-10 py-6 shadow-2xl [background-color:rgba(20,16,32,0.52)]" spotlightColor="rgba(0, 229, 255, 0.2)">
+        <SpotlightCard className="login-auth-card" spotlightColor="rgba(255, 221, 161, 0.12)">
           {(
             <>
-              <div className="text-center mb-4">
-                <div className="mb-2 mt-4 flex justify-center">
+              <div className="login-card-intro">
+                <div className="login-brand">
                   <Image
                     src="/cwrite-lite-logo.webp"
                     alt="CWrite Logo"
-                    width={220}
-                    height={94}
-                    className="object-contain"
+                    width={640}
+                    height={390}
+                    className="login-brand-image"
                     priority
                   />
                 </div>
-                <p className="text-white font-semibold text-base md:text-lg">
-                  
+                <h1 className="login-heading">
                   {mode === "login" ? "Log in to start writing" : "Register to begin your creative journey"}
-                </p>
+                </h1>
+                <p className="login-intro">Draw, connect, and write your own stories.</p>
               </div>
 
-              <div className="space-y-5">
+              <form className="login-auth-form" onSubmit={(event) => {
+                event.preventDefault()
+                if (!isLoading) void (mode === "login" ? handleLogin() : handleRegister())
+              }}>
                 {mode === "login" ? (
                   <>
                 <div>
-                  <label className="block text-sm font-bold mb-2 text-white">Username</label>
+                  <label htmlFor="login-username" className="block text-sm font-bold mb-2 text-white">Username</label>
                   <Input
+                    id="login-username"
+                    name="username"
+                    autoComplete="username"
                     type="text"
                     placeholder="Enter your username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleLogin()
-                    }}
                     className="text-base py-3 border-2 border-amber-100 focus:border-lime-700 rounded-xl bg-white/80 focus:bg-white text-gray-900"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 text-white">Password</label>
+                  <label htmlFor="login-password" className="block text-sm font-bold mb-2 text-white">Password</label>
                   <Input
+                    id="login-password"
+                    name="password"
+                    autoComplete="current-password"
                     type="password"
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleLogin()
-                    }}
                     className="text-base py-3 border-2 border-amber-100 focus:border-lime-700 rounded-xl bg-white/80 focus:bg-white text-gray-900"
                   />
                 </div>
 
                 <Button
-                  onClick={handleLogin}
+                  type="submit"
                   disabled={isLoading}
                   className="w-full bg-gradient-to-r from-[#c9a573] to-[#a77d4d] hover:from-[#d5b484] hover:to-[#b38a57] text-white border-0 shadow-xl py-6 text-lg font-bold disabled:opacity-50"
                 >
-                  {isLoading ? "Logging in..." : "🚀 Login"}
+                  {isLoading ? "Logging in..." : "Log in"}
                 </Button>
 
                 {registrationAllowed ? (
@@ -306,7 +294,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     Create a new {selectedRole === "teacher" ? "teacher" : "student"} account
                   </button>
                 ) : (
-                  <p className="w-full rounded-xl border border-white/30 bg-white/10 py-3 px-4 text-center text-sm text-white/90 backdrop-blur-md">
+                  <p className="login-registration-notice">
                     {!REGISTRATION_ENABLED ? REGISTRATION_DISABLED_MESSAGE : "Teacher registration is not available."}
                   </p>
                 )}
@@ -314,8 +302,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 ) : (
                   <>
                 <div>
-                  <label className="block text-sm font-bold mb-2 text-white">Email</label>
+                  <label htmlFor="register-email" className="block text-sm font-bold mb-2 text-white">Email</label>
                   <Input
+                    id="register-email"
+                    name="email"
+                    autoComplete="email"
                     type="email"
                     placeholder="Enter your email"
                     value={registerEmail}
@@ -325,8 +316,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 text-white">Name</label>
+                  <label htmlFor="register-name" className="block text-sm font-bold mb-2 text-white">Name</label>
                   <Input
+                    id="register-name"
+                    name="name"
+                    autoComplete="name"
                     type="text"
                     placeholder="Enter your name"
                     value={registerName}
@@ -336,21 +330,21 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 text-white">Password</label>
+                  <label htmlFor="register-password" className="block text-sm font-bold mb-2 text-white">Password</label>
                   <Input
+                    id="register-password"
+                    name="password"
+                    autoComplete="new-password"
                     type="password"
                     placeholder="Create your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleRegister()
-                    }}
                     className="text-base py-3 border-2 border-amber-100 focus:border-lime-700 rounded-xl bg-white/80 focus:bg-white text-gray-900"
                   />
                 </div>
 
                 <Button
-                  onClick={handleRegister}
+                  type="submit"
                   disabled={isLoading}
                   className="w-full bg-gradient-to-r from-[#9d87b4] to-[#82689b] hover:from-[#ac97bf] hover:to-[#9177a9] text-white border-0 shadow-xl py-6 text-lg font-bold disabled:opacity-50"
                 >
@@ -370,7 +364,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 </button>
                   </>
                 )}
-              </div>
+              </form>
             </>
           )}
         </SpotlightCard>
