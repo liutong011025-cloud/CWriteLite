@@ -61,17 +61,21 @@ export default function Footer() {
           {logos}
           <div className="portal-footer-copy">
             <p className="portal-project-name">Strategic Plan Start-up Project @EdUHK</p>
-            <address className="portal-contact">
-              <span>Contact PI</span>
-              <a href="mailto:yyin@eduhk.hk">
-                <strong>Yang Yin Nicole</strong>
-                <span>yyin@eduhk.hk</span>
-              </a>
-            </address>
-            <p className="portal-copyright">
-              Copyright © 2026 The Education University of Hong Kong. All Rights Reserved.
-            </p>
-            {notice}
+            <div className="portal-footer-right">
+              <address className="portal-contact">
+                <span>Contact PI</span>
+                <a href="mailto:yyin@eduhk.hk">
+                  <strong>Yang Yin Nicole</strong>
+                  <span>yyin@eduhk.hk</span>
+                </a>
+              </address>
+              <div className="portal-footer-legal">
+                <p className="portal-copyright">
+                  Copyright © 2026 The Education University of Hong Kong. All Rights Reserved.
+                </p>
+                {notice}
+              </div>
+            </div>
           </div>
         </div>
       </footer>
