@@ -582,7 +582,7 @@ label input:focus,label textarea:focus,input:focus-visible,textarea:focus-visibl
 /* The public entrance pairs the original illustration with formal project details. */
 :root { --cwrite-portal-footer-height:54px; }
 body:has(>main[data-stage="login"]) { position:relative; isolation:isolate; background:#7ec8e8; }
-body:has(>main[data-stage="login"])::before { content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; background:#7ec8e8 url('/Background1.webp') center bottom/cover no-repeat; }
+body:has(>main[data-stage="login"])::before { content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; background:#7ec8e8 url('/Background1.webp') center 75%/cover no-repeat; }
 main[data-stage="login"] { display:flex; flex:1; flex-direction:column; }
 .login-page { position:relative; display:flex; flex:1; align-items:center; min-height:max(520px,calc(100dvh - var(--cwrite-portal-footer-height))); padding:28px max(32px,6vw); overflow:hidden; isolation:isolate; }
 .login-auth-wrap { position:relative; z-index:10; width:400px; max-width:100%; margin-left:auto; margin-right:max(3vw,calc((100vw - 1360px)/2)); }

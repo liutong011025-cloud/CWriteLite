@@ -64,7 +64,7 @@ export default function Footer() {
             <address className="portal-contact">
               <span>Contact PI</span>
               <a href="mailto:yyin@eduhk.hk">
-                <strong>Nicole Yang</strong>
+                <strong>Yang Yin Nicole</strong>
                 <span>yyin@eduhk.hk</span>
               </a>
             </address>
