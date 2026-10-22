@@ -237,7 +237,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 <h1 className="login-heading">
                   {mode === "login" ? "Log in to start writing" : "Register to begin your creative journey"}
                 </h1>
-                <p className="login-intro">Draw, connect, and write your own stories.</p>
               </div>
 
               <form className="login-auth-form" onSubmit={(event) => {

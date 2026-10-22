@@ -61,7 +61,6 @@ export default function Footer() {
           {logos}
           <div className="portal-footer-copy">
             <p className="portal-project-name">Strategic Plan Start-up Project @EdUHK</p>
-            <p className="portal-project-intro">Draw, connect, and write your own stories.</p>
             <address className="portal-contact">
               <span>Contact PI</span>
               <a href="mailto:yyin@eduhk.hk">
