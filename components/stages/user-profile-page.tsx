@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import FarmScene from "@/components/lite/farm-scene"
 import TreeWatering from '@/components/lite/tree-watering'
 import FarmGuide from "@/components/lite/farm-guide"
+import LuminaLibrary from "@/components/lite/lumina-library"
 import {farmValueMeaning, farmValueLabel} from "@/components/lite/farm-values"
 import {FARM_SAPLING_SLOTS} from "@/lib/farm-slots"
 
@@ -1384,6 +1385,7 @@ export default function UserProfilePage({
       {/* My Farm - 固定視窗鋪滿，背景 object-cover 不露 firstmap，前景用 % 鎖定相對位置 */}
       <div ref={farmContainerRef} className="fixed inset-x-0 top-0 w-full overflow-hidden" style={{bottom:'var(--cwrite-footer-height)'}}>
         {!isOtherFarm && <FarmHeroBrand />}
+        {!isOtherFarm && <LuminaLibrary key={currentUsername} username={currentUsername} />}
         <style>{`
           @keyframes farm-breathe {
             0%, 100% { transform: scale(1); }
