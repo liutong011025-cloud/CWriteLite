@@ -20,6 +20,7 @@ import FarmScene from "@/components/lite/farm-scene"
 import TreeWatering from '@/components/lite/tree-watering'
 import FarmGuide from "@/components/lite/farm-guide"
 import LuminaLibrary from "@/components/lite/lumina-library"
+import { canUseLuminaLibrary } from "@/lib/lumina-library-demo"
 import {farmValueMeaning, farmValueLabel} from "@/components/lite/farm-values"
 import {FARM_SAPLING_SLOTS} from "@/lib/farm-slots"
 
@@ -415,6 +416,8 @@ export default function UserProfilePage({
   onEditStory,
   isOtherFarm = false,
 }: UserProfilePageProps) {
+  const libraryEnabled = !isOtherFarm && canUseLuminaLibrary(currentUsername)
+  const [libraryOpen, setLibraryOpen] = useState(false)
   const [works, setWorks] = useState<WorkItem[]>([])
   const [reviews, setReviews] = useState<ReviewItem[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -624,7 +627,7 @@ export default function UserProfilePage({
       ]
     : [
     { id: "farmbacktomap", label: "Start writing!", imageSrc: "/farmbacktomap.webp", baseWidthPercent: 16, useNaturalAspect: true },
-    { id: "farmsetting", label: "Settings", imageSrc: "/farmsetting.webp" },
+    { id: "farmsetting", label: libraryEnabled ? "LuminAI Library" : "Settings", imageSrc: libraryEnabled ? "/farm-lumina-library.webp" : "/farmsetting.webp" },
     { id: "farmwrittingboard", label: "Writing Board", imageSrc: "/farmwritingboard.webp" },
     { id: "vistothersfarm", label: "Visit friends' farms", imageSrc: "/visitothersfarm.webp", baseWidthPercent: 16, useNaturalAspect: true },
   ]
@@ -1385,7 +1388,7 @@ export default function UserProfilePage({
       {/* My Farm - 固定視窗鋪滿，背景 object-cover 不露 firstmap，前景用 % 鎖定相對位置 */}
       <div ref={farmContainerRef} className="fixed inset-x-0 top-0 w-full overflow-hidden" style={{bottom:'var(--cwrite-footer-height)'}}>
         {!isOtherFarm && <FarmHeroBrand />}
-        {!isOtherFarm && <LuminaLibrary key={currentUsername} username={currentUsername} />}
+        {libraryEnabled && <LuminaLibrary key={currentUsername} username={currentUsername} open={libraryOpen} onClose={() => setLibraryOpen(false)} />}
         <style>{`
           @keyframes farm-breathe {
             0%, 100% { transform: scale(1); }
@@ -1524,7 +1527,8 @@ export default function UserProfilePage({
                   onClick={() => {
                     if (element.id === "farmbacktomap") onBack()
                     else if (element.id === "farmsetting") {
-                      if (!isOtherFarm) onOpenSettings()
+                      if (libraryEnabled) setLibraryOpen(true)
+                      else if (!isOtherFarm) onOpenSettings()
                     } else if (element.id === "theirmap") {
                       setShowOtherWritingMap(true)
                     } else if (element.id === "farmwrittingboard") {trackProcess("FARM_WORK_VIEW",{username:userId});setViewMode("writings")}
@@ -1925,7 +1929,7 @@ export default function UserProfilePage({
           </div>
         )}
       {!isOtherFarm && (
-        <><FarmMuteButton isMuted={isMuted} onToggle={() => setIsMuted((prev) => !prev)} /><FarmGuide /></>
+        <><FarmMuteButton isMuted={isMuted} onToggle={() => setIsMuted((prev) => !prev)} /><FarmGuide libraryEnabled={libraryEnabled} /></>
       )}
     </div>
   )
