@@ -11,12 +11,13 @@ const steps = [
   {target:'friends',title:'Visit friends’ farms',text:'Visit your friends’ farms and read their writing.',side:'left'},
   {target:'settings',title:'Your Settings',text:'Set up your personal information and choose your avatar.',side:'right'},
 ] as const;
+const libraryStep = { target: 'settings', title: 'LuminAI Library', text: 'Open the bookshelf, scroll through five stories from other INNO readers, and leave a kind note.', side: 'right' } as const;
 
 type Rect = {x:number;y:number;width:number;height:number};
 type Placement = {target:Rect;left:number;top:number;path:string};
 const clamp = (n:number,min:number,max:number)=>Math.max(min,Math.min(n,Math.max(min,max)));
 
-export default function FarmGuide() {
+export default function FarmGuide({ libraryEnabled = false }: { libraryEnabled?: boolean }) {
   const [open,setOpen] = useState(false);
   const [step,setStep] = useState(0);
   const [placement,setPlacement] = useState<Placement|null>(null);
@@ -24,7 +25,7 @@ export default function FarmGuide() {
   const card = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const id = useId().replace(/:/g,'');
-  const current = steps[step];
+  const current = libraryEnabled && step === steps.length - 1 ? libraryStep : steps[step];
   const close = ()=>{setOpen(false);bulb.current?.focus();};
 
   useLayoutEffect(()=>{
