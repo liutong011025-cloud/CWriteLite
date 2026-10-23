@@ -35,3 +35,13 @@ export const LIBRARY_STORIES = [
     'When they landed, Nora and Sol watched Earth rise together. They had different abilities, but each had needed the other. On the return journey, nobody asked Sol to sit with the luggage.'
   ]}
 ] as const;
+
+// An extra exhibition story keeps every visitor's shelf at five other-user samples.
+export const BONUS_LIBRARY_STORY = {
+  title: 'The Lighthouse That Learned to Listen', theme: 'Empathy & understanding', art: '/examples/park.webp', paragraphs: [
+    'On a small island, an AI lighthouse guided every boat home. It knew the tides and could predict storms, but it did not understand why an old fisherman sometimes stayed at sea after sunset.',
+    'A girl named Ella visited its control room. The lighthouse asked her to make the fisherman follow the safest schedule. Instead, Ella suggested asking him why he waited.',
+    'The fisherman explained that he listened for the songs of migrating whales. His recordings helped the village protect their route. The lighthouse had seen a delay where the fisherman had seen a responsibility.',
+    'Together they designed a new signal: a soft blue light when whales were nearby, and a bright white beam when it was time to return. The lighthouse still calculated the safest path, but now it listened before deciding where that path should lead.'
+  ]
+} as const;
