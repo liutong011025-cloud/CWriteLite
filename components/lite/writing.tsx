@@ -69,7 +69,7 @@ export function WritingPage({ story, onChange, onCanvas, onFinish, onEvent, onBe
     async function suggest() { setCanvasCollapsed(true); setBusy(true); setError(''); if (tips)
         onEvent('suggestions_shuffled', { requestId: tips.requestId }); try {
         const p = editor.current?.selectionStart ?? text.length;
-        const r = await api('/api/ai', { kind: 'tips', storyId: story.id, sections: story.sections, section: i, cursorContext: text.slice(Math.max(0, p - 500), Math.min(text.length, p + 150)), shuffle: Boolean(tips) });
+        const r = await api('/api/ai', { kind: 'tips', storyId: story.id, sections: story.sections, section: i, canvas: story.canvas, cursorContext: text.slice(Math.max(0, p - 500), Math.min(text.length, p + 150)), shuffle: Boolean(tips) });
         setTips(r);trackProcess('RS_AI_OUTPUT_SHOWN',{kind:'tips',requestId:r.requestId,sectionIndex:i,result:r},'system');
         onEvent('suggestions_requested', { requestId: r.requestId, section: i, focus: r.focus });
     }
