@@ -20,6 +20,7 @@ export function sectionSignature(story: Pick<Story, 'sections' | 'canvas' | 'cha
 }
 
 export function planQuestion(story: Story, section: number) {
+    if (story.sections[section]?.trim()) return 'Keep going with your idea. Any extra detail is up to you.';
     const character = story.canvas.nodes.find(n => n.type === 'character')?.label || story.characterSnapshots[0]?.name || 'your character';
     const setting = story.canvas.nodes.find(n => n.type === 'setting')?.label;
     const goal = story.canvas.nodes.find(n => n.type === 'goal')?.label;

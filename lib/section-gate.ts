@@ -2,9 +2,9 @@ import { createHash } from 'node:crypto';
 import type { Story } from './types';
 import { sectionSignature } from './story-plan';
 
-export const MIN_SECTION_WORDS = 12;
-export const GATE_VERSION = 2;
-export const gateHash = (story: Pick<Story,'sections'|'canvas'|'characterSnapshots'>, section:number) => createHash('sha256').update(`${GATE_VERSION}:`+sectionSignature(story, section)).digest('hex');
+export const GATE_VERSION = 3;
+const versionHash = (story: Pick<Story,'sections'|'canvas'|'characterSnapshots'>, section:number, version:number) => createHash('sha256').update(`${version}:`+sectionSignature(story, section)).digest('hex');
+export const gateHash = (story: Pick<Story,'sections'|'canvas'|'characterSnapshots'>, section:number) => versionHash(story, section, GATE_VERSION);
 const tokensOf = (text:string) => text.toLowerCase().match(/[a-z0-9]+(?:'[a-z]+)?/g) || [];
 const phrases = (tokens:string[],size=4) => new Set(tokens.slice(0,Math.max(0,tokens.length-size+1)).map((_,i)=>tokens.slice(i,i+size).join(' ')));
 const sentences = (text:string) => text.split(/[.!?\n]+/).map(tokensOf).filter(t=>t.length>=5);
@@ -24,35 +24,34 @@ export function repeatsEarlier(text:string, earlier:string[]) {
     });
 }
 
-export function draftBasics(text: string, previous: string[]) {
-    const tokens = text.toLowerCase().match(/[a-z]+(?:'[a-z]+)?/g) || [];
-    if (tokens.length < MIN_SECTION_WORDS) return `Add a little more: aim for at least ${MIN_SECTION_WORDS} words that tell this part of your story.`;
-    if (new Set(tokens).size < 5 || /([a-z])\1{6,}/i.test(text)) return 'Use different words to explain what happens. Repeating letters or the same words does not tell a story.';
-    if (repeatsEarlier(text,previous)) return 'This repeats an earlier part. Tell a new event that fits this story part.';
+export function draftBasics(text: string, _previous: string[] = []) {
+    if (!text.trim()) return 'Write your idea for this part. A short sentence is welcome.';
+    const tokens = text.toLowerCase().match(/\p{L}+(?:['’]\p{L}+)?/gu) || [];
+    if (!tokens.length) return 'Tell us your idea using words so we can understand it.';
+    // No length or vocabulary-diversity requirement. Only obvious filler is blocked locally.
+    const repeatedLetters = tokens.every(token => /^(\p{L})\1{5,}$/u.test(token));
+    if (repeatedLetters) return 'Tell us what you mean instead of repeating the same letters.';
     return '';
 }
 
 type GateStory = Pick<Story,'sections'|'canvas'|'characterSnapshots'>;
-const quoteIn = (text:string,quote:unknown) => typeof quote==='string' && tokensOf(quote).length>=2 && tokensOf(text).join(' ').includes(tokensOf(quote).join(' '));
+const normalizeQuote = (text:string) => text.toLowerCase().replace(/\s+/g,' ').trim();
+const quoteIn = (text:string,quote:unknown) => typeof quote==='string' && /\p{L}/u.test(quote) && normalizeQuote(text).includes(normalizeQuote(quote));
 export function reviewChecks(story:GateStory,section:number,review:any) {
-    const text=story.sections[section]||'',evidence=review?.evidence;
-    const characters=story.canvas.nodes.filter(n=>n.type==='character'&&n.characterId&&story.characterSnapshots.some(c=>c.id===n.characterId));
-    const characterIds=new Set(characters.map(n=>n.characterId));
-    const plotNodes=story.canvas.nodes.filter(n=>n.type!=='character'&&n.label.trim());
-    const nodeIds=new Set((plotNodes.length||story.canvas.edges.length?plotNodes:characters).map(n=>n.id));
-    const edgeIds=new Set(story.canvas.edges.map(e=>e.id));
+    const text=story.sections[section]||'';
+    // Stage fit, plot development and canvas detail are optional coaching, not pass criteria.
+    // A model cannot block a student using invented or missing quotations.
+    const groundedIssue=quoteIn(text,review?.quote);
     return {
-        intelligible:review?.intelligible===true,
-        characterGrounded:review?.characterGrounded===true&&characterIds.has(evidence?.character?.characterId)&&quoteIn(text,evidence?.character?.quote),
-        planLinked:review?.planLinked===true&&(nodeIds.has(evidence?.plan?.nodeId)||edgeIds.has(evidence?.plan?.edgeId))&&quoteIn(text,evidence?.plan?.quote),
-        sectionFit:review?.sectionFit===true&&quoteIn(text,evidence?.structure?.quote)&&typeof evidence?.structure?.reason==='string'&&evidence.structure.reason.trim().length>0,
-        progresses:review?.progresses===true&&quoteIn(text,evidence?.progress?.quote)&&!repeatsEarlier(text,story.sections.slice(0,section)),
+        intelligible:review?.blockingIssue === undefined ? review?.intelligible === true : !(review?.blockingIssue==='unintelligible' && groundedIssue),
+        onTopic:!(review?.blockingIssue==='unrelated' && groundedIssue),
     };
 }
 
 export function approvedSections(story: Pick<Story,'sections'|'canvas'|'characterSnapshots'>, events: { payload:unknown }[]) {
     return Array.from({length:5},(_,section) => events.some(e => {
         const p = e.payload as {section?:number;hash?:string};
-        return !draftBasics(story.sections[section]||'',story.sections.slice(0,section)) && p.section === section && p.hash === gateHash(story,section);
+        // Previously passed, unchanged writing remains passed under the more lenient policy.
+        return !draftBasics(story.sections[section]||'') && p.section === section && (p.hash === gateHash(story,section) || p.hash === versionHash(story,section,2));
     }));
 }
