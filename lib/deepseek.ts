@@ -3,7 +3,7 @@
  * 統一封裝 DeepSeek Chat API，支援純文本對話
  */
 const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
-const DEEPSEEK_MODEL = "deepseek-chat";
+const DEEPSEEK_MODEL = "deepseek-flash";
 function getDeepSeekApiKey(): string {
     // 用动态取值，避免 Next 在构建时把空的 process.env.DEEPSEEK_API_KEY 写死进产物
     const raw = process.env["DEEPSEEK_API_KEY"] ||
@@ -61,6 +61,7 @@ export async function chat(options: DeepSeekOptions): Promise<string> {
             },
             body: JSON.stringify({
                 model: DEEPSEEK_MODEL,
+                thinking: { type: "disabled" },
                 messages,
                 temperature: temperature ?? 0.7,
                 max_tokens: maxTokens ?? 4096,
@@ -115,6 +116,7 @@ export async function* streamChat(options: DeepSeekStreamOptions): AsyncGenerato
         },
         body: JSON.stringify({
             model: DEEPSEEK_MODEL,
+            thinking: { type: "disabled" },
             messages,
             stream: true,
         }),
