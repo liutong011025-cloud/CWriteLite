@@ -259,7 +259,7 @@ const DEFAULT_TREE_LAYOUT: FarmElementState[] = [
 
 // 视觉上将两排树位对调：上排显示 7-12，下排显示 1-6
 const FARM_SLOT_TREE_IDS = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
-const FARM_BGM_SRC = "/farm-halloween-goblin-2026.mp3"
+const FARM_BGM_SRC = "/yoshiyuki_tatsuya-pixel-hearts-foreverwav-427383.mp3"
 const FARM_HOVER_SOUND_SRC = "/soundreality-finger-snap-179180.mp3"
 
 function FarmMuteButton({
@@ -635,7 +635,7 @@ export default function UserProfilePage({
   const farmTreeStates = DEFAULT_TREE_LAYOUT
   const forestById = new Map(forest.map((tree) => [tree.id, tree] as const))
 
-  const farmBackgroundSrc = isOtherFarm ? "/farm.webp" : "/farm-halloween-2026-animated.webp"
+  const farmBackgroundSrc = isOtherFarm ? "/farm.webp" : "/farm-scene-cloudless.webp"
   const farmBackgroundAlt = isOtherFarm ? "Other Student Farm Background" : "My Farm Background"
   const treeCount = 12
 
@@ -1429,7 +1429,7 @@ export default function UserProfilePage({
               : { left: 0, top: 0, right: 0, bottom: 0, width: "100%", height: "100%" }
           }
         >
-            {!isOtherFarm && <FarmScene halloween leftInset={coverOverlayRect ? Math.max(0,-coverOverlayRect.left / coverOverlayRect.width * 1920) : 0}/>}
+            {!isOtherFarm && <FarmScene leftInset={coverOverlayRect ? Math.max(0,-coverOverlayRect.left / coverOverlayRect.width * 1920) : 0}/>}
             {Array.from({ length: treeCount }).map((_, index) => {
                 const treeState = isOtherFarm ? farmTreeStates[index] || DEFAULT_TREE_LAYOUT[index] : {...FARM_SAPLING_SLOTS[index],scale:1}
                 const slotTreeId = FARM_SLOT_TREE_IDS[index] ?? index + 1
