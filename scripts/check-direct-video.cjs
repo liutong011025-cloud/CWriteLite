@@ -8,7 +8,7 @@ const find=where=>jobs.find(j=>where.id?j.id===where.id:j.storyId===where.storyI
 const prisma={story:{findFirst:async({where})=>where.id===story.id&&where.userId==='owner'?copy(story):null},videoJob:{
     findUnique:async({where})=>copy(find(where)),findUniqueOrThrow:async({where})=>{const j=find(where);assert.ok(j);return copy(j);},
     findFirst:async({where})=>copy(jobs.find(j=>j.id===where.id&&j.userId===where.userId)),
-    findMany:async({where})=>copy(jobs.filter(j=>j.storyId===where.storyId&&j.userId===where.userId&&j.plan.snapshotHash===where.plan.equals).reverse()),
+    findMany:async({where})=>copy(jobs.filter(j=>j.storyId===where.storyId&&j.userId===where.userId&&where.OR.some(condition=>j.plan.snapshotHash===condition.plan.equals)).reverse()),
     create:async({data})=>{if(jobs.some(j=>j.revisionHash===data.revisionHash))throw new Prisma.PrismaClientKnownRequestError('duplicate',{code:'P2002',clientVersion:'6'});const j={...data,id:'job-'+jobs.length,errorMessage:'',outputUrl:'',updatedAt:new Date(),clips:[{...data.clips.create,id:'clip-'+jobs.length,providerTaskId:'',sourceUrl:''}]};jobs.push(j);return copy(j);},
     update:async({where,data})=>{const j=find(where);if(where.status&&!(typeof where.status==='string'?j.status===where.status:where.status.in.includes(j.status)))throw new Prisma.PrismaClientKnownRequestError('changed',{code:'P2025',clientVersion:'6'});const {clips,...patch}=data;Object.assign(j,patch,{updatedAt:new Date()});if(clips)Object.assign(j.clips[0],clips.update.data);return copy(j);},
     updateMany:async({where,data})=>{const j=find(where);if(!j||where.status&&where.status!==j.status)return {count:0};Object.assign(j,data,{updatedAt:new Date()});return {count:1};}
@@ -24,7 +24,7 @@ global.fetch=async(url,init)=>{
     assert.ok(url.startsWith('https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks'));
     if(init.method==='POST'){
         submissions++;const body=JSON.parse(init.body);
-        assert.ok(body.callback_url.startsWith('https://c-write-lite.vercel.app/api/drama-video/callback?'));assert.equal(body.ratio,'adaptive');assert.equal(body.duration,5);assert.equal(body.generate_audio,false);assert.equal(body.content[1].role,'first_frame');assert.ok(body.content[1].image_url.url.startsWith('data:image/png;base64,'));
+        assert.ok(body.callback_url.startsWith('https://c-write-lite.vercel.app/api/drama-video/callback?'));assert.equal(body.ratio,'adaptive');assert.ok(body.duration>=5&&body.duration<=30);assert.equal(body.generate_audio,true);assert.equal(body.content[1].role,'first_frame');assert.ok(body.content[1].image_url.url.startsWith('data:image/png;base64,'));
         const info=await sharp(Buffer.from(body.content[1].image_url.url.split(',')[1],'base64')).metadata();assert.equal(info.width,1280);assert.equal(info.height,880);
         if(providerFailure)return Response.json({error:{code:providerCode,message:'test server failure'}},{status:providerStatus});
         return Response.json({id:'cgt-test-'+submissions});
@@ -40,16 +40,17 @@ async function main(){
     assert.deepEqual(await sample(png,640,700),[255,0,0]);assert.deepEqual(await sample(png,10,10),[255,255,255]);
     const bigger=copy(story);bigger.canvas.drama.scenes[0].actors[0].scale=1.6;
     assert.deepEqual(await sample(png,400,700),[255,255,255]);assert.deepEqual(await sample(await reference.dramaVideoReference(bigger,bigger.canvas.drama.scenes[0]),400,700),[255,0,0]);
-    assert.match(dramaMotionPrompt(story,story.canvas.drama.scenes[0]),/thinks silently/);
+    assert.match(dramaMotionPrompt(story,story.canvas.drama.scenes[0]),/inner voice says exactly/);
     const route=require('../app/api/drama-video/route.ts'),poll=require('../app/api/drama-video/[id]/route.ts');
     const request=(prompt='Gentle movement',sceneId='scene')=>new Request('http://localhost/api/drama-video',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({storyId:'story',sceneId,prompt,duration:15})});
     await Promise.all([route.POST(request()),route.POST(request())]);assert.equal(submissions,1);assert.equal(jobs.length,1);assert.equal(jobs[0].clips[0].providerTaskId,'cgt-test-1');
     await route.POST(request());assert.equal(submissions,1);
     const result=await (await poll.GET(new Request('http://localhost'),{params:Promise.resolve({id:jobs[0].id})})).json();assert.equal(result.job.status,'ready');assert.ok(result.job.outputUrl.endsWith('.mp4'));
     const restored=await (await route.GET(new Request('http://localhost/api/drama-video?storyId=story'))).json();assert.equal(restored.jobs[0].id,jobs[0].id);assert.equal(restored.scenes.length,1);
+    assert.match(restored.jobs[0].captionsVtt,/Fox thinks: I wonder who needs help\./);assert.equal(restored.jobs[0].renderVersion,3);
     userId='other';assert.equal((await poll.GET(new Request('http://localhost'),{params:Promise.resolve({id:jobs[0].id})})).status,404);assert.equal((await route.POST(request())).status,404);userId='owner';
     story.canvas.drama.scenes[0].notes='A different motion';providerFailure=true;await route.POST(request());assert.equal(jobs[1].status,'needs_confirmation');await route.POST(request());assert.equal(submissions,2);
-
+    
     const callback=require('../app/api/drama-video/callback/route.ts');const {videoCallbackUrl}=require('../lib/video-callback.ts');
     const unknown=jobs[1],signed=videoCallbackUrl(unknown.id,unknown.revisionHash+'|'+unknown.plan.callbackNonce);
     const notify=url=>new Request(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:'cgt-test-lost',status:'succeeded',content:{video_url:'https://attacker.example/fake.mp4'}})});
@@ -63,6 +64,10 @@ async function main(){
     providerFailure=false;jobs=[];submissions=0;story.canvas.drama.scenes.push({...copy(story.canvas.drama.scenes[0]),id:'scene-2'});
     await Promise.all([route.POST(request()),route.POST(request('ignored','scene-2')),route.POST(request())]);assert.equal(submissions,2);assert.equal(jobs.length,2);assert.ok(jobs.every(j=>j.clips[0].duration===5));
     const batch=await (await route.GET(new Request('http://localhost/api/drama-video?storyId=story'))).json();assert.equal(batch.jobs.length,2);assert.equal(batch.scenes.length,2);
-    console.log('Passed: stage composition / scale, first-frame data URI, adaptive aspect, silent animation, concurrent deduplication, polling, ownership and ambiguous submission recovery. No paid API calls.');
+    story.canvas.drama.scenes[0].lines.push({id:'reply',characterId:'fox',kind:'dialogue',text:'Come with me and we can find the missing friend together.'});await route.POST(request());assert.ok(jobs.at(-1).clips[0].duration>5);assert.match(jobs.at(-1).plan.prompt,/says exactly/);
+    const beforeTooLong=submissions;story.canvas.drama.scenes[0].lines[0].text='help '.repeat(100);const tooLong=await route.POST(request());assert.equal(tooLong.status,409);assert.equal(submissions,beforeTooLong);
+    const {dramaRevisionHash}=require('../lib/video-pipeline.ts');jobs=[{...copy(jobs[0]),plan:{mode:'direct-v1',snapshotHash:dramaRevisionHash(story,process.env.ARK_VIDEO_MODEL+'|direct-five-second-v2')},status:'ready',outputUrl:'https://example.volccdn.com/old.mp4'}];
+    const legacy=await (await route.GET(new Request('http://localhost/api/drama-video?storyId=story'))).json();assert.equal(legacy.jobs[0].outputUrl,'https://example.volccdn.com/old.mp4');assert.equal(legacy.jobs[0].renderVersion,0);assert.equal(legacy.renderVersion,3);
+    console.log('Passed: voiced storyboard, exact captions, adaptive duration, old video retrieval, first-frame composition, concurrent deduplication, polling, ownership and ambiguous submission recovery. No paid API calls.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

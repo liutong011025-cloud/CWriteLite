@@ -45,7 +45,8 @@ async function arkFetch(path: string, init: RequestInit) {
 }
 
 /** Create one Seedance task. Callers must save the returned id before any retry. */
-export async function createSeedanceTask(prompt: string, imageUrl?: string, duration = 5, model = process.env.ARK_VIDEO_MODEL?.trim() || SEEDANCE_VIDEO_MODEL, callbackUrl?:string) {
+export const videoDurationLimit=(model:string)=>/seedance[-.]2[-.]5/i.test(model)?30:15;
+export async function createSeedanceTask(prompt: string, imageUrl?: string, duration = 5, model = process.env.ARK_VIDEO_MODEL?.trim() || SEEDANCE_VIDEO_MODEL, callbackUrl?:string,generateAudio=false) {
     const content: unknown[] = [{ type: 'text', text: prompt }];
     if (imageUrl && /^(https:\/\/|data:image\/(png|webp);base64,)/.test(imageUrl)) content.push({ type: 'image_url', image_url: { url: imageUrl }, role: 'first_frame' });
     const {response,body} = await arkFetch('/contents/generations/tasks', {
@@ -55,8 +56,8 @@ export async function createSeedanceTask(prompt: string, imageUrl?: string, dura
             content,
             resolution: '720p',
             ratio: imageUrl ? 'adaptive' : '16:9',
-            duration: Math.max(4, Math.min(15, Math.ceil(duration))),
-            generate_audio: false,
+            duration: Math.max(4, Math.min(videoDurationLimit(model), Math.ceil(duration))),
+            generate_audio: generateAudio,
             watermark: false,
             ...(callbackUrl?{callback_url:callbackUrl}:{}),
         }),

@@ -1,10 +1,13 @@
 import type {VideoJob,VideoClip} from '@prisma/client';
 import {prisma} from './prisma';
 import {readSeedanceTask} from './ark-video';
+import {dramaCaptionTrack,type VideoCaption} from './drama-video-prompt';
 export type DirectJob=VideoJob&{clips:VideoClip[]};
 export function directVideoJob(job:DirectJob){
+    const plan=job.plan as {prompt?:string;renderVersion?:number;captions?:VideoCaption[]};
     return {id:job.id,sceneId:job.clips[0]?.sceneId,status:job.status.replace(/^direct_/,''),errorCode:job.errorCode,errorMessage:job.errorMessage,
-        outputUrl:job.status==='ready'?job.outputUrl:'',prompt:(job.plan as {prompt?:string}).prompt||'',duration:job.clips[0]?.duration||5};
+        outputUrl:job.status==='ready'?job.outputUrl:'',prompt:plan.prompt||'',duration:job.clips[0]?.duration||5,renderVersion:plan.renderVersion||0,
+        captionsVtt:plan.captions?.length?dramaCaptionTrack(plan.captions):''};
 }
 export async function pollDirectVideo(job:DirectJob){
     if(job.status==='direct_preparing'||job.status==='direct_submitting'){
