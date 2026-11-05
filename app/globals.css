@@ -1531,11 +1531,17 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 .header-back-button:hover { background:#f3e3be; }
 .other-farm-back { position:fixed; top:16px; left:16px; z-index:80; }
 .character-pack-scroll,.drama-pack-library { display:flex; justify-content:flex-start; gap:16px; overflow-x:auto; overflow-y:hidden; max-width:100%; padding:12px 8px 18px; }
+.character-pack-scroll,.drama-pack-library { scrollbar-width:thin; scrollbar-color:#ad9169 #f3eadb; }
+.character-pack-scroll::-webkit-scrollbar,.drama-pack-library::-webkit-scrollbar { height:10px; }
+.character-pack-scroll::-webkit-scrollbar-track,.drama-pack-library::-webkit-scrollbar-track { background:#f3eadb; border-radius:8px; }
+.character-pack-scroll::-webkit-scrollbar-thumb,.drama-pack-library::-webkit-scrollbar-thumb { background:#ad9169; border-radius:8px; }
 .modal .character-pack-scroll { margin:12px 0; }
 .character-pack-scroll>.character-pack-card,.drama-pack-library>.character-pack-card { flex:0 0 165px; width:165px; max-width:none; }
 .character-pack-scroll>.character-pack-card:nth-child(n),.drama-pack-library>.character-pack-card:nth-child(n) { transform:none; }
 .character-pack-card .portrait-window img { inset:0; object-position:center; box-sizing:border-box; }
 .pack-confirm-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
+.pack-scroll-actions { display:flex; align-items:center; justify-content:center; gap:10px; color:#766952; font-size:14px; }
+.pack-scroll-actions button { min-width:40px; min-height:36px; padding:6px 10px; }
 .story-shell:has(.modal-backdrop) .shell-save-status { z-index:0; }
 .node-connect-handle.top { left:50%; top:-9px; transform:translateX(-50%); }
 .node-connect-handle.bottom { left:50%; bottom:-9px; transform:translateX(-50%); }
