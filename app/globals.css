@@ -1527,6 +1527,28 @@ main[data-stage="characters"] .story-content>.wood-title { font-size:28px; color
 
 /* Cagent rests on the stage frame without making the scene strip taller. */
 .object-text-hint { margin:0; color:#746b5b; font-size:15px; line-height:1.5; }
+.header-back-button { display:flex; align-items:center; gap:5px; flex-shrink:0; padding:8px 11px; border:1px solid #f2dfb6; border-radius:9px; background:#fff7e1; color:#675238; font-weight:700; }
+.header-back-button:hover { background:#f3e3be; }
+.other-farm-back { position:fixed; top:16px; left:16px; z-index:80; }
+.character-pack-scroll,.drama-pack-library { display:flex; justify-content:flex-start; gap:16px; overflow-x:auto; overflow-y:hidden; max-width:100%; padding:12px 8px 18px; }
+.modal .character-pack-scroll { margin:12px 0; }
+.character-pack-scroll>.character-pack-card,.drama-pack-library>.character-pack-card { flex:0 0 165px; width:165px; max-width:none; }
+.character-pack-scroll>.character-pack-card:nth-child(n),.drama-pack-library>.character-pack-card:nth-child(n) { transform:none; }
+.character-pack-card .portrait-window img { inset:0; object-position:center; box-sizing:border-box; }
+.pack-confirm-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
+.story-shell:has(.modal-backdrop) .shell-save-status { z-index:0; }
+.node-connect-handle.top { left:50%; top:-9px; transform:translateX(-50%); }
+.node-connect-handle.bottom { left:50%; bottom:-9px; transform:translateX(-50%); }
+.node-connect-handle.left { left:-9px; top:50%; transform:translateY(-50%); }
+.node-connect-handle.right { right:-9px; top:50%; transform:translateY(-50%); }
+.node-connect-handle.top:hover,.node-connect-handle.bottom:hover { transform:translateX(-50%) scale(1.12); }
+.node-connect-handle.left:hover,.node-connect-handle.right:hover { transform:translateY(-50%) scale(1.12); }
+.node-resize-handle { position:absolute; width:15px; height:15px; padding:0; border:2px solid #a9854f; border-radius:3px; background:#fff8e5; touch-action:none; z-index:5; }
+.node-resize-handle.top-left { left:-7px; top:-7px; cursor:nwse-resize; }
+.node-resize-handle.top-right { right:-7px; top:-7px; cursor:nesw-resize; }
+.node-resize-handle.bottom-left { left:-7px; bottom:-7px; cursor:nesw-resize; }
+.node-resize-handle.bottom-right { right:-7px; bottom:-7px; cursor:nwse-resize; }
+.node-resize-handle:focus-visible { outline:2px solid #8d66bf; outline-offset:3px; }
 .object-description input { box-sizing:border-box; width:100%; min-width:0; }
 .object-text-add { width:100%; }
 .object-picture-option { border-top:1px solid #e6d7bd; padding-top:12px; }

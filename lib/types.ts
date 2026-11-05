@@ -20,9 +20,10 @@ export type CanvasNode = {
     characterId?: string;
     x: number;
     y: number;
+    scale?: number;
     details?: string;
 };
-export type CanvasAnchor = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export type CanvasAnchor = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top' | 'right' | 'bottom' | 'left';
 export type CanvasEdge = {
     id: string;
     source: string;

@@ -1,8 +1,12 @@
 import type { CanvasAnchor, CanvasNode } from './types';
 
-export const CANVAS_ANCHORS: CanvasAnchor[] = ['top-left','top-right','bottom-left','bottom-right'];
+export const CANVAS_ANCHORS: CanvasAnchor[] = ['top','right','bottom','left'];
 
 export function canvasAnchorPoint(node:Pick<CanvasNode,'x'|'y'>,size:{width:number;height:number},anchor:CanvasAnchor) {
+  if(anchor==='top')return {x:node.x+size.width/2,y:node.y};
+  if(anchor==='right')return {x:node.x+size.width,y:node.y+size.height/2};
+  if(anchor==='bottom')return {x:node.x+size.width/2,y:node.y+size.height};
+  if(anchor==='left')return {x:node.x,y:node.y+size.height/2};
   return {x:node.x+(anchor.endsWith('right')?size.width:0),y:node.y+(anchor.startsWith('bottom')?size.height:0)};
 }
 

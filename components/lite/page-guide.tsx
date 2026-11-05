@@ -13,7 +13,7 @@ const guides: Record<string, readonly GuideStep[]> = {
   ],
   characters: [
     {target:'.character-deck',title:'Choose your characters',text:'Click a character card to choose who will be in your story. Or click Create a New Character to make someone new.'},
-    {target:'.deck-pack-corner',title:'Open your character pack',text:'Open the pack to explore character ideas. Choose one you like and make it your own.'},
+    {target:'.deck-pack-corner',title:'Open your character pack',text:'Open the pack to choose your saved characters. Click Confirm characters to add them to your story.'},
     {target:'.deck-bottom > button',title:'Ready to plan?',text:'Choose at least one character, then click this button to open your Story Canvas.'},
   ],
   studio: [
@@ -31,7 +31,7 @@ const guides: Record<string, readonly GuideStep[]> = {
   canvas: [
     {target:'.canvas-example-button',title:'See an example',text:'Click View examples. The window shows a canvas on the left and its story on the right. Notice how the cards and connections become events. Then come back and make your own plan.'},
     {target:'.canvas-toolbar',title:'Build your story plan',text:'Your characters are already here. Add an object, a setting, a goal or a note. For an object, write your idea and click Add text card. Add a picture only if you want one. A setting picture becomes the background.'},
-    {target:'.canvas-surface',title:'Move and connect your ideas',text:'Drag cards to arrange your plan. Drag any corner dot to another card, then write how the two ideas connect.'},
+    {target:'.canvas-surface',title:'Move and connect your ideas',text:'Drag cards to arrange your plan. Drag a corner to resize a card, or drag an edge dot to another card to connect your ideas.'},
     {target:'.connection-suggestions',title:'Plan with Cagent',text:'Click Suggest connections for ideas. Pale, glowing lines appear on the canvas. Click a line or its label to keep it. You choose what belongs in your story.'},
     {target:'.page-bottom > button',title:'Start writing',text:'Click Start writing for a quick AI plan check. If ideas need connecting, you can keep planning or choose Write anyway. Your canvas stays with you as you write.'},
   ],
